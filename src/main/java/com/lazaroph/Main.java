@@ -23,6 +23,8 @@ public class Main {
         int port = DEFAULT_PORT;
         if (args.length > 0) {
             try { port = Integer.parseInt(args[0]); } catch (Exception ignored) {}
+        } else if (System.getenv("PORT") != null) {
+            try { port = Integer.parseInt(System.getenv("PORT")); } catch (Exception ignored) {}
         } else if (System.getProperty("server.port") != null) {
             try { port = Integer.parseInt(System.getProperty("server.port")); } catch (Exception ignored) {}
         }
