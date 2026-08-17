@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+  <rect width="500" height="500" fill="#0b0f19" rx="24"/>
+  <g transform="translate(100, 50)">
+    <path d="M 80 20 L 120 50 C 135 60, 165 60, 180 50 L 220 20 L 270 80 L 235 120 L 225 105 L 225 350 C 225 360, 215 370, 205 370 L 95 370 C 85 370, 75 360, 75 350 L 75 105 L 65 120 L 30 80 Z" fill="#182030" stroke="#00e5ff" stroke-width="3"/>
+    <text x="150" y="160" font-family="sans-serif" font-size="16" font-weight="900" text-anchor="middle" fill="#00e5ff" letter-spacing="2">LAZAROPH</text>
+    <text x="150" y="180" font-family="sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#ffffff" letter-spacing="1">PRO SLEEVELESS</text>
+    <text x="150" y="410" font-family="sans-serif" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff" letter-spacing="3">PERFORMANCE JERSEY</text>
+  </g>
+</svg>

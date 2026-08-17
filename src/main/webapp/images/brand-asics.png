@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
+  <rect width="300" height="200" fill="#ffffff" rx="8"/>
+  <!-- Asics Swirl Motif -->
+  <g transform="translate(150, 75)">
+    <path d="M -60 10 C -40 -35, 10 -40, 40 -10 C 25 -25, -10 -25, -30 5 C -45 25, -20 35, 10 25 C -5 40, -45 35, -60 10 Z" fill="#000000"/>
+    <path d="M -15 -10 C 15 -35, 55 -25, 65 10 C 50 -10, 20 -15, 0 10 C -10 22, 15 25, 35 15 C 20 30, -5 25, -15 -10 Z" fill="#000000"/>
+  </g>
+  <text x="150" y="165" font-family="'Outfit', sans-serif" font-size="24" font-weight="900" text-anchor="middle" fill="#000000" letter-spacing="4">ASICS</text>
+</svg>

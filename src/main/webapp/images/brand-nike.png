@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
+  <rect width="300" height="200" fill="#ffffff" rx="8"/>
+  <!-- Nike Swoosh -->
+  <path d="M 50 120 C 100 135, 170 140, 230 70 C 235 64, 240 68, 235 76 C 185 155, 110 160, 50 120 Z" fill="#000000"/>
+  <text x="150" y="175" font-family="'Outfit', 'Impact', sans-serif" font-size="26" font-weight="900" text-anchor="middle" fill="#000000" letter-spacing="4">NIKE</text>
+</svg>

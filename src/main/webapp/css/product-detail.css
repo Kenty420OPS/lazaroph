@@ -1,0 +1,354 @@
+/* ==========================================================================
+   LAZAROPH PRODUCT DETAIL PAGE STYLES — WHITE & BLACK THEME
+   US Shoe Size Matrix, Variant Selectors, Stock Feedback & Gallery
+   ========================================================================== */
+
+.product-detail-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+    align-items: start;
+    padding: 40px 0 80px;
+}
+
+/* Gallery Section */
+.product-gallery {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: sticky;
+    top: calc(var(--header-height) + 20px);
+}
+
+.gallery-main-view {
+    position: relative;
+    width: 100%;
+    padding-top: 90%;
+    background: #f9fafb;
+    border: 1.5px solid #e5e7eb;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.gallery-main-img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 85%;
+    height: 85%;
+    object-fit: contain;
+    transition: transform var(--transition-smooth);
+}
+
+.gallery-main-view:hover .gallery-main-img {
+    transform: translate(-50%, -50%) scale(1.08);
+}
+
+.gallery-thumbnails {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+}
+
+.gallery-thumb-btn {
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+    border-radius: var(--radius-sm);
+    background: #f9fafb;
+    border: 1.5px solid #e5e7eb;
+    padding: 6px;
+    cursor: pointer;
+    transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.gallery-thumb-btn.active, .gallery-thumb-btn:hover {
+    border-color: #000000;
+    transform: translateY(-2px);
+}
+
+.gallery-thumb-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Product Info Section */
+.product-info-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.product-meta-header {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.product-brand-tag {
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #6b7280;
+    margin-bottom: 6px;
+}
+
+.product-detail-title {
+    font-size: 2.25rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.03em;
+    color: #000000;
+    margin-bottom: 12px;
+    line-height: 1.15;
+}
+
+.product-sku-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.product-sku-row code {
+    background: #f3f4f6;
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: #000000;
+    font-family: monospace;
+    font-size: 0.85rem;
+    border: 1px solid #e5e7eb;
+}
+
+.product-price-section {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.price-current {
+    font-family: var(--font-heading);
+    font-size: 2rem;
+    font-weight: 900;
+    color: #000000;
+}
+
+.price-original {
+    font-size: 1.15rem;
+    color: #9ca3af;
+    text-decoration: line-through;
+}
+
+/* Variant & US Shoe Sizing Section */
+.variant-section {
+    margin-bottom: 28px;
+}
+
+.variant-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.variant-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #000000;
+}
+
+.size-chart-link {
+    font-size: 0.8rem;
+    color: #4b5563;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.size-chart-link:hover {
+    color: #000000;
+}
+
+/* US Shoe Size Buttons Matrix */
+.us-sizes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.size-pill-btn {
+    background: #ffffff;
+    border: 1.5px solid #d1d5db;
+    border-radius: var(--radius-sm);
+    padding: 12px 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+.size-pill-btn:hover:not(:disabled) {
+    border-color: #000000;
+    background: #f9fafb;
+}
+
+.size-pill-btn.active {
+    background: #000000;
+    border-color: #000000;
+}
+
+.size-pill-btn.active .size-text,
+.size-pill-btn.active .size-stock-feedback {
+    color: #ffffff !important;
+}
+
+.size-pill-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    border-color: #e5e7eb;
+    background: #f3f4f6;
+}
+
+.size-pill-btn.out-of-stock::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    width: 80%;
+    height: 1.5px;
+    background-color: #9ca3af;
+    transform: rotate(-25deg);
+}
+
+.size-text {
+    font-family: var(--font-heading);
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #000000;
+    display: block;
+}
+
+.size-stock-feedback {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #6b7280;
+    display: block;
+    margin-top: 2px;
+}
+
+.stock-indicator-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    margin-bottom: 24px;
+}
+
+.stock-indicator-banner.in-stock {
+    color: #059669;
+    border-color: #a7f3d0;
+    background: #ecfdf5;
+}
+
+.stock-indicator-banner.low-stock {
+    color: #d97706;
+    border-color: #fde68a;
+    background: #fffbeb;
+}
+
+.stock-indicator-banner.out-stock {
+    color: #dc2626;
+    border-color: #fecaca;
+    background: #fef2f2;
+}
+
+/* Quantity & Action Buttons */
+.action-row {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 30px;
+}
+
+.quantity-stepper {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1.5px solid #d1d5db;
+    border-radius: var(--radius-sm);
+    height: 52px;
+    padding: 0 4px;
+}
+
+.qty-btn {
+    background: transparent;
+    color: #000000;
+    font-size: 1.2rem;
+    width: 38px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color var(--transition-fast);
+}
+
+.qty-btn:hover {
+    color: #6b7280;
+}
+
+.qty-input {
+    width: 44px;
+    text-align: center;
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-weight: 800;
+    color: #000000;
+    background: transparent;
+}
+
+/* Accordion Details */
+.product-accordions {
+    border-top: 1px solid #e5e7eb;
+}
+
+.accordion-item {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.accordion-header {
+    padding: 18px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #000000;
+    user-select: none;
+}
+
+.accordion-header:hover {
+    color: #4b5563;
+}
+
+.accordion-body {
+    padding-bottom: 18px;
+    font-size: 0.9rem;
+    color: #4b5563;
+    line-height: 1.7;
+}

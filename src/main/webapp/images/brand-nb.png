@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
+  <rect width="300" height="200" fill="#ffffff" rx="8"/>
+  <!-- New Balance NB Logo Motif -->
+  <g transform="translate(110, 40)">
+    <path d="M 0 70 L 25 15 L 42 15 L 20 70 Z" fill="#000000"/>
+    <path d="M 15 50 L 55 50 L 50 62 L 10 62 Z" fill="#000000"/>
+    <path d="M 28 25 L 68 25 L 63 37 L 23 37 Z" fill="#000000"/>
+    <path d="M 50 15 C 65 15, 80 25, 80 40 C 80 50, 72 56, 62 58 C 75 60, 85 70, 85 85 C 85 100, 68 100, 45 100 L 25 100 L 32 82 L 52 82 C 60 82, 65 78, 65 72 C 65 65, 58 62, 50 62 L 36 62 L 40 48 L 52 48 C 58 48, 62 44, 62 38 C 62 32, 58 28, 50 28 L 44 28 L 48 15 Z" fill="#000000"/>
+  </g>
+  <text x="150" y="170" font-family="'Outfit', sans-serif" font-size="18" font-weight="900" text-anchor="middle" fill="#000000" letter-spacing="3">NEW BALANCE</text>
+</svg>

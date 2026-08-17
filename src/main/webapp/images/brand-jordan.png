@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
+  <rect width="300" height="200" fill="#ffffff" rx="8"/>
+  <!-- Jordan Jumpman Silhouette -->
+  <g transform="translate(150, 70) scale(0.9)">
+    <!-- Head & Ball -->
+    <circle cx="0" cy="-45" r="7" fill="#000000"/>
+    <circle cx="-32" cy="-42" r="5" fill="#000000"/>
+    <!-- Left Extended Arm with Ball -->
+    <path d="M -30 -38 L -6 -25 L -2 -15 Z" fill="#000000"/>
+    <!-- Right Extended Arm -->
+    <path d="M 0 -25 L 30 -35 L 28 -30 L 2 -15 Z" fill="#000000"/>
+    <!-- Torso -->
+    <polygon points="-6,-25 6,-25 8,5 -8,5" fill="#000000"/>
+    <!-- Split Legs (Iconic Dunk Spread) -->
+    <path d="M -8 5 L -35 38 L -30 42 L 0 10 Z" fill="#000000"/>
+    <path d="M 8 5 L 38 35 L 34 40 L 0 10 Z" fill="#000000"/>
+  </g>
+  <text x="150" y="165" font-family="'Outfit', sans-serif" font-size="24" font-weight="900" text-anchor="middle" fill="#000000" letter-spacing="4">JORDAN</text>
+</svg>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
+  <rect width="300" height="200" fill="#ffffff" rx="8"/>
+  <!-- Under Armour Interlocking UA Logo -->
+  <g transform="translate(150, 75)">
+    <path d="M 0 -35 C 22 -35, 38 -20, 38 0 C 38 12, 30 22, 18 28 C 32 34, 40 44, 40 55 L 25 55 C 25 45, 15 36, 0 36 C -15 36, -25 45, -25 55 L -40 55 C -40 44, -32 34, -18 28 C -30 22, -38 12, -38 0 C -38 -20, -22 -35, 0 -35 Z" fill="#000000"/>
+    <path d="M 0 -22 C -12 -22, -22 -12, -22 0 C -22 8, -16 16, 0 20 C 16 16, 22 8, 22 0 C 22 -12, 12 -22, 0 -22 Z" fill="#ffffff"/>
+  </g>
+  <text x="150" y="165" font-family="'Outfit', sans-serif" font-size="18" font-weight="900" text-anchor="middle" fill="#000000" letter-spacing="2">UNDER ARMOUR</text>
+</svg>
