@@ -488,7 +488,11 @@ const AdminAuth = {
 
         try {
             const data = await API.adminLoginStep1(email, password);
-            this.setPreToken(data.preAuthToken);
+            const preToken = data && data.preAuthToken ? data.preAuthToken : '';
+            if (!preToken) {
+                throw new Error((data && (data.error || data.message)) || 'Administrator verification failed.');
+            }
+            this.setPreToken(preToken);
             sessionStorage.setItem('lazaroph_admin_pre_name', data.adminName || 'Super Admin');
             sessionStorage.setItem('lazaroph_admin_pre_email', data.adminEmail || email);
 

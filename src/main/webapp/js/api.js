@@ -378,6 +378,37 @@ const FallbackStore = {
         localStorage.setItem('lazaroph_offline_products', JSON.stringify(products));
     },
 
+    getAdmins() {
+        const saved = localStorage.getItem('lazaroph_fallback_admins');
+        if (saved) {
+            try { return JSON.parse(saved); } catch (e) {}
+        }
+        return [
+            { id: 1, name: 'Clark Montoya (Super Admin 1)', email: 'admin1@lazaroph.com', password: 'AdminPassword2026!', securityPin: '992104', role: 'SUPER_ADMIN', status: 'ACTIVE' },
+            { id: 2, name: 'Mark Lazaro (Super Admin 2)', email: 'admin2@lazaroph.com', password: 'AdminPassword2026!', securityPin: '882910', role: 'SUPER_ADMIN', status: 'ACTIVE' },
+            { id: 3, name: 'Elena Santos (Super Admin 3)', email: 'admin3@lazaroph.com', password: 'AdminPassword2026!', securityPin: '773821', role: 'SUPER_ADMIN', status: 'ACTIVE' },
+            { id: 4, name: 'LAZAROPH Master Administrator', email: 'admin@lazaroph.com', password: 'admin123Password!', securityPin: '992104', role: 'SUPER_ADMIN', status: 'ACTIVE' }
+        ];
+    },
+
+    saveAdmins(admins) {
+        localStorage.setItem('lazaroph_fallback_admins', JSON.stringify(admins));
+    },
+
+    getCustomers() {
+        const saved = localStorage.getItem('lazaroph_fallback_customers');
+        if (saved) {
+            try { return JSON.parse(saved); } catch (e) {}
+        }
+        return [
+            { id: 2, name: 'Juan Dela Cruz', email: 'customer@example.com', password: 'customer123', role: 'CUSTOMER', status: 'VERIFIED', phone: '09171234567', address: '911 J.P. Rizal St', city: 'Marikina', province: 'Metro Manila', zipCode: '1805' }
+        ];
+    },
+
+    saveCustomers(customers) {
+        localStorage.setItem('lazaroph_fallback_customers', JSON.stringify(customers));
+    },
+
     getCart() {
         const saved = localStorage.getItem('lazaroph_offline_cart');
         if (saved) {
@@ -435,36 +466,191 @@ const FallbackStore = {
     handle(path, method = 'GET', body = null, queryParams = {}) {
         const cleanPath = path.split('?')[0];
 
-        // 1. Auth
-        if (cleanPath === '/api/auth/me') {
-            const token = API.getToken();
-            if (token === 'admin-token') {
-                return { id: 1, name: 'LAZAROPH Administrator', email: 'admin@lazaroph.com', role: 'ADMIN', phone: '282948572', address: '911 J.P. Rizal St', city: 'Marikina', province: 'Metro Manila', zipCode: '1805' };
-            }
-            if (token === 'customer-token') {
-                return { id: 2, name: 'Juan Dela Cruz', email: 'customer@example.com', role: 'CUSTOMER', phone: '09171234567', address: '32 F. E. Mendoza St', city: 'Marikina', province: 'Metro Manila', zipCode: '1805' };
-            }
-            throw new Error('Not authenticated');
-        }
-
-        if (cleanPath === '/api/auth/login') {
+        // 1. Admin Two-Step Authentication
+        if (cleanPath === '/api/auth/admin/login-step1' || cleanPath === '/api/auth/admin/step1') {
             const req = typeof body === 'string' ? JSON.parse(body || '{}') : (body || {});
-            if (req.email === 'admin@lazaroph.com') {
-                const user = { id: 1, name: 'LAZAROPH Administrator', email: 'admin@lazaroph.com', role: 'ADMIN', phone: '282948572', address: '911 J.P. Rizal St', city: 'Marikina', province: 'Metro Manila', zipCode: '1805' };
-                return { token: 'admin-token', user };
+            const email = (req.email || '').trim().toLowerCase();
+            const password = req.password || '';
+
+            const admins = this.getAdmins();
+            const admin = admins.find(a => a.email.toLowerCase() === email);
+            if (!admin) {
+                throw new Error('No administrator found with this email address.');
             }
-            const user = { id: 2, name: 'Juan Dela Cruz', email: req.email || 'customer@example.com', role: 'CUSTOMER', phone: '09171234567', address: '32 F. E. Mendoza St', city: 'Marikina', province: 'Metro Manila', zipCode: '1805' };
-            return { token: 'customer-token', user };
+            if (admin.status === 'DISABLED') {
+                throw new Error('This administrator account has been disabled.');
+            }
+            if (admin.password !== password) {
+                throw new Error('Invalid login password. Please check your credentials.');
+            }
+
+            const preAuthToken = 'pre2fa_' + Math.random().toString(36).substring(2) + Date.now();
+            sessionStorage.setItem('lazaroph_admin_pretoken', preAuthToken);
+            sessionStorage.setItem('lazaroph_admin_pre_email', admin.email);
+            sessionStorage.setItem('lazaroph_admin_pre_name', admin.name);
+
+            return {
+                success: true,
+                preAuthToken,
+                adminEmail: admin.email,
+                adminName: admin.name,
+                adminRole: admin.role,
+                message: 'Step 1 verified. Please enter your Security Password.'
+            };
         }
 
-        if (cleanPath === '/api/auth/register') {
+        if (cleanPath === '/api/auth/admin/verify-step2' || cleanPath === '/api/auth/admin/step2') {
             const req = typeof body === 'string' ? JSON.parse(body || '{}') : (body || {});
-            const user = { id: Date.now(), name: req.name || 'New Customer', email: req.email, role: 'CUSTOMER', phone: req.phone || '', address: req.address || '', city: req.city || '', province: req.province || '', zipCode: req.zipCode || '' };
-            return { token: 'customer-token', user };
+            const preAuthToken = req.preAuthToken || sessionStorage.getItem('lazaroph_admin_pretoken');
+            const pin = (req.securityPassword || req.pin || req.securityPin || '').trim();
+
+            const savedEmail = sessionStorage.getItem('lazaroph_admin_pre_email') || '';
+            const admins = this.getAdmins();
+            const admin = admins.find(a => a.email.toLowerCase() === savedEmail.toLowerCase()) || admins[0];
+
+            if (!admin) {
+                throw new Error('Session expired. Please restart login from Step 1.');
+            }
+            if (admin.securityPin && admin.securityPin !== pin) {
+                throw new Error('Invalid Security Password. Please enter your correct 6-digit PIN.');
+            }
+
+            const token = 'adm_' + Math.random().toString(36).substring(2) + Date.now();
+            const adminUser = {
+                id: admin.id,
+                name: admin.name,
+                email: admin.email,
+                role: admin.role || 'SUPER_ADMIN',
+                status: 'ACTIVE'
+            };
+
+            localStorage.setItem('lazaroph_admin_token', token);
+            localStorage.setItem('lazaroph_admin_user', JSON.stringify(adminUser));
+
+            return {
+                success: true,
+                token,
+                admin: adminUser,
+                message: 'Two-step authentication verified.'
+            };
         }
 
-        if (cleanPath === '/api/auth/logout') {
-            return { message: 'Logged out successfully' };
+        if (cleanPath === '/api/auth/admin/me') {
+            const saved = localStorage.getItem('lazaroph_admin_user');
+            if (saved) {
+                try { return JSON.parse(saved); } catch (e) {}
+            }
+            const admins = this.getAdmins();
+            return admins[0];
+        }
+
+        if (cleanPath === '/api/auth/admin/logout') {
+            localStorage.removeItem('lazaroph_admin_token');
+            localStorage.removeItem('lazaroph_admin_user');
+            sessionStorage.removeItem('lazaroph_admin_pretoken');
+            return { success: true, message: 'Admin logged out successfully' };
+        }
+
+        // 2. Customer Authentication
+        if (cleanPath === '/api/auth/customer/login' || cleanPath === '/api/auth/login') {
+            const req = typeof body === 'string' ? JSON.parse(body || '{}') : (body || {});
+            const email = (req.email || '').trim().toLowerCase();
+            const password = req.password || '';
+
+            const customers = this.getCustomers();
+            const cust = customers.find(c => c.email.toLowerCase() === email) || customers[0];
+            if (req.email && req.email.toLowerCase() !== 'customer@example.com' && (!cust || cust.password !== password)) {
+                throw new Error('Invalid email or password.');
+            }
+
+            const token = 'cust_' + Math.random().toString(36).substring(2) + Date.now();
+            const custUser = {
+                id: cust.id,
+                name: cust.name,
+                email: cust.email,
+                role: 'CUSTOMER',
+                status: cust.status || 'VERIFIED',
+                phone: cust.phone || '09171234567',
+                address: cust.address || '911 J.P. Rizal St',
+                city: cust.city || 'Marikina',
+                province: cust.province || 'Metro Manila',
+                zipCode: cust.zipCode || '1805'
+            };
+            localStorage.setItem('lazaroph_customer_token', token);
+            localStorage.setItem('lazaroph_customer_user', JSON.stringify(custUser));
+            return {
+                success: true,
+                token,
+                customer: custUser,
+                user: custUser
+            };
+        }
+
+        if (cleanPath === '/api/auth/customer/register' || cleanPath === '/api/auth/register') {
+            const req = typeof body === 'string' ? JSON.parse(body || '{}') : (body || {});
+            const customers = this.getCustomers();
+            const email = (req.email || '').toLowerCase().trim();
+            if (customers.some(c => c.email.toLowerCase() === email)) {
+                throw new Error('An account with this email address already exists. Please log in.');
+            }
+            const newCust = {
+                id: Date.now(),
+                name: req.name || 'New Customer',
+                email: email,
+                password: req.password || 'password123',
+                phone: req.phone || '',
+                address: req.address || '',
+                city: req.city || 'Marikina',
+                province: req.province || 'Metro Manila',
+                zipCode: req.zipCode || '1805',
+                role: 'CUSTOMER',
+                status: 'VERIFIED'
+            };
+            customers.push(newCust);
+            this.saveCustomers(customers);
+            return {
+                success: true,
+                message: 'Account created successfully! Verification link sent to your email.'
+            };
+        }
+
+        if (cleanPath === '/api/auth/customer/verify-email') {
+            return { success: true, message: 'Email verified successfully! You can now log in.' };
+        }
+
+        if (cleanPath === '/api/auth/customer/me' || cleanPath === '/api/auth/me') {
+            const saved = localStorage.getItem('lazaroph_customer_user');
+            if (saved) {
+                try { return JSON.parse(saved); } catch (e) {}
+            }
+            const custs = this.getCustomers();
+            return custs[0];
+        }
+
+        if (cleanPath === '/api/auth/customer/logout' || cleanPath === '/api/auth/logout') {
+            localStorage.removeItem('lazaroph_customer_token');
+            localStorage.removeItem('lazaroph_customer_user');
+            return { success: true, message: 'Logged out successfully' };
+        }
+
+        if (cleanPath === '/api/auth/customer/forgot-password') {
+            return { success: true, message: 'If an account exists for this email, we will send you a password reset link.' };
+        }
+
+        if (cleanPath === '/api/auth/customer/reset-password') {
+            return { success: true, message: 'Your password has been successfully reset. You can now log in using your new password.' };
+        }
+
+        if (cleanPath === '/api/auth/email-simulator/latest') {
+            return [
+                {
+                    id: 1,
+                    to: 'customer@example.com',
+                    subject: 'Verify Your Email Address — LAZAROPH',
+                    token: 'sim_tok_' + Date.now(),
+                    date: new Date().toISOString()
+                }
+            ];
         }
 
         // 2. Categories & Brands
@@ -628,7 +814,7 @@ const FallbackStore = {
             return this.storeSettings;
         }
 
-        if (cleanPath === '/api/admin/stats') {
+        if (cleanPath === '/api/admin/stats' || cleanPath === '/api/admin/overview') {
             return {
                 totalSales: 18450.00,
                 totalOrders: 6,
