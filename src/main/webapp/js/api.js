@@ -693,6 +693,144 @@ const FallbackStore = {
             return list;
         }
 
+        if (cleanPath.startsWith('/api/admin/products/delete/') || (cleanPath.startsWith('/api/products/') && method === 'DELETE')) {
+            const id = parseInt(cleanPath.split('/').pop());
+            let products = this.getProducts();
+            products = products.filter(p => p.id !== id);
+            this.saveProducts(products);
+            return { success: true, message: 'Product deleted successfully.' };
+        }
+
+        if (cleanPath === '/api/admin/products/save') {
+            const req = typeof body === 'string' ? JSON.parse(body || '{}') : (body || {});
+            let products = this.getProducts();
+            let savedProduct;
+            if (req.id) {
+                const idx = products.findIndex(p => p.id === req.id);
+                if (idx !== -1) {
+                    savedProduct = { ...products[idx], ...req };
+                    products[idx] = savedProduct;
+                } else {
+                    savedProduct = { ...req };
+                    products.push(savedProduct);
+                }
+            } else {
+                const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+                savedProduct = {
+                    ...req,
+                    id: newId,
+                    sku: req.sku || ('LZPH-PRD-' + newId),
+                    status: req.status || 'ACTIVE',
+                    createdAt: new Date().toISOString()
+                };
+                products.unshift(savedProduct);
+            }
+            this.saveProducts(products);
+            return { success: true, product: savedProduct, message: 'Product saved successfully.' };
+        }
+
+        if (cleanPath.startsWith('/api/admin/brands/delete/') || (cleanPath.startsWith('/api/brands/') && method === 'DELETE')) {
+            const id = parseInt(cleanPath.split('/').pop());
+            this.brands = this.brands.filter(b => b.id !== id);
+            return { success: true, message: 'Brand deleted successfully.' };
+        }
+
+        if (cleanPath === '/api/admin/brands/save') {
+            const req = typeof body === 'string' ? JSON.parse(body || '{}') : (body || {});
+            let savedBrand;
+            if (req.id) {
+                const idx = this.brands.findIndex(b => b.id === req.id);
+                if (idx !== -1) {
+                    savedBrand = { ...this.brands[idx], ...req };
+                    this.brands[idx] = savedBrand;
+                } else {
+                    savedBrand = { ...req };
+                    this.brands.push(savedBrand);
+                }
+            } else {
+                const newId = this.brands.length > 0 ? Math.max(...this.brands.map(b => b.id)) + 1 : 1;
+                savedBrand = {
+                    ...req,
+                    id: newId,
+                    status: req.status || 'ACTIVE'
+                };
+                this.brands.push(savedBrand);
+            }
+            return { success: true, brand: savedBrand, message: 'Brand saved successfully.' };
+        }
+
+        if (cleanPath === '/api/admin/brands/status') {
+            const req = typeof body === 'string' ? JSON.parse(body || '{}') : (body || {});
+            const brand = this.brands.find(b => b.id === req.id);
+            if (brand) {
+                brand.status = req.status;
+            }
+            return { success: true, brand };
+        }
+
+        if (cleanPath.startsWith('/api/admin/orders/delete/') || (cleanPath.startsWith('/api/orders/delete/')) || (cleanPath.startsWith('/api/admin/orders/') && method === 'DELETE')) {
+            const id = parseInt(cleanPath.split('/').pop());
+            let orders = this.getOrders();
+            orders = orders.filter(o => o.id !== id);
+            localStorage.setItem('lazaroph_offline_orders', JSON.stringify(orders));
+            return { success: true, message: 'Order deleted successfully.' };
+        }
+
+        if (cleanPath.includes('/api/admin/orders/') && cleanPath.endsWith('/status')) {
+            const parts = cleanPath.split('/');
+            const idStr = parts[parts.indexOf('orders') + 1];
+            const orderId = parseInt(idStr);
+            const req = typeof body === 'string' ? JSON.parse(body || '{}') : (body || {});
+            let orders = this.getOrders();
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                order.status = req.status;
+                localStorage.setItem('lazaroph_offline_orders', JSON.stringify(orders));
+            }
+            return { success: true, order, message: 'Order status updated successfully.' };
+        }
+
+        if (cleanPath.includes('/api/admin/orders/') && cleanPath.endsWith('/delivery')) {
+            const parts = cleanPath.split('/');
+            const idStr = parts[parts.indexOf('orders') + 1];
+            const orderId = parseInt(idStr);
+            const req = typeof body === 'string' ? JSON.parse(body || '{}') : (body || {});
+            let orders = this.getOrders();
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                order.riderName = req.riderName || order.riderName;
+                order.riderPhone = req.riderPhone || order.riderPhone;
+                order.estimatedDeliveryTime = req.estimatedDeliveryTime || order.estimatedDeliveryTime;
+                localStorage.setItem('lazaroph_offline_orders', JSON.stringify(orders));
+            }
+            return { success: true, order, message: 'Delivery information updated.' };
+        }
+
+        if (cleanPath.startsWith('/api/admin/custom-orders/delete/') || (cleanPath.startsWith('/api/admin/custom-orders/') && method === 'DELETE')) {
+            const id = parseInt(cleanPath.split('/').pop());
+            const raw = localStorage.getItem('lazaroph_offline_custom_orders');
+            let orders = raw ? JSON.parse(raw) : [
+                { id: 1, orderNumber: 'LZPH-20260825-0001', customerName: 'Juan Dela Cruz', teamName: 'MANILA KINGS', playerName: 'DELA CRUZ', playerNumber: '24', size: 'L', designStyle: 'pro-elite', productionStatus: 'DESIGN_APPROVED', createdAt: '2026-08-25T10:00:00' }
+            ];
+            orders = orders.filter(o => o.id !== id);
+            localStorage.setItem('lazaroph_offline_custom_orders', JSON.stringify(orders));
+            return { success: true, message: 'Custom order deleted successfully.' };
+        }
+
+        if (cleanPath === '/api/admin/inventory/update-stock') {
+            const req = typeof body === 'string' ? JSON.parse(body || '{}') : (body || {});
+            const products = this.getProducts();
+            products.forEach(p => {
+                (p.variants || []).forEach(v => {
+                    if (v.id === req.variantId) {
+                        v.stock = req.stock;
+                    }
+                });
+            });
+            this.saveProducts(products);
+            return { success: true, message: 'Stock updated successfully.' };
+        }
+
         if (cleanPath.startsWith('/api/products/')) {
             const id = parseInt(cleanPath.replace('/api/products/', ''));
             const p = this.getProducts().find(item => item.id === id);
@@ -1452,14 +1590,22 @@ const API = {
     },
 
     updateOrderStatus(orderId, status) {
-        return this.request('/api/admin/orders/status', {
+        return this.request(`/api/admin/orders/${orderId}/status`, {
             method: 'POST',
             body: JSON.stringify({ orderId, status })
         });
     },
 
+    deleteAdminOrder(orderId) {
+        return this.request(`/api/admin/orders/delete/${orderId}`, { method: 'POST' });
+    },
+
     getAdminCustomOrders() {
         return this.request('/api/admin/custom-orders');
+    },
+
+    deleteCustomOrder(id) {
+        return this.request(`/api/admin/custom-orders/delete/${id}`, { method: 'POST' });
     },
 
     updateCustomOrderStatus(customOrderId, status) {

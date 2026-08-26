@@ -992,6 +992,9 @@ const Admin = {
                                                     <button class="btn btn-primary btn-sm" style="font-size: 0.75rem; font-weight: 800; background: #000000; color: #ffffff; padding: 4px 8px;" onclick="Admin.openCustomerChat(${o.id}, '${o.orderNumber}')">
                                                         💬 Chat
                                                     </button>
+                                                    <button class="btn btn-sm" style="font-size: 0.75rem; font-weight: 800; background: rgba(220,38,38,0.1); color: #dc2626; border: 1px solid rgba(220,38,38,0.3); padding: 4px 8px;" onclick="Admin.deleteOrder(${o.id}, '${o.orderNumber}')">
+                                                        🗑️ Delete
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -1007,6 +1010,18 @@ const Admin = {
             `;
         } catch (err) {
             container.innerHTML = `<div style="color: var(--color-danger); padding: 40px;">Failed to load orders: ${err.message}</div>`;
+        }
+    },
+
+    async deleteOrder(orderId, orderNumber) {
+        if (!confirm(`Are you sure you want to permanently delete order #${orderNumber}?`)) return;
+        try {
+            await API.deleteAdminOrder(orderId);
+            showToast(`Order #${orderNumber} deleted successfully.`, 'success');
+            const content = document.getElementById('admin-content-area');
+            if (content) this.loadOrders(content);
+        } catch (err) {
+            showToast(err.message, 'error');
         }
     },
 
@@ -2014,14 +2029,19 @@ const Admin = {
                                             ${co.customizationNotes || 'None'}
                                         </td>
                                         <td>
-                                            <select class="form-control" style="padding: 4px 8px; font-size: 0.82rem; width: 150px;" onchange="Admin.updateCustomStatus(${co.id}, this.value)">
-                                                <option value="PENDING_DESIGN" ${co.status === 'PENDING_DESIGN' ? 'selected' : ''}>Pending Design</option>
-                                                <option value="DESIGN_APPROVED" ${co.status === 'DESIGN_APPROVED' ? 'selected' : ''}>Design Approved</option>
-                                                <option value="IN_PRODUCTION" ${co.status === 'IN_PRODUCTION' ? 'selected' : ''}>In Production</option>
-                                                <option value="READY" ${co.status === 'READY' ? 'selected' : ''}>Ready for Packing</option>
-                                                <option value="SHIPPED" ${co.status === 'SHIPPED' ? 'selected' : ''}>Shipped</option>
-                                                <option value="COMPLETED" ${co.status === 'COMPLETED' ? 'selected' : ''}>Completed</option>
-                                            </select>
+                                            <div style="display: flex; gap: 6px; align-items: center;">
+                                                <select class="form-control" style="padding: 4px 8px; font-size: 0.82rem; width: 140px;" onchange="Admin.updateCustomStatus(${co.id}, this.value)">
+                                                    <option value="PENDING_DESIGN" ${co.status === 'PENDING_DESIGN' ? 'selected' : ''}>Pending Design</option>
+                                                    <option value="DESIGN_APPROVED" ${co.status === 'DESIGN_APPROVED' ? 'selected' : ''}>Design Approved</option>
+                                                    <option value="IN_PRODUCTION" ${co.status === 'IN_PRODUCTION' ? 'selected' : ''}>In Production</option>
+                                                    <option value="READY" ${co.status === 'READY' ? 'selected' : ''}>Ready for Packing</option>
+                                                    <option value="SHIPPED" ${co.status === 'SHIPPED' ? 'selected' : ''}>Shipped</option>
+                                                    <option value="COMPLETED" ${co.status === 'COMPLETED' ? 'selected' : ''}>Completed</option>
+                                                </select>
+                                                <button type="button" class="btn btn-sm" style="font-size: 0.75rem; padding: 4px 8px; background: rgba(220,38,38,0.1); color: #dc2626; border: 1px solid rgba(220,38,38,0.3);" onclick="Admin.deleteCustomOrder(${co.id}, '${co.orderNumber}')" title="Delete custom order">
+                                                    🗑️
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 `).join('')}
@@ -2032,6 +2052,18 @@ const Admin = {
             `;
         } catch (err) {
             container.innerHTML = `<div style="color: var(--color-danger); padding: 40px;">Failed to load custom orders: ${err.message}</div>`;
+        }
+    },
+
+    async deleteCustomOrder(id, orderNumber) {
+        if (!confirm(`Are you sure you want to permanently delete custom order #${orderNumber}?`)) return;
+        try {
+            await API.deleteCustomOrder(id);
+            showToast(`Custom order #${orderNumber} deleted successfully.`, 'success');
+            const content = document.getElementById('admin-content-area');
+            if (content) this.loadCustomOrders(content);
+        } catch (err) {
+            showToast(err.message, 'error');
         }
     },
 
