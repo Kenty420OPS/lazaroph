@@ -66,8 +66,29 @@ const Store = {
                 const newArrivals = products.filter(p => p.isNewArrival).slice(0, 4);
                 newGrid.innerHTML = newArrivals.map(p => this.renderProductCard(p)).join('');
             }
+            // Load dynamic Featured Categories background images
+            this.loadFeaturedCategories();
         } catch (err) {
             console.error('Failed to load featured products:', err);
+        }
+    },
+
+    async loadFeaturedCategories() {
+        try {
+            const categories = await API.getFeaturedCategories();
+            if (!categories || !categories.length) return;
+
+            categories.forEach(cat => {
+                const key = (cat.key || '').toLowerCase();
+                const bg = document.getElementById(`cat-bg-${key}`);
+                if (bg && cat.imageUrl) {
+                    bg.style.backgroundImage = `linear-gradient(rgba(17,22,34,0.35), rgba(17,22,34,0.85)), url('${cat.imageUrl}')`;
+                    bg.style.backgroundSize = 'cover';
+                    bg.style.backgroundPosition = 'center';
+                }
+            });
+        } catch (err) {
+            console.error('Failed to load featured categories:', err);
         }
     },
 
@@ -124,7 +145,14 @@ const Store = {
 
             grid.innerHTML = products.map(p => this.renderProductCard(p)).join('');
         } catch (err) {
-            grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #dc2626; padding: 40px;">Failed to load products: ${err.message}</div>`;
+            grid.innerHTML = `
+                <div style="grid-column: 1/-1; text-align: center; color: #dc2626; padding: 40px; background: #ffffff; border-radius: var(--radius-lg); border: 1px solid #fee2e2;">
+                    <div style="font-size: 2rem; margin-bottom: 8px;">⚠️</div>
+                    <div style="font-weight: 700; margin-bottom: 6px;">Failed to load products: ${err.message}</div>
+                    <p style="color: #6b7280; font-size: 0.85rem; margin-bottom: 16px;">Make sure the Java server is running or retry.</p>
+                    <button class="btn btn-secondary btn-sm" onclick="Store.loadCatalog()">🔄 Retry</button>
+                </div>
+            `;
         }
     },
 
@@ -171,30 +199,30 @@ const Store = {
 
         return `
             <div class="product-card" data-product-id="${product.id}">
-                <div class="product-card-thumb" onclick="App.navigate('product', { id: ${product.id} })" style="cursor: pointer;">
-                    <img src="${product.mainImageUrl}" alt="${product.name}" class="product-card-img" onerror="this.src='/images/placeholder-product.png'">
-                    <div class="product-badges">
+                <div class="product-card-media" onclick="App.navigate('product', { id: ${product.id} })" style="cursor: pointer;">
+                    <img src="${product.mainImageUrl}" alt="${product.name}" class="product-card-img" onerror="this.src='images/placeholder-product.png'">
+                    <div class="product-card-badges">
                         ${hasDiscount ? '<span class="badge badge-sale">SALE</span>' : ''}
                         ${product.isNewArrival ? '<span class="badge badge-new">NEW</span>' : ''}
                         <span class="badge badge-legit">100% LEGIT</span>
                     </div>
-                    <button class="wishlist-toggle-btn" onclick="event.stopPropagation(); Store.toggleWishlist(${product.id})" title="Add to Wishlist">
+                    <button class="product-wishlist-btn" onclick="event.stopPropagation(); Store.toggleWishlist(${product.id})" title="Add to Wishlist">
                         ♥
                     </button>
                 </div>
                 <div class="product-card-body">
-                    <div class="product-card-category">${product.categoryName || 'Authentic'} • ${product.gender || 'UNISEX'}</div>
+                    <div class="product-card-meta">
+                        <span>${product.categoryName || 'Authentic'} • ${product.gender || 'UNISEX'}</span>
+                    </div>
                     <h3 class="product-card-title">
                         <a href="javascript:void(0)" onclick="App.navigate('product', { id: ${product.id} })">${product.name}</a>
                     </h3>
-                    <div class="product-card-prices">
-                        <span class="price-current">${formatMoney(price)}</span>
-                        ${hasDiscount ? `<span class="price-original">${formatMoney(product.price)}</span>` : ''}
+                    <div class="product-card-price-row">
+                        <span class="product-price">${formatMoney(price)}</span>
+                        ${hasDiscount ? `<span class="product-original-price">${formatMoney(product.price)}</span>` : ''}
                     </div>
-                    <div class="product-card-sizes">
-                        ${sizesHtml}
-                    </div>
-                    <div class="product-card-footer">
+                    ${sizesHtml ? `<div class="product-card-sizes" style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 14px;">${sizesHtml}</div>` : ''}
+                    <div class="product-card-footer" style="margin-top: auto;">
                         <button class="btn btn-primary btn-sm btn-block" onclick="App.navigate('product', { id: ${product.id} })">
                             View Options
                         </button>

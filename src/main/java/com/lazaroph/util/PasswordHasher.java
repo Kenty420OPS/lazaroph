@@ -28,4 +28,15 @@ public class PasswordHasher {
         if (plainPassword == null || storedHash == null) return false;
         return hashPassword(plainPassword).equalsIgnoreCase(storedHash);
     }
+
+    public static String generateSecureToken() {
+        java.security.SecureRandom random = new java.security.SecureRandom();
+        byte[] bytes = new byte[32];
+        random.nextBytes(bytes);
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
+    }
 }

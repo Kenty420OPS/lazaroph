@@ -9,7 +9,42 @@ DROP DATABASE IF EXISTS lazaroph;
 CREATE DATABASE lazaroph CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE lazaroph;
 
--- 1. USERS TABLE
+-- 1. ADMINISTRATORS TABLE (SUPER ADMINS)
+CREATE TABLE admins (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    security_password_hash VARCHAR(255) NOT NULL,
+    role ENUM('SUPER_ADMIN') NOT NULL DEFAULT 'SUPER_ADMIN',
+    status ENUM('ACTIVE', 'DISABLED') NOT NULL DEFAULT 'ACTIVE',
+    failed_security_attempts INT DEFAULT 0,
+    security_locked_until TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 2. CUSTOMERS TABLE
+CREATE TABLE customers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    phone VARCHAR(30) NULL,
+    address TEXT NULL,
+    city VARCHAR(100) NULL,
+    province VARCHAR(100) NULL,
+    zip_code VARCHAR(20) NULL,
+    status ENUM('PENDING', 'VERIFIED', 'DISABLED') NOT NULL DEFAULT 'PENDING',
+    verification_token VARCHAR(255) NULL,
+    verification_expires TIMESTAMP NULL,
+    reset_token VARCHAR(255) NULL,
+    reset_expires TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- LEGACY USERS TABLE (For Relational Foreign Keys)
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -138,9 +173,19 @@ CREATE TABLE orders (
     payment_method VARCHAR(50) NOT NULL DEFAULT 'GCash',
     payment_reference VARCHAR(100) NULL,
     subtotal DECIMAL(10,2) NOT NULL,
-    shipping_fee DECIMAL(10, 2) NOT NULL DEFAULT 150.00,
+    shipping_fee DECIMAL(10, 2) NOT NULL DEFAULT 180.00,
     total DECIMAL(10, 2) NOT NULL,
     status ENUM('PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED') NOT NULL DEFAULT 'PENDING',
+    courier ENUM('LALAMOVE', 'LBC', 'STORE_PICKUP') NOT NULL DEFAULT 'LALAMOVE',
+    courier_tracking_number VARCHAR(100) NULL,
+    courier_tracking_url TEXT NULL,
+    courier_status VARCHAR(50) DEFAULT 'PENDING_DISPATCH',
+    pickup_branch VARCHAR(100) DEFAULT 'Concepcion Uno, Marikina',
+    driver_name VARCHAR(100) NULL,
+    driver_phone VARCHAR(50) NULL,
+    driver_plate VARCHAR(50) NULL,
+    estimated_delivery VARCHAR(100) NULL,
+    waybill_url TEXT NULL,
     notes TEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -199,10 +244,21 @@ CREATE TABLE wishlists (
 -- SEED DATA
 -- ==========================================================
 
--- Default Users: Admin and Customer (SHA-256 for 'admin123' and 'customer123')
+-- 1. Seed 3 Super Admins (Admin 1, Admin 2, Admin 3)
+INSERT INTO admins (name, email, password_hash, security_password_hash, role, status) VALUES
+('Clark Montoya (Super Admin 1)', 'admin1@lazaroph.com', SHA2(CONCAT('AdminPassword123!', 'LAZAROPH_AUTHENTIC_2026'), 256), SHA2(CONCAT('992104', 'LAZAROPH_AUTHENTIC_2026'), 256), 'SUPER_ADMIN', 'ACTIVE'),
+('Mark Lazaro (Super Admin 2)', 'admin2@lazaroph.com', SHA2(CONCAT('AdminPassword456!', 'LAZAROPH_AUTHENTIC_2026'), 256), SHA2(CONCAT('882910', 'LAZAROPH_AUTHENTIC_2026'), 256), 'SUPER_ADMIN', 'ACTIVE'),
+('Elena Santos (Super Admin 3)', 'admin3@lazaroph.com', SHA2(CONCAT('AdminPassword789!', 'LAZAROPH_AUTHENTIC_2026'), 256), SHA2(CONCAT('773821', 'LAZAROPH_AUTHENTIC_2026'), 256), 'SUPER_ADMIN', 'ACTIVE'),
+('LAZAROPH Administrator', 'admin@lazaroph.com', SHA2(CONCAT('admin123', 'LAZAROPH_AUTHENTIC_2026'), 256), SHA2(CONCAT('992104', 'LAZAROPH_AUTHENTIC_2026'), 256), 'SUPER_ADMIN', 'ACTIVE');
+
+-- 2. Seed Verified Customer Account
+INSERT INTO customers (name, email, password_hash, phone, address, city, province, zip_code, status) VALUES
+('Juan Dela Cruz', 'customer@example.com', SHA2(CONCAT('customer123', 'LAZAROPH_AUTHENTIC_2026'), 256), '09171234567', '32 F. E. Mendoza Street, Malanday', 'Marikina', 'Metro Manila', '1805', 'VERIFIED');
+
+-- 3. Legacy Users Table Seed
 INSERT INTO users (name, email, password_hash, role, phone, address, city, province, zip_code) VALUES
-('LAZAROPH Administrator', 'admin@lazaroph.com', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 'ADMIN', '282948572', '911 J.P. Rizal Street, Concepcion Uno', 'Marikina', 'Metro Manila', '1805'),
-('Juan Dela Cruz', 'customer@example.com', 'b4c73045f59f30f9a2e6f4a861fa4c3f59e9f131a4773c333068e1a14a30a133', 'CUSTOMER', '09171234567', '32 F. E. Mendoza Street, Malanday', 'Marikina', 'Metro Manila', '1805');
+('LAZAROPH Administrator', 'admin@lazaroph.com', SHA2(CONCAT('AdminPassword123!', 'LAZAROPH_AUTHENTIC_2026'), 256), 'ADMIN', '282948572', '911 J.P. Rizal Street, Concepcion Uno', 'Marikina', 'Metro Manila', '1805'),
+('Juan Dela Cruz', 'customer@example.com', SHA2(CONCAT('customer123', 'LAZAROPH_AUTHENTIC_2026'), 256), 'CUSTOMER', '09171234567', '32 F. E. Mendoza Street, Malanday', 'Marikina', 'Metro Manila', '1805');
 
 -- Categories
 INSERT INTO categories (name, slug, description, image_url) VALUES

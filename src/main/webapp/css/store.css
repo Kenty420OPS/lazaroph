@@ -661,6 +661,67 @@ nav {
     text-overflow: ellipsis;
 }
 
+.size-pill-preview {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #374151;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+}
+
+.size-pill-preview.out-of-stock {
+    opacity: 0.4;
+    text-decoration: line-through;
+}
+
+.product-card-thumb {
+    position: relative;
+    background: #f9fafb;
+    padding: 30px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1 / 1;
+    min-height: 240px;
+    overflow: hidden;
+}
+
+.product-badges {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 3;
+}
+
+.wishlist-toggle-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #e5e7eb;
+    color: #000000;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.wishlist-toggle-btn:hover {
+    background: #000000;
+    color: #ffffff;
+}
+
 /* ==========================================================================
    PHYSICAL STORE LOCATOR
    ========================================================================== */
@@ -943,12 +1004,69 @@ nav {
    BRANDS SHOWCASE & DIRECTORY STYLES (White & Black Luxury)
    ========================================================== */
 
-/* 1. Homepage Brand Grid */
+/* 1. Homepage Brand Grid — Foot Locker Style 6x2 Layout */
 .home-brands-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
     margin-top: 24px;
+}
+
+@media (max-width: 1024px) {
+    .home-brands-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .home-brands-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.footlocker-brand-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.footlocker-brand-card:hover {
+    border-color: #000000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.footlocker-brand-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transition: transform 0.2s ease;
+}
+
+.footlocker-brand-card:hover .footlocker-brand-img {
+    transform: scale(1.06);
+}
+
+.footlocker-shop-all-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+}
+
+.footlocker-shop-all-text {
+    font-family: var(--font-heading);
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #000000;
+    letter-spacing: 0.01em;
+    text-align: center;
 }
 
 .brand-showcase-card {
@@ -984,13 +1102,11 @@ nav {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
-    filter: grayscale(100%);
-    transition: filter var(--transition-fast), transform var(--transition-fast);
+    transition: transform var(--transition-fast);
 }
 
 .brand-showcase-card:hover .brand-logo-img {
-    filter: grayscale(0%);
-    transform: scale(1.06);
+    transform: scale(1.08);
 }
 
 .brand-showcase-card .brand-name {
@@ -1182,3 +1298,128 @@ nav {
     border-radius: var(--radius-sm);
     box-shadow: var(--shadow-sm);
 }
+
+/* ==========================================================================
+   INSTALLMENT FINANCING VIA SALMON SECTION
+   Clean, minimalist luxury design matching LazaroPH typography & spacing
+   ========================================================================== */
+.salmon-financing-section {
+    padding: 72px 0;
+    background: #ffffff;
+    border-top: 1px solid #e5e7eb;
+}
+
+.salmon-financing-inner {
+    max-width: 1040px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 56px;
+    align-items: center;
+}
+
+.salmon-brand-badge {
+    margin-bottom: 20px;
+}
+
+.salmon-brand-logo {
+    height: 52px;
+    width: auto;
+    max-width: 340px;
+    object-fit: contain;
+    display: block;
+}
+
+.salmon-heading {
+    font-family: var(--font-heading);
+    font-size: clamp(1.75rem, 3.2vw, 2.25rem);
+    font-weight: 900;
+    color: #000000;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    margin: 0 0 16px 0;
+}
+
+.salmon-desc {
+    font-family: var(--font-body);
+    font-size: 1.05rem;
+    color: #4b5563;
+    line-height: 1.6;
+    margin: 0;
+    font-weight: 500;
+}
+
+.salmon-financing-requirements {
+    padding-left: 12px;
+}
+
+.salmon-req-title {
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #000000;
+    letter-spacing: -0.01em;
+    margin: 0 0 16px 0;
+    line-height: 1.3;
+}
+
+.salmon-req-list {
+    list-style-type: disc;
+    margin: 0;
+    padding-left: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.salmon-req-list li {
+    font-family: var(--font-body);
+    font-size: 0.96rem;
+    color: #1f2937;
+    line-height: 1.5;
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .salmon-financing-section {
+        padding: 48px 0;
+    }
+
+    .salmon-financing-inner {
+        grid-template-columns: 1fr;
+        gap: 32px;
+    }
+
+    .salmon-financing-requirements {
+        padding-left: 0;
+    }
+
+    .salmon-brand-logo {
+        height: 44px;
+        max-width: 220px;
+        margin-bottom: 18px;
+    }
+
+    .salmon-heading {
+        font-size: 1.6rem;
+        margin-bottom: 12px;
+    }
+
+    .salmon-desc {
+        font-size: 0.98rem;
+    }
+
+    .salmon-req-title {
+        font-size: 1.05rem;
+        margin-bottom: 12px;
+    }
+
+    .salmon-req-list {
+        gap: 10px;
+    }
+
+    .salmon-req-list li {
+        font-size: 0.92rem;
+    }
+}
+

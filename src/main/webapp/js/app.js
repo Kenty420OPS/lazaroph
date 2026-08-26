@@ -82,9 +82,23 @@ const App = {
     },
 
     handleRoute() {
-        const fullHash = window.location.hash || '#home';
-        const [rawView, queryString] = fullHash.substring(1).split('?');
-        const view = rawView || 'home';
+        // Support direct pathname routing (/login, /register, etc.) and hash routing (#login, etc.)
+        let fullPath = window.location.pathname || '';
+        if (fullPath.startsWith('/')) fullPath = fullPath.substring(1);
+        if (fullPath.endsWith('/')) fullPath = fullPath.slice(0, -1);
+
+        const fullHash = window.location.hash || '';
+        let view = 'home';
+        let queryString = '';
+
+        if (fullHash) {
+            const [rawView, qs] = fullHash.substring(1).split('?');
+            view = rawView || 'home';
+            queryString = qs || '';
+        } else if (fullPath && fullPath !== 'index.html') {
+            view = fullPath;
+            queryString = window.location.search ? window.location.search.substring(1) : '';
+        }
 
         const params = {};
         if (queryString) {
@@ -93,6 +107,7 @@ const App = {
             });
         }
 
+        this.currentRouteParams = params;
         this.showView(view, params);
     },
 
@@ -107,26 +122,82 @@ const App = {
 
         // Toggle Admin vs Storefront Headers
         const siteHeader = document.getElementById('site-header');
-        const siteFooter = document.getElementById('site-footer');
+        const siteFooters = document.querySelectorAll('.site-footer');
         const announcementBar = document.getElementById('announcement-bar');
 
-        if (view === 'admin') {
-            if (siteHeader) siteHeader.classList.add('hidden');
-            if (siteFooter) siteFooter.classList.add('hidden');
-            if (announcementBar) announcementBar.classList.add('hidden');
+        // ADMIN ROUTES & GUARD
+        if (view === 'admin' || view === 'admin/dashboard' || view.startsWith('admin/')) {
+            document.body.classList.add('admin-mode');
+            if (siteHeader) {
+                siteHeader.classList.add('hidden');
+                siteHeader.style.setProperty('display', 'none', 'important');
+            }
+            siteFooters.forEach(f => {
+                f.classList.add('hidden');
+                f.style.setProperty('display', 'none', 'important');
+            });
+            if (announcementBar) {
+                announcementBar.classList.add('hidden');
+                announcementBar.style.setProperty('display', 'none', 'important');
+            }
+
+            // Close customer floating chat if open
+            if (typeof Chat !== 'undefined' && Chat.isOpen) {
+                Chat.toggle();
+            }
+
+            // Admin Step 1: Login
+            if (view === 'admin/login') {
+                const el = document.getElementById('view-admin-login');
+                if (el) el.classList.remove('hidden');
+                return;
+            }
+
+            // Admin Step 2: Security Verification
+            if (view === 'admin/security-verification') {
+                if (!AdminAuth.getPreToken()) {
+                    showToast('Please sign in with your admin credentials first.', 'info');
+                    this.navigate('admin/login');
+                    return;
+                }
+
+                const el = document.getElementById('view-admin-security');
+                if (el) el.classList.remove('hidden');
+                return;
+            }
+
+            // Admin Dashboard Guard: Strict 2-Step Verified Admin Session Required!
+            if (!AdminAuth.isVerified()) {
+                showToast('Admin session required. Please authenticate.', 'info');
+                this.navigate('admin/login');
+                return;
+            }
 
             const viewAdmin = document.getElementById('view-admin');
             if (viewAdmin) {
                 viewAdmin.classList.remove('hidden');
                 Admin.init();
+                if (params.tab) {
+                    Admin.switchTab(params.tab);
+                }
             }
             return;
         }
 
         // Restore storefront chrome
-        if (siteHeader) siteHeader.classList.remove('hidden');
-        if (siteFooter) siteFooter.classList.remove('hidden');
-        if (announcementBar) announcementBar.classList.remove('hidden');
+        document.body.classList.remove('admin-mode');
+        if (siteHeader) {
+            siteHeader.classList.remove('hidden');
+            siteHeader.style.removeProperty('display');
+        }
+        siteFooters.forEach(f => {
+            f.classList.remove('hidden');
+            f.style.removeProperty('display');
+        });
+        if (announcementBar) {
+            announcementBar.classList.remove('hidden');
+            announcementBar.style.removeProperty('display');
+        }
 
         // Scroll to top
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -186,6 +257,30 @@ const App = {
             const el = document.getElementById('view-account');
             if (el) el.classList.remove('hidden');
             this.loadAccountView();
+        } else if (view === 'login') {
+            const el = document.getElementById('view-customer-login');
+            if (el) el.classList.remove('hidden');
+        } else if (view === 'register') {
+            const el = document.getElementById('view-customer-register');
+            if (el) {
+                el.classList.remove('hidden');
+                const formC = document.getElementById('cust-reg-form-container');
+                const succC = document.getElementById('cust-reg-success-container');
+                if (formC) formC.style.display = 'block';
+                if (succC) succC.style.display = 'none';
+            }
+        } else if (view === 'verify-email') {
+            const el = document.getElementById('view-customer-verify-email');
+            if (el) el.classList.remove('hidden');
+            if (params.token) {
+                CustomerAuth.runVerifyEmail(params.token);
+            }
+        } else if (view === 'forgot-password') {
+            const el = document.getElementById('view-customer-forgot-password');
+            if (el) el.classList.remove('hidden');
+        } else if (view === 'reset-password') {
+            const el = document.getElementById('view-customer-reset-password');
+            if (el) el.classList.remove('hidden');
         }
     },
 
@@ -193,29 +288,28 @@ const App = {
         const container = document.getElementById('view-account');
         if (!container) return;
 
-        if (!Auth.currentUser) {
+        if (!CustomerAuth.isLoggedIn() && !Auth.currentUser) {
             container.innerHTML = `
                 <div class="container" style="text-align: center; padding: 80px 20px;">
-                    <h2>Please Log In</h2>
-                    <p style="color: var(--color-text-muted); margin-bottom: 24px;">You must be logged in to view your profile and orders.</p>
-                    <button class="btn btn-primary" onclick="Auth.openAuthModal('login')">Sign In</button>
+                    <h2>Customer Login Required</h2>
+                    <p style="color: var(--color-text-muted); margin-bottom: 24px;">Please sign in to view your orders, addresses, and account details.</p>
+                    <button class="btn btn-primary btn-lg" onclick="App.navigate('login')">Go to Login</button>
                 </div>
             `;
             return;
         }
 
-        const u = Auth.currentUser;
+        const u = CustomerAuth.getCustomer() || Auth.currentUser;
 
         container.innerHTML = `
             <div class="container" style="padding: 40px 0 80px;">
                 <div class="section-header" style="margin-bottom: 32px;">
                     <div>
-                        <div class="section-subtitle">MY LAZAROPH ACCOUNT</div>
-                        <h1 class="section-title">WELCOME, ${u.name.toUpperCase()}</h1>
+                        <div class="section-subtitle">LAZAROPH CUSTOMER PORTAL</div>
+                        <h1 class="section-title">WELCOME, ${escapeHtml(u.name.toUpperCase())}</h1>
                     </div>
                     <div style="display: flex; gap: 12px;">
-                        ${u.role === 'ADMIN' ? `<button class="btn btn-primary" onclick="App.navigate('admin')">Admin Panel</button>` : ''}
-                        <button class="btn btn-secondary" onclick="Auth.logout()">Log Out</button>
+                        <button class="btn btn-secondary" onclick="CustomerAuth.logout()">Log Out</button>
                     </div>
                 </div>
 
@@ -223,21 +317,23 @@ const App = {
                     <!-- Profile Card -->
                     <div class="admin-card">
                         <h3 style="font-size: 1.15rem; font-weight: 800; text-transform: uppercase; margin-bottom: 20px; color: #ffffff;">
-                            Account Information
+                            Profile &amp; Delivery Address
                         </h3>
-                        <div style="font-size: 0.95rem; color: var(--color-text-secondary); line-height: 1.8;">
-                            <div>Full Name: <strong style="color: #ffffff;">${u.name}</strong></div>
-                            <div>Email: <strong style="color: #ffffff;">${u.email}</strong></div>
-                            <div>Phone: <strong style="color: #ffffff;">${u.phone || 'N/A'}</strong></div>
-                            <div>Default Address: <strong style="color: #ffffff;">${u.address || 'N/A'}, ${u.city || ''} ${u.province || ''} ${u.zipCode || ''}</strong></div>
-                            <div>Account Type: <span class="badge ${u.role === 'ADMIN' ? 'badge-brand' : 'badge-outline'}">${u.role}</span></div>
+                        <div style="font-size: 0.95rem; color: var(--color-text-secondary); line-height: 1.9;">
+                            <div>Full Name: <strong style="color: #ffffff;">${escapeHtml(u.name)}</strong></div>
+                            <div>Email: <strong style="color: #ffffff;">${escapeHtml(u.email)}</strong></div>
+                            <div>Contact Number: <strong style="color: #ffffff;">${escapeHtml(u.phone || '09171234567')}</strong></div>
+                            <div>Shipping Address: <strong style="color: #ffffff;">${escapeHtml(u.address || '32 F. E. Mendoza Street, Malanday')}, ${escapeHtml(u.city || 'Marikina')}, ${escapeHtml(u.province || 'Metro Manila')} ${escapeHtml(u.zipCode || '1805')}</strong></div>
+                            <div style="margin-top: 10px;">
+                                Account Status: <span class="status-badge active">✓ VERIFIED CUSTOMER</span>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Past Orders -->
                     <div class="admin-card">
                         <h3 style="font-size: 1.15rem; font-weight: 800; text-transform: uppercase; margin-bottom: 20px; color: #ffffff;">
-                            My Order History
+                            Order History &amp; Tracking
                         </h3>
                         <div id="user-order-history-list">
                             <!-- Populated by Orders.loadUserOrders() -->

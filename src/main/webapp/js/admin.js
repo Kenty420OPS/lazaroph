@@ -11,22 +11,53 @@ const Admin = {
     brands: [],
 
     async init() {
-        if (!Auth.currentUser || Auth.currentUser.role !== 'ADMIN') {
-            App.navigate('home');
+        if (!AdminAuth.isVerified()) {
+            App.navigate('admin/login');
             showToast('Access denied. Administrator privileges required.', 'error');
             return;
+        }
+
+        const currentAdmin = AdminAuth.getAdmin();
+        const nameEl = document.getElementById('admin-sidebar-user-name');
+        if (nameEl && currentAdmin) {
+            nameEl.textContent = currentAdmin.name;
         }
 
         try {
             this.categories = await API.getCategories();
             this.brands = await API.getBrands();
+            this.checkUnreadMessages();
         } catch (ignored) {}
+
+        // Check unread chat messages periodically
+        setInterval(() => this.checkUnreadMessages(), 8000);
 
         this.switchTab('dashboard');
     },
 
+    async checkUnreadMessages() {
+        try {
+            const data = await API.getUnreadChatCount();
+            const count = data.unreadCount || 0;
+            const badge = document.getElementById('admin-chat-unread-badge');
+            if (badge) {
+                if (count > 0) {
+                    badge.textContent = count > 99 ? '99+' : count;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        } catch (ignored) {}
+    },
+
     switchTab(tab) {
         this.currentTab = tab;
+
+        if (tab !== 'chat') {
+            this.stopAdminChatPolling();
+            this.renderedChatConvId = null;
+        }
 
         document.querySelectorAll('.admin-nav-btn').forEach(b => b.classList.remove('active'));
         const activeBtn = document.querySelector(`.admin-nav-btn[data-tab="${tab}"]`);
@@ -47,12 +78,18 @@ const Admin = {
             this.loadInventory(content);
         } else if (tab === 'orders') {
             this.loadOrders(content);
+        } else if (tab === 'chat') {
+            this.loadChat(content);
         } else if (tab === 'custom-orders') {
             this.loadCustomOrders(content);
         } else if (tab === 'customers') {
             this.loadCustomers(content);
         } else if (tab === 'settings') {
             this.loadSettings(content);
+        } else if (tab === 'homepage-management' || tab === 'featured-categories') {
+            this.loadHomepageManagement(content);
+        } else if (tab === 'admin-management') {
+            this.loadAdminManagement(content);
         }
     },
 
@@ -224,7 +261,7 @@ const Admin = {
                                 ${products.map(p => `
                                     <tr>
                                         <td>
-                                            <img src="${p.mainImageUrl}" style="width: 48px; height: 48px; object-fit: contain; background: #0e131d; border-radius: 4px; padding: 2px;" onerror="this.src='/images/placeholder-product.png'">
+                                            <img src="${p.mainImageUrl}" style="width: 48px; height: 48px; object-fit: contain; background: #0e131d; border-radius: 4px; padding: 2px;" onerror="this.src='images/placeholder-product.png'">
                                         </td>
                                         <td>
                                             <strong style="color: #ffffff; display: block;">${p.name}</strong>
@@ -256,7 +293,13 @@ const Admin = {
                 </div>
             `;
         } catch (err) {
-            container.innerHTML = `<div style="color: var(--color-danger); padding: 40px;">Failed to load products: ${err.message}</div>`;
+            container.innerHTML = `
+                <div style="color: var(--color-danger); padding: 40px; text-align: center;">
+                    <div style="font-size: 1.8rem; margin-bottom: 8px;">⚠️</div>
+                    <div style="font-weight: 700; margin-bottom: 8px;">Failed to load products: ${err.message}</div>
+                    <button class="btn btn-secondary btn-sm" onclick="Admin.loadProducts(document.getElementById('admin-content-area'))">🔄 Retry</button>
+                </div>
+            `;
         }
     },
 
@@ -418,32 +461,40 @@ const Admin = {
                 <div class="admin-card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                         <h3 style="font-size: 1.15rem; font-weight: 800; text-transform: uppercase; margin-bottom: 0; color: #ffffff;">
-                            2. Product Photography & Images
+                            2. Product Photography &amp; Images
                         </h3>
                         <div style="display: flex; gap: 8px;">
                             <input type="file" id="prod-file-upload-input" accept="image/*" multiple style="display: none;" onchange="Admin.handleProductMultipleFileUpload(this)">
-                            <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; font-weight: 800;" onclick="document.getElementById('prod-file-upload-input').click()">
-                                📁 Upload Photo(s)
+                            <button type="button" class="btn btn-primary btn-sm" style="font-size: 0.75rem; font-weight: 800;" onclick="document.getElementById('prod-file-upload-input').click()">
+                                📁 Browse Device Photos
                             </button>
-                            <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; font-weight: 800;" onclick="Admin.addImageRow()">
+                            <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; font-weight: 800;" onclick="Admin.addImageUrlPrompt()">
                                 + Add Image URL
                             </button>
                         </div>
                     </div>
                     <p style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 16px;">
-                        Upload product photos directly from your device (PNG, JPG, WebP) or enter image URLs.
+                        Attach product photos directly from your computer/phone (PNG, JPG, WebP, SVG) or paste web URLs.
                     </p>
 
-                    <div id="admin-images-container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
-                        ${this.productImages.map((img, i) => `
-                            <div style="display: flex; gap: 10px; align-items: center;">
-                                <div style="width: 44px; height: 38px; background: #fff; border: 1px solid #444; border-radius: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; padding: 2px;">
-                                    <img src="${img.imageUrl || '/images/placeholder-product.png'}" style="max-width: 100%; max-height: 100%; object-fit: contain;" onerror="this.src='/images/logo.png'">
-                                </div>
-                                <input type="text" class="form-control image-url-input" value="${img.imageUrl || ''}" oninput="this.previousElementSibling.querySelector('img').src=this.value" placeholder="/images/runner-x1-black-main.png or data:image/..." style="flex-grow: 1;">
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="Admin.removeImageRow(${i})">Remove</button>
-                            </div>
-                        `).join('')}
+                    <!-- Interactive Drag & Drop Area -->
+                    <div class="admin-image-dropzone" id="admin-image-dropzone" 
+                         onclick="document.getElementById('prod-file-upload-input').click()"
+                         ondragover="event.preventDefault(); this.classList.add('dragover')"
+                         ondragleave="this.classList.remove('dragover')"
+                         ondrop="event.preventDefault(); this.classList.remove('dragover'); Admin.handleDropFiles(event.dataTransfer.files)">
+                        <div class="dropzone-icon">📷</div>
+                        <div class="dropzone-title">Click to upload photos or drag &amp; drop here</div>
+                        <div class="dropzone-sub">Supports PNG, JPG, WebP, SVG files from your device</div>
+                    </div>
+
+                    <!-- Live Image Cards Preview Grid -->
+                    <div class="admin-image-cards-grid" id="admin-image-cards-grid">
+                        <!-- Populated by Admin.renderImageCardsGrid() -->
+                    </div>
+
+                    <div style="margin-top: 10px; font-size: 0.8rem; color: #9ca3af;">
+                        💡 <em>Tip: The first image with the black "★ MAIN COVER" badge will be the primary catalog display photo. Click "Set Main" on any image to switch.</em>
                     </div>
                 </div>
 
@@ -499,6 +550,45 @@ const Admin = {
         `;
 
         this.renderSizeVariantsChecklist(p.sizeType, p.variants);
+        this.renderImageCardsGrid();
+    },
+
+    renderImageCardsGrid() {
+        const grid = document.getElementById('admin-image-cards-grid');
+        if (!grid) return;
+
+        if (!this.productImages || this.productImages.length === 0) {
+            grid.innerHTML = `
+                <div style="grid-column: 1 / -1; padding: 16px; text-align: center; color: #9ca3af; font-size: 0.85rem;">
+                    No photos attached yet. Click the upload box above or add an image URL.
+                </div>
+            `;
+            return;
+        }
+
+        grid.innerHTML = this.productImages.map((img, i) => {
+            const isMain = i === 0 || img.isMain;
+            const url = img.imageUrl || 'images/placeholder-product.png';
+
+            return `
+                <div class="admin-image-card ${isMain ? 'is-main' : ''}">
+                    ${isMain ? `<span class="admin-image-main-badge">★ MAIN COVER</span>` : ''}
+                    <div class="admin-image-card-thumb">
+                        <img src="${url}" alt="Product Photo ${i + 1}" onerror="this.src='images/placeholder-product.png'">
+                    </div>
+                    <div class="admin-image-card-actions">
+                        ${!isMain ? `
+                            <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.setMainImage(${i})">
+                                Make Main
+                            </button>
+                        ` : '<span style="font-weight: 800; font-size: 0.68rem; color: #000;">Primary</span>'}
+                        <button type="button" class="btn btn-danger btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.removeImageCard(${i})" title="Delete image">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
     },
 
     onCategoryChange(catId) {
@@ -518,55 +608,63 @@ const Admin = {
     handleProductMultipleFileUpload(input) {
         const files = input.files;
         if (!files || files.length === 0) return;
+        this.handleDropFiles(files);
+    },
 
-        Array.from(files).forEach((file, idx) => {
+    handleDropFiles(files) {
+        if (!files || files.length === 0) return;
+
+        let loadedCount = 0;
+        const total = files.length;
+
+        Array.from(files).forEach((file) => {
             if (!file.type.startsWith('image/')) return;
             const reader = new FileReader();
             reader.onload = (e) => {
                 const dataUrl = e.target.result;
-                this.productImages.push({ imageUrl: dataUrl, isMain: this.productImages.length === 0 });
-                const container = document.getElementById('admin-images-container');
-                if (container) {
-                    const div = document.createElement('div');
-                    div.style.cssText = 'display: flex; gap: 10px; align-items: center;';
-                    div.innerHTML = `
-                        <div style="width: 44px; height: 38px; background: #fff; border: 1px solid #444; border-radius: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; padding: 2px;">
-                            <img src="${dataUrl}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
-                        </div>
-                        <input type="text" class="form-control image-url-input" value="${dataUrl}" oninput="this.previousElementSibling.querySelector('img').src=this.value" style="flex-grow: 1;">
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="this.parentElement.remove()">Remove</button>
-                    `;
-                    container.appendChild(div);
+                this.productImages.push({ 
+                    imageUrl: dataUrl, 
+                    isMain: this.productImages.length === 0 
+                });
+                loadedCount++;
+                if (loadedCount === total) {
+                    this.renderImageCardsGrid();
+                    showToast(`Successfully attached ${loadedCount} product photo(s)!`, 'success');
                 }
             };
             reader.readAsDataURL(file);
         });
-        showToast(`${files.length} photo(s) selected & loaded!`, 'success');
     },
 
-    addImageRow() {
-        this.productImages.push({ imageUrl: '', isMain: false });
-        const container = document.getElementById('admin-images-container');
-        if (container) {
-            const div = document.createElement('div');
-            div.style.cssText = 'display: flex; gap: 10px; align-items: center;';
-            div.innerHTML = `
-                <div style="width: 44px; height: 38px; background: #fff; border: 1px solid #444; border-radius: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; padding: 2px;">
-                    <img src="/images/placeholder-product.png" style="max-width: 100%; max-height: 100%; object-fit: contain;">
-                </div>
-                <input type="text" class="form-control image-url-input" placeholder="/images/photo.png or https://..." oninput="this.previousElementSibling.querySelector('img').src=this.value" style="flex-grow: 1;">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="this.parentElement.remove()">Remove</button>
-            `;
-            container.appendChild(div);
+    addImageUrlPrompt() {
+        const url = prompt('Enter direct image URL (e.g. /images/kd19-black.png or https://...):');
+        if (url && url.trim().length > 0) {
+            this.productImages.push({
+                imageUrl: url.trim(),
+                isMain: this.productImages.length === 0
+            });
+            this.renderImageCardsGrid();
+            showToast('Image URL added!', 'success');
         }
     },
 
-    removeImageRow(index) {
+    setMainImage(index) {
+        if (index < 0 || index >= this.productImages.length) return;
+        const item = this.productImages.splice(index, 1)[0];
+        item.isMain = true;
+        this.productImages.forEach(img => img.isMain = false);
+        this.productImages.unshift(item);
+        this.renderImageCardsGrid();
+        showToast('Primary cover photo updated!', 'info');
+    },
+
+    removeImageCard(index) {
+        if (index < 0 || index >= this.productImages.length) return;
         this.productImages.splice(index, 1);
-        const container = document.getElementById('admin-images-container');
-        if (container && container.children[index]) {
-            container.children[index].remove();
+        if (this.productImages.length > 0) {
+            this.productImages[0].isMain = true;
         }
+        this.renderImageCardsGrid();
     },
 
     renderSizeVariantsChecklist(sizeType, existingVariants = []) {
@@ -629,14 +727,13 @@ const Admin = {
         const colorHex = document.getElementById('form-p-color-hex').value || '#111111';
 
         // Collect Images
-        const imgInputs = document.querySelectorAll('.image-url-input');
-        const images = [];
-        imgInputs.forEach((inp, idx) => {
-            const url = inp.value.trim();
-            if (url) {
-                images.push({ imageUrl: url, isMain: idx === 0, sortOrder: idx + 1 });
-            }
-        });
+        const images = (this.productImages || [])
+            .filter(img => img.imageUrl && img.imageUrl.trim().length > 0)
+            .map((img, idx) => ({
+                imageUrl: img.imageUrl.trim(),
+                isMain: idx === 0 || img.isMain,
+                sortOrder: idx + 1
+            }));
         if (images.length === 0) {
             images.push({ imageUrl: '/images/placeholder-product.png', isMain: true, sortOrder: 1 });
         }
@@ -793,7 +890,7 @@ const Admin = {
     },
 
     async loadOrders(container) {
-        container.innerHTML = `<div style="text-align: center; padding: 60px 0;">Loading customer orders...</div>`;
+        container.innerHTML = `<div style="text-align: center; padding: 60px 0;">Loading customer orders & delivery records...</div>`;
 
         try {
             const orders = await API.getAdminOrders();
@@ -801,65 +898,112 @@ const Admin = {
             container.innerHTML = `
                 <div class="admin-header">
                     <div>
-                        <div class="section-subtitle">ORDER FULFILLMENT</div>
-                        <h1 class="admin-page-title">ALL CUSTOMER ORDERS (${orders.length})</h1>
+                        <div class="section-subtitle">MANUAL DELIVERY & LOGISTICS MANAGEMENT</div>
+                        <h1 class="admin-page-title">CUSTOMER ORDERS & DELIVERY (${orders.length})</h1>
                     </div>
                 </div>
 
-                <div class="admin-card">
+                <div class="admin-card" style="border: 1.5px solid #e5e7eb; border-radius: 6px; background: #ffffff;">
                     <div class="table-responsive">
                         <table class="admin-table">
                             <thead>
                                 <tr>
-                                    <th>Order Number</th>
-                                    <th>Date</th>
-                                    <th>Customer & Phone</th>
-                                    <th>Shipping Address</th>
-                                    <th>Items Ordered</th>
-                                    <th>Total</th>
-                                    <th>Status Action</th>
+                                    <th>Order # &amp; Date</th>
+                                    <th>Customer &amp; Contact</th>
+                                    <th>Delivery Method</th>
+                                    <th>Delivery Fee</th>
+                                    <th>Purchased Items</th>
+                                    <th>Total Amount</th>
+                                    <th>Order Status</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${orders.map(o => `
-                                    <tr>
-                                        <td>
-                                            <strong style="color: #ffffff;">${o.orderNumber}</strong>
-                                            <span style="display: block; font-size: 0.75rem; color: var(--color-text-muted);">${o.paymentMethod}</span>
-                                            ${o.paymentReference ? `<span style="display: block; font-size: 0.72rem; color: var(--color-brand-cyan); font-weight: 700;">Ref: ${o.paymentReference}</span>` : ''}
-                                        </td>
-                                        <td>${new Date(o.createdAt).toLocaleDateString()}</td>
-                                        <td>
-                                            <strong>${o.customerName}</strong>
-                                            <div style="font-size: 0.8rem; color: var(--color-text-muted);">${o.customerPhone}</div>
-                                        </td>
-                                        <td style="max-width: 200px; font-size: 0.82rem; color: var(--color-text-secondary);">
-                                            ${o.shippingAddress}, ${o.shippingCity}
-                                        </td>
-                                        <td>
-                                            <ul style="list-style: none; font-size: 0.82rem;">
-                                                ${o.items.map(it => `
-                                                    <li>${it.productName} (<strong style="color: #fff;">${it.size}</strong>) × ${it.quantity}</li>
-                                                `).join('')}
-                                            </ul>
-                                        </td>
-                                        <td><strong style="color: var(--color-brand-red); font-size: 1.05rem;">${formatMoney(o.total)}</strong></td>
-                                        <td>
-                                            <select class="form-control" style="padding: 4px 8px; font-size: 0.82rem; width: 130px;" onchange="Admin.updateOrderStatus(${o.id}, this.value)">
-                                                <option value="PENDING" ${o.status === 'PENDING' ? 'selected' : ''}>Pending</option>
-                                                <option value="CONFIRMED" ${o.status === 'CONFIRMED' ? 'selected' : ''}>Confirmed</option>
-                                                <option value="PROCESSING" ${o.status === 'PROCESSING' ? 'selected' : ''}>Processing</option>
-                                                <option value="SHIPPED" ${o.status === 'SHIPPED' ? 'selected' : ''}>Shipped</option>
-                                                <option value="DELIVERED" ${o.status === 'DELIVERED' ? 'selected' : ''}>Delivered</option>
-                                                <option value="CANCELLED" ${o.status === 'CANCELLED' ? 'selected' : ''}>Cancelled</option>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                `).join('')}
+                                ${orders.map(o => {
+                                    const courier = o.courier || 'LALAMOVE';
+                                    const isFeeConfirmed = o.deliveryFeeConfirmed || courier === 'STORE_PICKUP';
+                                    const feeDisplay = isFeeConfirmed ? (o.shippingFee && o.shippingFee > 0 ? formatMoney(o.shippingFee) : 'FREE') : '<span style="color:#e11d48; font-weight:700; font-size:0.8rem; background:#ffe4e6; padding:2px 6px; border-radius:3px;">To be Confirmed</span>';
+
+                                    let badgeHtml = `<span class="courier-badge badge-lalamove">🚚 Lalamove</span>`;
+                                    if (courier === 'LBC') badgeHtml = `<span class="courier-badge badge-lbc">📦 LBC Express</span>`;
+                                    if (courier === 'STORE_PICKUP') badgeHtml = `<span class="courier-badge badge-pickup">🏪 Store Pickup</span>`;
+
+                                    const officialStatuses = [
+                                        'Pending Order',
+                                        'Payment Verification',
+                                        'Delivery Confirmation',
+                                        'Preparing Order',
+                                        'Ready for Pickup',
+                                        'For Delivery',
+                                        'Shipped',
+                                        'Out for Delivery',
+                                        'Delivered',
+                                        'Cancelled'
+                                    ];
+
+                                    return `
+                                        <tr>
+                                            <td>
+                                                <div style="font-weight: 800; font-size: 0.95rem; color: #000000;">${o.orderNumber}</div>
+                                                <div style="font-size: 0.75rem; color: #6b7280;">${new Date(o.createdAt).toLocaleDateString()}</div>
+                                                <span style="font-size: 0.72rem; color: #374151; font-weight: 600;">${o.paymentMethod}</span>
+                                            </td>
+                                            <td>
+                                                <strong style="color: #000000;">${o.customerName}</strong>
+                                                <div style="font-size: 0.8rem; color: #4b5563;">📞 ${o.customerPhone}</div>
+                                                <div style="font-size: 0.75rem; color: #6b7280;">${o.shippingCity || 'Marikina'}</div>
+                                            </td>
+                                            <td>
+                                                ${badgeHtml}
+                                                ${courier === 'LBC' && (o.lbcTrackingNumber || o.courierTrackingNumber) ? `
+                                                    <div style="font-size: 0.72rem; color: #111827; margin-top: 4px;">
+                                                        AWB: <code style="background: #fee2e2; padding: 1px 4px; border-radius: 3px;">${o.lbcTrackingNumber || o.courierTrackingNumber}</code>
+                                                    </div>
+                                                ` : ''}
+                                                ${courier === 'LALAMOVE' && o.riderName ? `
+                                                    <div style="font-size: 0.72rem; color: #111827; margin-top: 4px;">
+                                                        Rider: <strong>${o.riderName}</strong>
+                                                    </div>
+                                                ` : ''}
+                                            </td>
+                                            <td>
+                                                <div style="font-size: 0.9rem; font-weight: 700;">${feeDisplay}</div>
+                                            </td>
+                                            <td>
+                                                <div style="font-size: 0.82rem; color: #1f2937; max-width: 180px;">
+                                                    ${o.items.map(it => `${it.productName} (${it.size}) × ${it.quantity}`).join('<br>')}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <strong style="color: #000000; font-size: 1.05rem; font-weight: 900;">${formatMoney(o.total)}</strong>
+                                            </td>
+                                            <td>
+                                                <select class="form-control" style="padding: 4px 8px; font-size: 0.8rem; width: 155px; border-color: #d1d5db; font-weight: 600;" onchange="Admin.updateOrderStatus(${o.id}, this.value)">
+                                                    ${officialStatuses.map(st => `
+                                                        <option value="${st}" ${o.status === st || (o.status && o.status.equalsIgnoreCase && o.status.equalsIgnoreCase(st)) ? 'selected' : ''}>${st}</option>
+                                                    `).join('')}
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <div style="display: flex; flex-direction: column; gap: 4px; min-width: 120px;">
+                                                    <button class="btn btn-secondary btn-sm" style="font-size: 0.75rem; font-weight: 800; border: 1.5px solid #000000; background: #ffffff; color: #000000; padding: 4px 8px;" onclick="Admin.openDeliveryModal(${o.id})">
+                                                        🚚 Delivery Info
+                                                    </button>
+                                                    <button class="btn btn-primary btn-sm" style="font-size: 0.75rem; font-weight: 800; background: #000000; color: #ffffff; padding: 4px 8px;" onclick="Admin.openCustomerChat(${o.id}, '${o.orderNumber}')">
+                                                        💬 Chat
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
                             </tbody>
                         </table>
                     </div>
                 </div>
+
+                <!-- Delivery Management Modal Container -->
+                <div id="admin-delivery-modal-wrap"></div>
             `;
         } catch (err) {
             container.innerHTML = `<div style="color: var(--color-danger); padding: 40px;">Failed to load orders: ${err.message}</div>`;
@@ -869,7 +1013,957 @@ const Admin = {
     async updateOrderStatus(orderId, status) {
         try {
             await API.updateOrderStatus(orderId, status);
-            showToast(`Order status updated to ${status}!`, 'success');
+            showToast(`Order status updated to ${status}! Customer notified.`, 'success');
+        } catch (err) {
+            showToast(err.message, 'error');
+        }
+    },
+
+    async openDeliveryModal(orderId) {
+        try {
+            const orders = await API.getAdminOrders();
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+
+            const modalWrap = document.getElementById('admin-delivery-modal-wrap') || document.body;
+            const courier = order.courier || 'LALAMOVE';
+
+            const modalHtml = `
+                <div class="modal-overlay" id="modal-delivery-manage" style="display: flex;" onclick="if(event.target === this) Admin.closeDeliveryModal()">
+                    <div class="modal-container" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+                        <div class="modal-header">
+                            <h3 class="modal-title">🚚 Delivery Management — #${order.orderNumber}</h3>
+                            <button type="button" class="modal-close" onclick="Admin.closeDeliveryModal()">✕</button>
+                        </div>
+                        <div class="modal-body delivery-modal-body">
+                            <form id="form-delivery-manage" onsubmit="Admin.saveDeliveryModalForm(event, ${order.id})">
+                                <!-- 1. Delivery Method -->
+                                <div class="form-group">
+                                    <label class="form-label" style="font-weight: 800; color: #000000;">Delivery Method *</label>
+                                    <select class="form-control" id="adm-del-courier" onchange="Admin.toggleDeliveryModalFields(this.value)">
+                                        <option value="LALAMOVE" ${courier === 'LALAMOVE' ? 'selected' : ''}>🚚 Lalamove (Same-Day / On-Demand)</option>
+                                        <option value="LBC" ${courier === 'LBC' ? 'selected' : ''}>📦 LBC Express (Nationwide Shipping)</option>
+                                        <option value="STORE_PICKUP" ${courier === 'STORE_PICKUP' ? 'selected' : ''}>🏪 Store Pickup (Marikina Hub)</option>
+                                    </select>
+                                </div>
+
+                                <!-- 2. Delivery Fee & Confirmation -->
+                                <div class="form-grid-2">
+                                    <div class="form-group">
+                                        <label class="form-label" style="font-weight: 800; color: #000000;">Delivery Fee (₱)</label>
+                                        <input type="number" step="0.01" class="form-control" id="adm-del-fee" value="${order.shippingFee != null ? order.shippingFee : ''}" placeholder="e.g. 150.00">
+                                    </div>
+                                    <div class="form-group" style="display: flex; align-items: flex-end; padding-bottom: 8px;">
+                                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 700; color: #000000; cursor: pointer;">
+                                            <input type="checkbox" id="adm-del-confirmed" ${order.deliveryFeeConfirmed || courier === 'STORE_PICKUP' ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #000000;">
+                                            Fee Confirmed
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- 3. Lalamove Rider Details -->
+                                <div id="adm-del-lalamove-box" style="display: ${courier === 'LALAMOVE' ? 'block' : 'none'}; background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 6px; padding: 14px; margin-bottom: 16px;">
+                                    <div style="font-size: 0.82rem; font-weight: 800; color: #b45309; text-transform: uppercase; margin-bottom: 10px;">
+                                        🚚 Lalamove Rider Assignment
+                                    </div>
+                                    <div class="form-grid-2">
+                                        <div class="form-group">
+                                            <label class="form-label">Rider Name</label>
+                                            <input type="text" class="form-control" id="adm-del-rider-name" value="${order.riderName || ''}" placeholder="e.g. Juan Ramos">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Rider Contact Number</label>
+                                            <input type="tel" class="form-control" id="adm-del-rider-phone" value="${order.riderPhone || ''}" placeholder="e.g. 09179988776">
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label class="form-label">Estimated Delivery Time</label>
+                                        <input type="text" class="form-control" id="adm-del-rider-time" value="${order.estimatedDeliveryTime || 'Within 2-3 Hours'}" placeholder="e.g. Today by 4:00 PM">
+                                    </div>
+                                </div>
+
+                                <!-- 4. LBC Details -->
+                                <div id="adm-del-lbc-box" style="display: ${courier === 'LBC' ? 'block' : 'none'}; background: #fff5f5; border: 1.5px solid #fecaca; border-radius: 6px; padding: 14px; margin-bottom: 16px;">
+                                    <div style="font-size: 0.82rem; font-weight: 800; color: #991b1b; text-transform: uppercase; margin-bottom: 10px;">
+                                        📦 LBC Shipping &amp; Tracking
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">LBC Tracking Number (AWB)</label>
+                                        <input type="text" class="form-control" id="adm-del-lbc-track" value="${order.lbcTrackingNumber || order.courierTrackingNumber || ''}" placeholder="e.g. 180599201948">
+                                    </div>
+                                    <div class="form-grid-2">
+                                        <div class="form-group">
+                                            <label class="form-label">Shipping Date</label>
+                                            <input type="text" class="form-control" id="adm-del-lbc-shipdate" value="${order.shippingDate || new Date().toLocaleDateString()}" placeholder="YYYY-MM-DD">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Estimated Delivery Date</label>
+                                            <input type="text" class="form-control" id="adm-del-lbc-estdate" value="${order.estimatedDeliveryDate || '2-4 Business Days'}" placeholder="e.g. 2-3 Days">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 5. Delivery Notes & Overall Status -->
+                                <div class="form-group">
+                                    <label class="form-label" style="font-weight: 800; color: #000000;">Delivery Notes</label>
+                                    <textarea class="form-control" id="adm-del-notes" style="min-height: 55px;" placeholder="Internal notes, rider instructions, address landmark notes...">${order.deliveryNotes || ''}</textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" style="font-weight: 800; color: #000000;">Order Status *</label>
+                                    <select class="form-control" id="adm-del-status" style="font-weight: 700;">
+                                        <option value="Pending Order" ${order.status === 'Pending Order' ? 'selected' : ''}>Pending Order</option>
+                                        <option value="Payment Verification" ${order.status === 'Payment Verification' ? 'selected' : ''}>Payment Verification</option>
+                                        <option value="Delivery Confirmation" ${order.status === 'Delivery Confirmation' ? 'selected' : ''}>Delivery Confirmation</option>
+                                        <option value="Preparing Order" ${order.status === 'Preparing Order' ? 'selected' : ''}>Preparing Order</option>
+                                        <option value="Ready for Pickup" ${order.status === 'Ready for Pickup' ? 'selected' : ''}>Ready for Pickup</option>
+                                        <option value="For Delivery" ${order.status === 'For Delivery' ? 'selected' : ''}>For Delivery</option>
+                                        <option value="Shipped" ${order.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
+                                        <option value="Out for Delivery" ${order.status === 'Out for Delivery' ? 'selected' : ''}>Out for Delivery</option>
+                                        <option value="Delivered" ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                                        <option value="Cancelled" ${order.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                                    </select>
+                                </div>
+
+                                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                                    <button type="submit" class="btn btn-primary btn-block" style="flex: 2; padding: 12px; font-weight: 800;">
+                                        💾 SAVE DELIVERY &amp; NOTIFY CUSTOMER
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" style="flex: 1; padding: 12px; font-weight: 700;" onclick="Admin.closeDeliveryModal()">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            modalWrap.innerHTML = modalHtml;
+        } catch (err) {
+            showToast(err.message, 'error');
+        }
+    },
+
+    toggleDeliveryModalFields(courier) {
+        const lalamoveBox = document.getElementById('adm-del-lalamove-box');
+        const lbcBox = document.getElementById('adm-del-lbc-box');
+        const feeInput = document.getElementById('adm-del-fee');
+        const confirmedCheck = document.getElementById('adm-del-confirmed');
+
+        if (lalamoveBox) lalamoveBox.style.display = courier === 'LALAMOVE' ? 'block' : 'none';
+        if (lbcBox) lbcBox.style.display = courier === 'LBC' ? 'block' : 'none';
+
+        if (courier === 'STORE_PICKUP') {
+            if (feeInput) feeInput.value = '0.00';
+            if (confirmedCheck) confirmedCheck.checked = true;
+        }
+    },
+
+    closeDeliveryModal() {
+        const modal = document.getElementById('modal-delivery-manage');
+        if (modal) modal.remove();
+    },
+
+    async saveDeliveryModalForm(e, orderId) {
+        e.preventDefault();
+
+        const courier = document.getElementById('adm-del-courier').value;
+        const fee = document.getElementById('adm-del-fee').value;
+        const confirmed = document.getElementById('adm-del-confirmed').checked;
+        const riderName = document.getElementById('adm-del-rider-name') ? document.getElementById('adm-del-rider-name').value : '';
+        const riderPhone = document.getElementById('adm-del-rider-phone') ? document.getElementById('adm-del-rider-phone').value : '';
+        const estTime = document.getElementById('adm-del-rider-time') ? document.getElementById('adm-del-rider-time').value : '';
+        const lbcTrack = document.getElementById('adm-del-lbc-track') ? document.getElementById('adm-del-lbc-track').value : '';
+        const shipDate = document.getElementById('adm-del-lbc-shipdate') ? document.getElementById('adm-del-lbc-shipdate').value : '';
+        const estDate = document.getElementById('adm-del-lbc-estdate') ? document.getElementById('adm-del-lbc-estdate').value : '';
+        const notes = document.getElementById('adm-del-notes').value;
+        const status = document.getElementById('adm-del-status').value;
+
+        try {
+            await API.updateOrderDelivery(orderId, {
+                courier,
+                shippingFee: fee,
+                deliveryFeeConfirmed: confirmed,
+                riderName,
+                riderPhone,
+                estimatedDeliveryTime: estTime,
+                lbcTrackingNumber: lbcTrack,
+                shippingDate: shipDate,
+                estimatedDeliveryDate: estDate,
+                deliveryNotes: notes,
+                status
+            });
+
+            showToast('Delivery updated! Customer received automatic notification.', 'success');
+            this.closeDeliveryModal();
+            this.loadOrders(document.getElementById('admin-content-area'));
+        } catch (err) {
+            showToast(err.message, 'error');
+        }
+    },
+
+    // ==========================================================
+    // ADMIN MESSAGES / CHAT MANAGEMENT (3-Column Layout)
+    // ==========================================================
+    chatConversations: [],
+    activeChatConvId: null,
+    chatPollTimer: null,
+    chatSearchQuery: '',
+
+    async loadChat(container) {
+        container.innerHTML = `<div style="text-align: center; padding: 60px 0;">Loading customer messages...</div>`;
+
+        try {
+            this.chatConversations = await API.getConversations();
+
+            container.innerHTML = `
+                <div class="admin-header" style="margin-bottom: 16px;">
+                    <div>
+                        <div class="section-subtitle">CUSTOMER COMMUNICATION</div>
+                        <h1 class="admin-page-title">MESSAGES &amp; LIVE CUSTOMER SUPPORT</h1>
+                    </div>
+                </div>
+
+                <div class="admin-chat-layout">
+                    <!-- Column 1: Conversations List -->
+                    <div class="admin-chat-sidebar">
+                        <div class="admin-chat-search">
+                            <input type="text" class="form-control" placeholder="🔍 Search customer or order #..." oninput="Admin.handleChatSearch(this.value)" style="font-size: 0.85rem; padding: 8px 12px; border-radius: 4px;">
+                        </div>
+                        <div class="admin-conv-list" id="admin-conv-list-items">
+                            ${this.renderConversationListHtml()}
+                        </div>
+                    </div>
+
+                    <!-- Column 2: Active Chat Feed -->
+                    <div class="admin-chat-main" id="admin-chat-main-area">
+                        <div style="margin: auto; text-align: center; color: #6b7280; padding: 40px;">
+                            <div style="font-size: 2.5rem; margin-bottom: 8px;">💬</div>
+                            <h3 style="color: #000000; font-size: 1.1rem; margin-bottom: 4px;">Select a Conversation</h3>
+                            <p style="font-size: 0.85rem;">Click any customer on the left to review messages, send delivery fees, and dispatch notifications.</p>
+                        </div>
+                    </div>
+
+                    <!-- Column 3: Customer Context Profile -->
+                    <div class="admin-chat-profile" id="admin-chat-profile-area">
+                        <div class="profile-card-header">Customer Profile</div>
+                        <div style="font-size: 0.85rem; color: #6b7280; margin-top: 10px;">Select a conversation to view customer details, order breakdown, and delivery state.</div>
+                    </div>
+                </div>
+            `;
+
+            this.renderedChatConvId = null;
+            // Auto-select first conversation if available
+            if (this.chatConversations.length > 0 && !this.activeChatConvId) {
+                this.selectChatConversation(this.chatConversations[0].id);
+            } else if (this.activeChatConvId) {
+                this.selectChatConversation(this.activeChatConvId);
+            }
+
+            this.startAdminChatPolling();
+        } catch (err) {
+            container.innerHTML = `<div style="color: var(--color-danger); padding: 40px;">Failed to load messages: ${err.message}</div>`;
+        }
+    },
+
+    renderConversationListHtml() {
+        const filtered = this.chatConversations.filter(c => {
+            if (!this.chatSearchQuery) return true;
+            const q = this.chatSearchQuery.toLowerCase();
+            return (c.customerName && c.customerName.toLowerCase().includes(q)) ||
+                   (c.orderNumber && c.orderNumber.toLowerCase().includes(q)) ||
+                   (c.customerEmail && c.customerEmail.toLowerCase().includes(q));
+        });
+
+        if (filtered.length === 0) {
+            return `<div style="padding: 20px; text-align: center; color: #9ca3af; font-size: 0.82rem;">No conversations found</div>`;
+        }
+
+        return filtered.map(c => {
+            const isActive = this.activeChatConvId === c.id;
+            const timeStr = c.lastMessageTime ? new Date(c.lastMessageTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+            return `
+                <div class="admin-conv-item ${isActive ? 'active' : ''}" onclick="Admin.selectChatConversation(${c.id})">
+                    <div class="top-row">
+                        <span class="customer-name">${c.customerName || 'Customer'}</span>
+                        <span class="msg-time">${timeStr}</span>
+                    </div>
+                    ${c.orderNumber ? `<span class="order-badge">Order #${c.orderNumber}</span>` : ''}
+                    <div class="msg-snippet">
+                        ${c.lastMessage || 'No messages yet'}
+                        ${c.unreadAdminCount > 0 ? `<span class="unread-dot" title="${c.unreadAdminCount} unread"></span>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    },
+
+    handleChatSearch(query) {
+        this.chatSearchQuery = query;
+        const listElem = document.getElementById('admin-conv-list-items');
+        if (listElem) listElem.innerHTML = this.renderConversationListHtml();
+    },
+
+    async selectChatConversation(convId) {
+        this.activeChatConvId = convId;
+        this.renderedChatConvId = null; // Reset shell so new conversation builds clean
+
+        // Update active class in list
+        document.querySelectorAll('.admin-conv-item').forEach(el => el.classList.remove('active'));
+        const listElem = document.getElementById('admin-conv-list-items');
+        if (listElem) listElem.innerHTML = this.renderConversationListHtml();
+
+        const conv = this.chatConversations.find(c => c.id === convId);
+        if (!conv) return;
+
+        // Load conversation messages and customer profile
+        await this.renderActiveChatFeed(conv);
+        await this.renderCustomerProfile(conv);
+        this.checkUnreadMessages();
+    },
+
+    renderChatMessagesHtml(messages, customerName) {
+        if (!messages || messages.length === 0) {
+            return `
+                <div style="text-align: center; color: #9ca3af; font-size: 0.85rem; padding: 40px;">
+                    No messages yet in this conversation. Send a message below to start chatting.
+                </div>
+            `;
+        }
+
+        return messages.map(m => {
+            const role = (m.senderRole || 'CUSTOMER').toLowerCase();
+            const timeStr = m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+            const esc = window.escapeChatHtml || function(s) { return s == null ? '' : String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+            
+            if (role === 'system') {
+                return `
+                    <div class="chat-bubble-row system">
+                        <div class="chat-bubble">
+                            <strong>📢 SYSTEM NOTIFICATION:</strong><br>${esc(m.message)}
+                        </div>
+                        <div class="chat-meta">${timeStr}</div>
+                    </div>
+                `;
+            }
+
+            // In Admin panel: Admin messages are right (customer-style bubble in black), Customer messages are left (white)
+            const isFromAdmin = role === 'admin';
+            const isPaymentProof = m.messageType === 'PAYMENT_PROOF';
+            const isPaymentVerified = m.messageType === 'PAYMENT_VERIFIED';
+
+            if (isPaymentVerified) {
+                return `
+                    <div class="chat-bubble-row system" style="background: rgba(16,185,129,0.08); border-left: 4px solid #10b981; border-radius: 6px; padding: 6px 12px; margin: 4px auto; max-width: 85%;">
+                        <div style="font-weight: 800; color: #15803d; font-size: 0.8rem; line-height: 1.35;">
+                            ${esc(m.message)}
+                        </div>
+                        <div class="chat-meta" style="color: #059669; font-weight: 700; margin-top: 2px;">${timeStr} • Verified by Administrator</div>
+                    </div>
+                `;
+            }
+
+            const hasImage = m.imageUrl && m.imageUrl !== 'null' && m.imageUrl !== 'undefined' && m.imageUrl.trim() !== '';
+
+            let bubbleContent = '';
+            if (isPaymentProof) {
+                bubbleContent += '<div style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 0.68rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-bottom: 4px; display: inline-flex; align-items: center; gap: 4px;">💳 PROOF OF PAYMENT</div>';
+            }
+            if (m.message && m.message.trim() !== '') {
+                bubbleContent += `<div class="chat-text">${esc(m.message.trim())}</div>`;
+            }
+            if (hasImage) {
+                bubbleContent += `<div class="admin-chat-image-preview" onclick="Chat ? Chat.openLightbox('${esc(m.imageUrl)}') : window.open('${esc(m.imageUrl)}', '_blank')"><img src="${esc(m.imageUrl)}" alt="Attachment / Receipt" loading="lazy"><div style="padding: 3px 6px; font-size: 0.65rem; color: #cbd5e1; display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.85);"><span>🔍 Inspect</span><span style="color: #38bdf8; font-weight: 700;">ENLARGE</span></div></div>`;
+                if (isPaymentProof) {
+                    bubbleContent += '<button type="button" class="btn-verify-payment-chip" onclick="Admin.openAdminPaymentVerifyModal()">💳 Double Confirm: Verify Payment</button>';
+                }
+            }
+
+            return `<div class="chat-bubble-row ${isFromAdmin ? 'customer' : 'admin'}"><div class="chat-bubble">${bubbleContent}</div><div class="chat-meta"><span>${timeStr}</span><span>• ${isFromAdmin ? 'Admin' : esc(customerName)}</span></div></div>`;
+        }).join('');
+    },
+
+    async renderActiveChatFeed(conv) {
+        const mainArea = document.getElementById('admin-chat-main-area');
+        if (!mainArea || !conv) return;
+
+        try {
+            const data = await API.getConversationMessages(conv.id);
+            const messages = data.messages || [];
+
+            const feedElem = document.getElementById('admin-chat-feed-scroll');
+            const isSameConvShell = feedElem && (this.renderedChatConvId === conv.id);
+
+            if (!isSameConvShell) {
+                // Initial render for this conversation: build full UI shell
+                this.renderedChatConvId = conv.id;
+                const lastMsgId = (messages.length > 0 && messages[messages.length - 1].id) ? messages[messages.length - 1].id : 0;
+                this.lastRenderedMessagesHash = `${messages.length}_${lastMsgId}`;
+
+                mainArea.innerHTML = `
+                    <div class="admin-chat-main-header">
+                        <div>
+                            <div class="title">${this.escapeHtml(conv.customerName)}</div>
+                            <div style="font-size: 0.78rem; color: #6b7280;">
+                                ${this.escapeHtml(conv.customerEmail)} • ${this.escapeHtml(conv.customerPhone || 'No Phone')}
+                                ${conv.orderNumber ? ` • <strong style="color: #000000;">Order #${this.escapeHtml(conv.orderNumber)}</strong>` : ''}
+                            </div>
+                        </div>
+                        <div>
+                            ${conv.orderId ? `
+                                <button class="btn btn-secondary btn-sm" style="font-size: 0.75rem; font-weight: 800; border: 1px solid #000000;" onclick="Admin.openDeliveryModal(${conv.orderId})">
+                                    🚚 Manage Delivery
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <div class="admin-chat-feed" id="admin-chat-feed-scroll">
+                        ${this.renderChatMessagesHtml(messages, conv.customerName)}
+                    </div>
+
+                    <!-- Quick Action Chips for Admin -->
+                    <div class="admin-quick-actions">
+                        <span class="admin-action-chip" onclick="Admin.sendQuickAdminReply('Your delivery fee is confirmed at ₱150. Please confirm to proceed with dispatch.')">🚚 Confirm Fee ₱150</span>
+                        <span class="admin-action-chip" onclick="Admin.openAdminPaymentVerifyModal()">💳 Payment Verified</span>
+                        <span class="admin-action-chip" onclick="Admin.sendQuickAdminReply('Your Lalamove rider has been assigned and is on the way with your order.')">🏍️ Rider Dispatched</span>
+                        <span class="admin-action-chip" onclick="Admin.sendQuickAdminReply('Your package has been handed over to LBC Express. Tracking number will be active shortly.')">📦 LBC Handed Over</span>
+                        <span class="admin-action-chip" onclick="Admin.sendQuickAdminReply('Your order is now ready for pickup at our Marikina branch!')">🏪 Ready for Pickup</span>
+                    </div>
+
+                    <div class="admin-chat-footer">
+                        <form onsubmit="Admin.handleAdminMsgSubmit(event)" style="display: flex; gap: 8px; align-items: center;">
+                            <input type="file" id="admin-chat-file-input" accept="image/jpeg,image/png,image/webp,image/jpg" style="display: none;" onchange="Admin.handleAdminChatFileSelected(this)">
+                            <button type="button" class="admin-chat-attach-btn" title="Upload Image / Proof" onclick="Admin.triggerAdminChatUpload()">+</button>
+                            <input type="text" class="form-control" id="admin-chat-input" placeholder="Type reply to ${this.escapeHtml(conv.customerName)}..." autocomplete="off" style="border-color: #000000; flex: 1;">
+                            <button type="submit" class="btn btn-primary" style="background: #000000; color: #ffffff; font-weight: 800; padding: 8px 20px; flex-shrink: 0;">
+                                Send Reply
+                            </button>
+                        </form>
+                    </div>
+                `;
+
+                const scrollElem = document.getElementById('admin-chat-feed-scroll');
+                if (scrollElem) scrollElem.scrollTop = scrollElem.scrollHeight;
+            } else {
+                // Shell already exists! Check if messages actually changed
+                const lastMsgId = (messages.length > 0 && messages[messages.length - 1].id) ? messages[messages.length - 1].id : 0;
+                const currentHash = `${messages.length}_${lastMsgId}`;
+                if (this.lastRenderedMessagesHash === currentHash) {
+                    // Nothing changed! DO NOT touch anything in DOM to prevent typing glitches or focus loss
+                    return;
+                }
+                this.lastRenderedMessagesHash = currentHash;
+
+                // Only update the messages inside the scroll container, preserving the input and quick action chips!
+                const scrollElem = document.getElementById('admin-chat-feed-scroll');
+                if (scrollElem) {
+                    const wasNearBottom = (scrollElem.scrollHeight - scrollElem.clientHeight) <= (scrollElem.scrollTop + 80);
+                    scrollElem.innerHTML = this.renderChatMessagesHtml(messages, conv.customerName);
+                    if (wasNearBottom) {
+                        scrollElem.scrollTop = scrollElem.scrollHeight;
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('Failed to load chat feed:', err);
+        }
+    },
+
+    async renderCustomerProfile(conv) {
+        const profileArea = document.getElementById('admin-chat-profile-area');
+        if (!profileArea) return;
+
+        let order = null;
+        if (conv.orderId) {
+            try {
+                const orders = await API.getAdminOrders();
+                order = orders.find(o => o.id === conv.orderId);
+            } catch (ignored) {}
+        }
+
+        profileArea.innerHTML = `
+            <div class="profile-card-header">Customer Profile</div>
+
+            <div class="profile-info-row">
+                <div class="label">Customer Name</div>
+                <div class="val">${conv.customerName}</div>
+            </div>
+            <div class="profile-info-row">
+                <div class="label">Email Address</div>
+                <div class="val" style="font-size: 0.82rem; word-break: break-all;">${conv.customerEmail}</div>
+            </div>
+            <div class="profile-info-row">
+                <div class="label">Mobile Number</div>
+                <div class="val">${conv.customerPhone || 'N/A'}</div>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 16px 0;">
+
+            <div class="profile-card-header">Related Order Details</div>
+
+            ${order ? `
+                <div class="profile-info-row">
+                    <div class="label">Order Number</div>
+                    <div class="val">#${order.orderNumber}</div>
+                </div>
+                <div class="profile-info-row">
+                    <div class="label">Order Status</div>
+                    <div class="val">
+                        <span class="status-pill status-${order.status ? order.status.toLowerCase().replace(/\\s+/g, '-') : 'pending'}" style="font-size: 0.75rem;">
+                            ${order.status}
+                        </span>
+                    </div>
+                </div>
+                <div class="profile-info-row">
+                    <div class="label">Delivery Method</div>
+                    <div class="val">${order.courier || 'LALAMOVE'}</div>
+                </div>
+                <div class="profile-info-row">
+                    <div class="label">Delivery Fee</div>
+                    <div class="val" style="color: ${order.deliveryFeeConfirmed ? '#059669' : '#e11d48'};">
+                        ${order.deliveryFeeConfirmed ? formatMoney(order.shippingFee) : 'To be Confirmed'}
+                    </div>
+                </div>
+                <div class="profile-info-row">
+                    <div class="label">Payment Status</div>
+                    <div class="val">${order.paymentMethod} (${order.paymentReference || 'No Ref'})</div>
+                </div>
+                <div class="profile-info-row">
+                    <div class="label">Order Total</div>
+                    <div class="val" style="font-size: 1.05rem; font-weight: 900;">${formatMoney(order.total)}</div>
+                </div>
+                <button class="btn btn-secondary btn-block btn-sm" style="margin-top: 12px; font-weight: 800; border: 1.5px solid #000000;" onclick="Admin.openDeliveryModal(${order.id})">
+                    🚚 Edit Delivery / Fee
+                </button>
+            ` : `
+                <div style="font-size: 0.82rem; color: #9ca3af;">No specific order tied to this conversation.</div>
+            `}
+        `;
+    },
+
+    async handleAdminMsgSubmit(e) {
+        e.preventDefault();
+        const input = document.getElementById('admin-chat-input');
+        if (!input || !input.value.trim() || !this.activeChatConvId) return;
+
+        const text = input.value.trim();
+        input.value = '';
+        input.focus();
+
+        await this.sendAdminMessage(text);
+
+        const refreshedInput = document.getElementById('admin-chat-input');
+        if (refreshedInput) refreshedInput.focus();
+    },
+
+    async sendQuickAdminReply(text) {
+        await this.sendAdminMessage(text);
+        const input = document.getElementById('admin-chat-input');
+        if (input) input.focus();
+    },
+
+    async sendAdminMessage(text) {
+        if (!this.activeChatConvId || !text.trim()) return;
+
+        try {
+            await API.sendChatMessage(this.activeChatConvId, text.trim());
+            const conv = this.chatConversations.find(c => c.id === this.activeChatConvId);
+            if (conv) {
+                // Invalidate hash so new message is rendered into feed immediately
+                this.lastRenderedMessagesHash = null;
+                await this.renderActiveChatFeed(conv);
+            }
+            // Update conv list snippet
+            this.chatConversations = await API.getConversations();
+            const listElem = document.getElementById('admin-conv-list-items');
+            if (listElem) listElem.innerHTML = this.renderConversationListHtml();
+        } catch (err) {
+            showToast(err.message, 'error');
+        }
+    },
+
+    // =========================================================================
+    // ADMIN PAYMENT VERIFICATION & ATTACHMENT (+) WITH DOUBLE CONFIRMATION
+    // =========================================================================
+    stagedAdminUpload: null,
+
+    openAdminPaymentVerifyModal() {
+        if (!this.activeChatConvId) {
+            showToast('Please select a conversation first.', 'info');
+            return;
+        }
+
+        const conv = this.chatConversations.find(c => c.id === this.activeChatConvId);
+        if (!conv) return;
+
+        let modal = document.getElementById('modal-admin-payment-confirm');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'modal-admin-payment-confirm';
+            modal.className = 'chat-confirm-modal-overlay';
+            document.body.appendChild(modal);
+        }
+
+        modal.innerHTML = `
+            <div class="chat-confirm-modal-card">
+                <div class="chat-confirm-modal-header" style="background: #0f172a;">
+                    <h3><span>💳</span> Double Confirmation: Verify Payment</h3>
+                    <button type="button" style="background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;" onclick="Admin.closeAdminPaymentVerifyModal()">✕</button>
+                </div>
+                <div class="chat-confirm-modal-body">
+                    <div style="background: #ecfdf5; border: 1.5px solid #a7f3d0; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px;">
+                        <div style="font-size: 0.88rem; font-weight: 800; color: #065f46; margin-bottom: 4px;">
+                            Payment Verification Request
+                        </div>
+                        <div style="font-size: 0.8rem; color: #047857; line-height: 1.45;">
+                            Customer: <strong>${this.escapeHtml(conv.customerName)}</strong><br>
+                            ${conv.orderNumber ? `Order: <strong style="color: #000000;">#${this.escapeHtml(conv.orderNumber)}</strong><br>` : ''}
+                            Email: ${this.escapeHtml(conv.customerEmail)} • Phone: ${this.escapeHtml(conv.customerPhone || 'N/A')}
+                        </div>
+                    </div>
+
+                    <div style="font-size: 0.82rem; color: #374151; margin-bottom: 12px; line-height: 1.45;">
+                        <strong>Double Confirmation Check:</strong><br>
+                        Have you confirmed receipt of the customer's payment screenshot or reference in your bank/GCash merchant account?
+                    </div>
+
+                    <div style="background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 8px; padding: 10px 12px; font-size: 0.78rem; color: #92400e; line-height: 1.45;">
+                        <strong>⚠️ What happens next:</strong>
+                        <ul style="margin: 4px 0 0 16px; padding: 0;">
+                            <li>Updates Order status to <strong style="color: #15803d;">PAID</strong></li>
+                            <li>Sends official verified announcement into this chat</li>
+                            <li>Notifies customer that packaging and dispatch will proceed</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="chat-confirm-modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="Admin.closeAdminPaymentVerifyModal()">Cancel</button>
+                    <button type="button" id="btn-admin-verify-confirm" class="btn btn-sm" style="background: #10b981; color: #ffffff; font-weight: 800; padding: 8px 18px; border: none; border-radius: 6px; cursor: pointer;" onclick="Admin.executePaymentVerification()">
+                        ✓ Yes, Confirm & Mark Paid
+                    </button>
+                </div>
+            </div>
+        `;
+        modal.style.display = 'flex';
+    },
+
+    closeAdminPaymentVerifyModal() {
+        const modal = document.getElementById('modal-admin-payment-confirm');
+        if (modal) modal.style.display = 'none';
+    },
+
+    async executePaymentVerification() {
+        if (!this.activeChatConvId) return;
+        const btn = document.getElementById('btn-admin-verify-confirm');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `<span class="btn-spinner"></span> Verifying...`;
+        }
+
+        try {
+            await API.verifyChatPayment(this.activeChatConvId);
+            this.closeAdminPaymentVerifyModal();
+            showToast('Order payment successfully verified and marked as PAID!', 'success');
+
+            const conv = this.chatConversations.find(c => c.id === this.activeChatConvId);
+            if (conv) {
+                this.lastRenderedMessagesHash = null;
+                await this.renderActiveChatFeed(conv);
+            }
+            // Also refresh orders table if order exists
+            if (this.loadOrders) this.loadOrders();
+        } catch (err) {
+            showToast(err.message || 'Failed to verify payment', 'error');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = `✓ Yes, Confirm & Mark Paid`;
+            }
+        }
+    },
+
+    triggerAdminChatUpload() {
+        if (!this.activeChatConvId) {
+            showToast('Please select a customer conversation first.', 'info');
+            return;
+        }
+        const input = document.getElementById('admin-chat-file-input');
+        if (input) {
+            input.value = '';
+            input.click();
+        }
+    },
+
+    handleAdminChatFileSelected(input) {
+        if (!input.files || !input.files[0]) return;
+        const file = input.files[0];
+
+        const validExts = ['.jpg', '.jpeg', '.png', '.webp'];
+        const fileName = file.name.toLowerCase();
+        const isValid = validExts.some(ext => fileName.endsWith(ext)) || file.type.startsWith('image/');
+        if (!isValid) {
+            showToast('Unsupported format. Please select a JPG, PNG, or WEBP image.', 'error');
+            input.value = '';
+            return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+            showToast('Image is too large. Maximum allowed size is 10MB.', 'error');
+            input.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const dataUrl = e.target.result;
+            this.stagedAdminUpload = {
+                file,
+                filename: file.name,
+                dataUrl
+            };
+            this.openAdminUploadConfirmModal(file, dataUrl);
+        };
+        reader.readAsDataURL(file);
+    },
+
+    openAdminUploadConfirmModal(file, dataUrl) {
+        let modal = document.getElementById('modal-admin-upload-confirm');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'modal-admin-upload-confirm';
+            modal.className = 'chat-confirm-modal-overlay';
+            document.body.appendChild(modal);
+        }
+
+        modal.innerHTML = `
+            <div class="chat-confirm-modal-card">
+                <div class="chat-confirm-modal-header">
+                    <h3><span>📎</span> Double Confirmation: Send Image Attachment</h3>
+                    <button type="button" style="background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;" onclick="Admin.closeAdminUploadConfirmModal()">✕</button>
+                </div>
+                <div class="chat-confirm-modal-body">
+                    <div style="font-size: 0.82rem; color: #374151; margin-bottom: 10px;">
+                        <strong>Preview Image Attachment:</strong>
+                    </div>
+                    <div class="chat-confirm-preview-frame">
+                        <img src="${dataUrl}" alt="Admin Attachment Preview">
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-size: 0.78rem; font-weight: 700; color: #111827; display: block; margin-bottom: 4px;">Optional Note to Customer</label>
+                        <input type="text" id="admin-confirm-upload-caption" class="form-control" placeholder="e.g. Here is your LBC / Lalamove waybill receipt" style="width: 100%; padding: 8px 10px; border: 1.5px solid #d1d5db; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;">
+                    </div>
+                </div>
+                <div class="chat-confirm-modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="Admin.closeAdminUploadConfirmModal()">Cancel</button>
+                    <button type="button" id="btn-admin-confirm-upload" class="btn btn-sm" style="background: #000000; color: #ffffff; font-weight: 800; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;" onclick="Admin.submitAdminChatAttachment()">
+                        ✓ Confirm & Send Image
+                    </button>
+                </div>
+            </div>
+        `;
+        modal.style.display = 'flex';
+    },
+
+    closeAdminUploadConfirmModal() {
+        const modal = document.getElementById('modal-admin-upload-confirm');
+        if (modal) modal.style.display = 'none';
+        this.stagedAdminUpload = null;
+    },
+
+    async submitAdminChatAttachment() {
+        if (!this.stagedAdminUpload || !this.activeChatConvId) return;
+        const btn = document.getElementById('btn-admin-confirm-upload');
+        const captionInput = document.getElementById('admin-confirm-upload-caption');
+        const caption = captionInput ? captionInput.value.trim() : '';
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `<span class="btn-spinner"></span> Sending...`;
+        }
+
+        try {
+            await API.uploadChatImage(this.activeChatConvId, {
+                filename: this.stagedAdminUpload.filename,
+                imageData: this.stagedAdminUpload.dataUrl,
+                message: caption || 'Attached photo from Administrator.',
+                messageType: 'IMAGE'
+            });
+
+            this.closeAdminUploadConfirmModal();
+            showToast('Image attachment sent to customer!', 'success');
+
+            const conv = this.chatConversations.find(c => c.id === this.activeChatConvId);
+            if (conv) {
+                this.lastRenderedMessagesHash = null;
+                await this.renderActiveChatFeed(conv);
+            }
+        } catch (err) {
+            showToast(err.message || 'Failed to send image attachment', 'error');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = `✓ Confirm & Send Image`;
+            }
+        }
+    },
+
+    openCustomerChat(orderId, orderNumber) {
+        this.activeChatConvId = null;
+        this.switchTab('chat');
+        setTimeout(async () => {
+            this.chatConversations = await API.getConversations();
+            const conv = this.chatConversations.find(c => c.orderId === orderId);
+            if (conv) {
+                this.selectChatConversation(conv.id);
+            } else {
+                // Start conversation for this order
+                try {
+                    const newConv = await API.startConversation({ orderId: orderId });
+                    this.chatConversations = await API.getConversations();
+                    this.selectChatConversation(newConv.id);
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        }, 100);
+    },
+
+    startAdminChatPolling() {
+        this.stopAdminChatPolling();
+        this.chatPollTimer = setInterval(async () => {
+            if (this.currentTab === 'chat' && this.activeChatConvId) {
+                const conv = this.chatConversations.find(c => c.id === this.activeChatConvId);
+                if (conv) {
+                    await this.renderActiveChatFeed(conv);
+                }
+            }
+        }, 3500);
+    },
+
+    stopAdminChatPolling() {
+        if (this.chatPollTimer) {
+            clearInterval(this.chatPollTimer);
+            this.chatPollTimer = null;
+        }
+    },
+
+    escapeHtml(str) {
+        if (!str) return '';
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    },
+
+    async printLbcWaybill(orderId) {
+        try {
+            const orders = await API.getAdminOrders();
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+
+            const printWindow = window.open('', '_blank', 'width=700,height=800');
+            if (!printWindow) {
+                showToast('Please allow popups to print the LBC Waybill.', 'error');
+                return;
+            }
+
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>LBC Express Consignment Waybill - ${order.orderNumber}</title>
+                    <style>
+                        body { font-family: 'Arial', sans-serif; margin: 20px; color: #000; background: #fff; }
+                        .waybill-box { border: 2px solid #000; padding: 15px; border-radius: 4px; max-width: 600px; margin: 0 auto; }
+                        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 12px; }
+                        .logo { font-size: 24px; font-weight: 900; color: #dc2626; letter-spacing: -1px; }
+                        .barcode { text-align: center; margin: 15px 0; font-family: monospace; font-size: 22px; letter-spacing: 4px; font-weight: bold; }
+                        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; border-bottom: 1px solid #000; padding-bottom: 12px; margin-bottom: 12px; }
+                        .label { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #666; }
+                        .val { font-size: 13px; font-weight: bold; margin-top: 2px; }
+                        .items-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 8px; }
+                        .items-table th, .items-table td { border: 1px solid #ddd; padding: 4px 6px; text-align: left; }
+                        .footer { margin-top: 15px; font-size: 9px; text-align: center; color: #555; border-top: 1px dashed #999; padding-top: 8px; }
+                        @media print { .no-print { display: none; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="no-print" style="text-align: center; margin-bottom: 15px;">
+                        <button onclick="window.print()" style="padding: 10px 20px; font-weight: bold; background: #dc2626; color: #fff; border: none; border-radius: 4px; cursor: pointer;">🖨️ PRINT THERMAL WAYBILL (AWB)</button>
+                    </div>
+                    <div class="waybill-box">
+                        <div class="header">
+                            <div>
+                                <div class="logo">LBC EXPRESS</div>
+                                <div style="font-size: 10px; font-weight: bold;">NATIONWIDE AIR & SEA CARGO</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 12px; font-weight: bold;">SERVICE: N-EXP COP</div>
+                                <div style="font-size: 10px;">ORIGIN: MARIKINA HUB (1805)</div>
+                            </div>
+                        </div>
+
+                        <div class="barcode">
+                            ||| | |||| | ||||| || |||| ||||| |||<br>
+                            <span style="font-size: 18px;">${order.courierTrackingNumber || '180599201948'}</span>
+                        </div>
+
+                        <div class="grid-2">
+                            <div>
+                                <div class="label">SHIPPER (CONSIGNOR):</div>
+                                <div class="val">LAZAROPH MARIKINA</div>
+                                <div style="font-size: 11px;">911 J.P. Rizal St, Concepcion Uno, Marikina City</div>
+                                <div style="font-size: 11px;">Tel: 282948572</div>
+                            </div>
+                            <div>
+                                <div class="label">CONSIGNEE (RECIPIENT):</div>
+                                <div class="val">${order.customerName}</div>
+                                <div style="font-size: 11px;">${order.shippingAddress}</div>
+                                <div style="font-size: 11px;">${order.shippingCity}, ${order.shippingProvince} ${order.shippingZip}</div>
+                                <div style="font-size: 11px;">Contact: ${order.customerPhone}</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 10px;">
+                            <div class="label">PACKAGE CONTENTS / AUTHENTIC MERCHANDISE:</div>
+                            <table class="items-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item Description</th>
+                                        <th>Size</th>
+                                        <th>Qty</th>
+                                        <th>Declared Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${order.items.map(it => `
+                                        <tr>
+                                            <td><strong>${it.productName}</strong></td>
+                                            <td>${it.size}</td>
+                                            <td>${it.quantity}</td>
+                                            <td>${formatMoney(it.subtotal)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; border-top: 1px solid #000; padding-top: 6px;">
+                            <span>TOTAL DECLARED VALUE: ${formatMoney(order.total)}</span>
+                            <span>PAYMENT: ${order.paymentMethod} (PAID)</span>
+                        </div>
+
+                        <div class="footer">
+                            Official LBC Express Waybill generated by LAZAROPH E-Commerce Platform.<br>
+                            Authentic Sneakers & Sportswear Logistics. For inquiries visit lbcexpress.com
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
         } catch (err) {
             showToast(err.message, 'error');
         }
@@ -1018,8 +2112,8 @@ const Admin = {
                 <div class="form-grid-2">
                     <!-- 1. Admin Profile & Contact Info -->
                     <div class="admin-card">
-                        <h3 style="font-size: 1.15rem; font-weight: 800; text-transform: uppercase; margin-bottom: 20px; color: #ffffff;">
-                            1. Administrator Account & Mobile
+                        <h3 style="font-size: 1.15rem; font-weight: 800; text-transform: uppercase; margin-bottom: 20px; color: #000000;">
+                            1. Administrator Account &amp; Mobile
                         </h3>
                         <form id="form-admin-profile" onsubmit="Admin.saveAdminProfileForm(event)">
                             <div class="form-group">
@@ -1032,8 +2126,8 @@ const Admin = {
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Admin Phone / Contact Number *</label>
-                                <input type="text" class="form-control" id="settings-admin-phone" required value="${u.phone || settings.adminPhone || '282948572'}" placeholder="282948572 or 09171234567" style="border-color: var(--color-brand-cyan); font-weight: 700; font-size: 1.05rem;">
-                                <span style="font-size: 0.78rem; color: var(--color-text-muted); margin-top: 4px; display: block;">
+                                <input type="text" class="form-control" id="settings-admin-phone" required value="${u.phone || settings.adminPhone || '282948572'}" placeholder="282948572 or 09171234567" style="font-weight: 700;">
+                                <span style="font-size: 0.78rem; color: #6b7280; margin-top: 4px; display: block;">
                                     This number updates your administrator profile and store master contact.
                                 </span>
                             </div>
@@ -1042,71 +2136,138 @@ const Admin = {
                                 <input type="password" class="form-control" id="settings-admin-password" placeholder="Leave blank to keep current password">
                             </div>
                             <button type="submit" class="btn btn-primary btn-block" id="btn-save-admin-profile" style="margin-top: 10px;">
-                                💾 UPDATE ADMIN PROFILE & NUMBER
+                                💾 UPDATE ADMIN PROFILE &amp; NUMBER
                             </button>
                         </form>
                     </div>
 
                     <!-- 2. Official Receiving Payment Details (GCash / Maya / Banks) -->
                     <div class="admin-card">
-                        <h3 style="font-size: 1.15rem; font-weight: 800; text-transform: uppercase; margin-bottom: 20px; color: #ffffff;">
-                            2. Receiving Payment Numbers & Accounts
+                        <h3 style="font-size: 1.15rem; font-weight: 800; text-transform: uppercase; margin-bottom: 20px; color: #000000;">
+                            2. Receiving Payment Numbers &amp; QR Codes
                         </h3>
                         <form id="form-store-settings" onsubmit="Admin.saveStoreSettingsForm(event)">
                             <div class="form-grid-2">
                                 <div class="form-group">
                                     <label class="form-label">GCash Mobile Number *</label>
-                                    <input type="text" class="form-control" id="settings-gcash-num" required value="${settings.gcashNumber || '0917-282-9485'}" placeholder="0917-282-9485" style="font-weight: 700; color: #00e5ff;">
+                                    <input type="text" class="form-control" id="settings-gcash-num" required value="${settings.gcashNumber || '0917-282-9485'}" placeholder="0917-282-9485" style="font-weight: 700;">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">GCash Account Name</label>
                                     <input type="text" class="form-control" id="settings-gcash-name" value="${settings.gcashName || 'LAZAROPH PHILIPPINES'}">
                                 </div>
                             </div>
-                            <!-- GCash QR Code Configuration -->
+
+                            <!-- GCash QR Code Configuration with Dedicated Add Image Button -->
                             <div class="form-group">
-                                <label class="form-label">GCash QR Code Image URL / File Path</label>
-                                <div style="display: flex; gap: 10px; align-items: center;">
-                                    <input type="text" class="form-control" id="settings-gcash-qr" value="${settings.gcashQrUrl || '/images/qr-gcash-demo.png'}" placeholder="/images/qr-gcash-demo.png" style="flex-grow: 1;" oninput="document.getElementById('prev-gcash-qr').src = this.value">
-                                    <img id="prev-gcash-qr" src="${settings.gcashQrUrl || '/images/qr-gcash-demo.png'}" style="width: 50px; height: 50px; object-fit: contain; background: #fff; border-radius: 4px; padding: 2px;" onerror="this.src='/images/qr-gcash-demo.png'">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <label class="form-label" style="margin-bottom: 0;">GCash QR Code Image</label>
+                                    <input type="file" id="upload-gcash-qr-input" accept="image/*" style="display: none;" onchange="Admin.handleQrUpload(this, 'settings-gcash-qr', 'prev-gcash-qr')">
+                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; font-weight: 800;" onclick="document.getElementById('upload-gcash-qr-input').click()">
+                                        📁 Upload GCash QR Image
+                                    </button>
                                 </div>
-                                <span style="font-size: 0.75rem; color: var(--color-text-muted);">Displayed to customers at checkout when paying via GCash.</span>
+                                <div style="display: flex; gap: 12px; align-items: center;">
+                                    <div class="admin-qr-preview-box" onclick="document.getElementById('upload-gcash-qr-input').click()" title="Click to upload or change GCash QR Code photo">
+                                        <img id="prev-gcash-qr" src="${settings.gcashQrUrl || '/images/qr-gcash-demo.png'}" alt="GCash QR Preview" onerror="this.src='/images/qr-gcash-demo.png'">
+                                        <span class="qr-upload-hint">Upload</span>
+                                    </div>
+                                    <div style="flex-grow: 1;">
+                                        <input type="text" class="form-control" id="settings-gcash-qr" value="${settings.gcashQrUrl || '/images/qr-gcash-demo.png'}" placeholder="/images/qr-gcash-demo.png or upload image file" oninput="document.getElementById('prev-gcash-qr').src = this.value">
+                                        <span style="font-size: 0.75rem; color: #6b7280; display: block; margin-top: 4px;">Click the button or box to attach your merchant QR code photo from your device.</span>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="form-grid-2" style="margin-top: 14px;">
                                 <div class="form-group">
                                     <label class="form-label">Maya (PayMaya) Number *</label>
-                                    <input type="text" class="form-control" id="settings-maya-num" required value="${settings.mayaNumber || '0917-282-9485'}" placeholder="0917-282-9485" style="font-weight: 700; color: #00e5ff;">
+                                    <input type="text" class="form-control" id="settings-maya-num" required value="${settings.mayaNumber || '0917-282-9485'}" placeholder="0917-282-9485" style="font-weight: 700;">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Maya Account Name</label>
                                     <input type="text" class="form-control" id="settings-maya-name" value="${settings.mayaName || 'LAZAROPH PHILIPPINES'}">
                                 </div>
                             </div>
-                            <!-- Maya QR Code Configuration -->
+
+                            <!-- Maya QR Code Configuration with Dedicated Add Image Button -->
                             <div class="form-group">
-                                <label class="form-label">Maya / QR Ph Image URL / File Path</label>
-                                <div style="display: flex; gap: 10px; align-items: center;">
-                                    <input type="text" class="form-control" id="settings-maya-qr" value="${settings.mayaQrUrl || '/images/qr-maya-demo.png'}" placeholder="/images/qr-maya-demo.png" style="flex-grow: 1;" oninput="document.getElementById('prev-maya-qr').src = this.value">
-                                    <img id="prev-maya-qr" src="${settings.mayaQrUrl || '/images/qr-maya-demo.png'}" style="width: 50px; height: 50px; object-fit: contain; background: #fff; border-radius: 4px; padding: 2px;" onerror="this.src='/images/qr-maya-demo.png'">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <label class="form-label" style="margin-bottom: 0;">Maya / QR Ph Image</label>
+                                    <input type="file" id="upload-maya-qr-input" accept="image/*" style="display: none;" onchange="Admin.handleQrUpload(this, 'settings-maya-qr', 'prev-maya-qr')">
+                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; font-weight: 800;" onclick="document.getElementById('upload-maya-qr-input').click()">
+                                        📁 Upload Maya QR Image
+                                    </button>
                                 </div>
-                                <span style="font-size: 0.75rem; color: var(--color-text-muted);">Displayed to customers at checkout when paying via Maya.</span>
+                                <div style="display: flex; gap: 12px; align-items: center;">
+                                    <div class="admin-qr-preview-box" onclick="document.getElementById('upload-maya-qr-input').click()" title="Click to upload or change Maya QR Code photo">
+                                        <img id="prev-maya-qr" src="${settings.mayaQrUrl || '/images/qr-maya-demo.png'}" alt="Maya QR Preview" onerror="this.src='/images/qr-maya-demo.png'">
+                                        <span class="qr-upload-hint">Upload</span>
+                                    </div>
+                                    <div style="flex-grow: 1;">
+                                        <input type="text" class="form-control" id="settings-maya-qr" value="${settings.mayaQrUrl || '/images/qr-maya-demo.png'}" placeholder="/images/qr-maya-demo.png or upload image file" oninput="document.getElementById('prev-maya-qr').src = this.value">
+                                        <span style="font-size: 0.75rem; color: #6b7280; display: block; margin-top: 4px;">Click the button or box to attach your merchant Maya/QR Ph photo from your device.</span>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="form-group" style="margin-top: 14px;">
-                                <label class="form-label">BDO Bank Account</label>
-                                <input type="text" class="form-control" id="settings-bdo" value="${settings.bdoAccount || '0012-3456-7890 (Lazaro PH)'}">
+                            <!-- BDO Bank Account & QR Ph Upload -->
+                            <div class="form-group" style="margin-top: 18px; padding-top: 14px; border-top: 1px dashed #e5e7eb;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <label class="form-label" style="margin-bottom: 0;">BDO Bank Account &amp; QR Ph</label>
+                                    <input type="file" id="upload-bdo-qr-input" accept="image/*" style="display: none;" onchange="Admin.handleQrUpload(this, 'settings-bdo-qr', 'prev-bdo-qr')">
+                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; font-weight: 800;" onclick="document.getElementById('upload-bdo-qr-input').click()">
+                                        📁 Upload BDO QR Image
+                                    </button>
+                                </div>
+                                <div class="form-grid-2" style="margin-bottom: 8px;">
+                                    <input type="text" class="form-control" id="settings-bdo" value="${settings.bdoAccount || '0012-3456-7890 (Lazaro PH)'}" placeholder="BDO Account Number &amp; Name">
+                                    <input type="text" class="form-control" id="settings-bdo-qr" value="${settings.bdoQrUrl || ''}" placeholder="BDO QR image path or upload file" oninput="document.getElementById('prev-bdo-qr').src = this.value || '/images/placeholder-product.png'">
+                                </div>
+                                <div style="display: flex; gap: 12px; align-items: center;">
+                                    <div class="admin-qr-preview-box" onclick="document.getElementById('upload-bdo-qr-input').click()" title="Click to upload or change BDO QR Code photo">
+                                        <img id="prev-bdo-qr" src="${settings.bdoQrUrl || '/images/placeholder-product.png'}" alt="BDO QR Preview" onerror="this.src='/images/placeholder-product.png'">
+                                        <span class="qr-upload-hint">Upload</span>
+                                    </div>
+                                    <span style="font-size: 0.75rem; color: #6b7280;">Upload BDO digital bank QR Ph code for direct scan-to-pay bank transfers.</span>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">BPI Bank Account</label>
-                                <input type="text" class="form-control" id="settings-bpi" value="${settings.bpiAccount || '9876-5432-10 (Lazaro PH)'}">
+
+                            <!-- BPI Bank Account & QR Ph Upload -->
+                            <div class="form-group" style="margin-top: 18px; padding-top: 14px; border-top: 1px dashed #e5e7eb;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <label class="form-label" style="margin-bottom: 0;">BPI Bank Account &amp; QR Ph</label>
+                                    <input type="file" id="upload-bpi-qr-input" accept="image/*" style="display: none;" onchange="Admin.handleQrUpload(this, 'settings-bpi-qr', 'prev-bpi-qr')">
+                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; font-weight: 800;" onclick="document.getElementById('upload-bpi-qr-input').click()">
+                                        📁 Upload BPI QR Image
+                                    </button>
+                                </div>
+                                <div class="form-grid-2" style="margin-bottom: 8px;">
+                                    <input type="text" class="form-control" id="settings-bpi" value="${settings.bpiAccount || '9876-5432-10 (Lazaro PH)'}" placeholder="BPI Account Number &amp; Name">
+                                    <input type="text" class="form-control" id="settings-bpi-qr" value="${settings.bpiQrUrl || ''}" placeholder="BPI QR image path or upload file" oninput="document.getElementById('prev-bpi-qr').src = this.value || '/images/placeholder-product.png'">
+                                </div>
+                                <div style="display: flex; gap: 12px; align-items: center;">
+                                    <div class="admin-qr-preview-box" onclick="document.getElementById('upload-bpi-qr-input').click()" title="Click to upload or change BPI QR Code photo">
+                                        <img id="prev-bpi-qr" src="${settings.bpiQrUrl || '/images/placeholder-product.png'}" alt="BPI QR Preview" onerror="this.src='/images/placeholder-product.png'">
+                                        <span class="qr-upload-hint">Upload</span>
+                                    </div>
+                                    <span style="font-size: 0.75rem; color: #6b7280;">Upload BPI digital bank QR Ph code for direct scan-to-pay bank transfers.</span>
+                                </div>
                             </div>
-                            <div class="form-group">
+
+                            <!-- Public Store Hotline -->
+                            <div class="form-group" style="margin-top: 18px; padding-top: 14px; border-top: 1px dashed #e5e7eb;">
                                 <label class="form-label">Public Store Hotline / Telephone</label>
-                                <input type="text" class="form-control" id="settings-store-phone" value="${settings.storePhone || '282948572'}">
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <div style="width: 40px; height: 40px; background: #f3f4f6; border: 1.5px solid #d1d5db; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <svg width="18" height="18" fill="none" stroke="#000000" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                                    </div>
+                                    <input type="text" class="form-control" id="settings-store-phone" value="${settings.storePhone || '282948572'}" placeholder="282948572 or 0917-282-9485" style="font-weight: 700;">
+                                </div>
+                                <span style="font-size: 0.75rem; color: #6b7280; display: block; margin-top: 4px;">Official store contact phone shown on customer receipts, invoices, and tracking pages.</span>
                             </div>
-                            <button type="submit" class="btn btn-primary btn-block" id="btn-save-store-settings" style="margin-top: 10px;">
-                                💾 SAVE PAYMENT, QR CODES & HOTLINE
+                            <button type="submit" class="btn btn-primary btn-block" id="btn-save-store-settings" style="margin-top: 14px; background: #000000; color: #ffffff; font-weight: 800;">
+                                💾 SAVE PAYMENT, QR CODES &amp; HOTLINE
                             </button>
                         </form>
                     </div>
@@ -1115,6 +2276,24 @@ const Admin = {
         } catch (err) {
             container.innerHTML = `<div style="color: var(--color-danger); padding: 40px;">Failed to load settings: ${err.message}</div>`;
         }
+    },
+
+    handleQrUpload(input, targetInputId, previewImgId) {
+        const file = input.files && input.files[0];
+        if (!file || !file.type.startsWith('image/')) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const dataUrl = e.target.result;
+            const targetInp = document.getElementById(targetInputId);
+            if (targetInp) targetInp.value = dataUrl;
+
+            const preview = document.getElementById(previewImgId);
+            if (preview) preview.src = dataUrl;
+
+            showToast('QR Code image attached! Click "SAVE PAYMENT" below to save.', 'success');
+        };
+        reader.readAsDataURL(file);
     },
 
     async saveAdminProfileForm(e) {
@@ -1160,7 +2339,9 @@ const Admin = {
         const mayaName = document.getElementById('settings-maya-name').value;
         const mayaQrUrl = document.getElementById('settings-maya-qr').value;
         const bdoAccount = document.getElementById('settings-bdo').value;
+        const bdoQrUrl = document.getElementById('settings-bdo-qr') ? document.getElementById('settings-bdo-qr').value : '';
         const bpiAccount = document.getElementById('settings-bpi').value;
+        const bpiQrUrl = document.getElementById('settings-bpi-qr') ? document.getElementById('settings-bpi-qr').value : '';
         const storePhone = document.getElementById('settings-store-phone').value;
 
         try {
@@ -1172,7 +2353,9 @@ const Admin = {
                 mayaName,
                 mayaQrUrl,
                 bdoAccount,
+                bdoQrUrl,
                 bpiAccount,
+                bpiQrUrl,
                 storePhone,
                 adminPhone: storePhone
             });
@@ -1417,7 +2600,7 @@ const Admin = {
             id: 0,
             name: '',
             slug: '',
-            logoUrl: '/images/brand-nike.png',
+            logoUrl: 'images/brand-nike.png',
             description: '',
             status: 'ACTIVE'
         };
@@ -1440,9 +2623,9 @@ const Admin = {
                         <div class="form-group">
                             <label class="form-label">Brand Logo / Image *</label>
                             <div style="display: flex; gap: 12px; align-items: center;">
-                                <input type="text" class="form-control" id="brand-form-logo" required value="${b.logoUrl || '/images/logo.png'}" oninput="document.getElementById('brand-logo-preview-img').src=this.value" placeholder="/images/brand-nike.png, https://... or upload photo">
+                                <input type="text" class="form-control" id="brand-form-logo" required value="${b.logoUrl || 'images/logo.png'}" oninput="document.getElementById('brand-logo-preview-img').src=this.value" placeholder="images/brand-nike.png, https://... or upload photo">
                                 <div style="width: 58px; height: 46px; background: #fff; border: 2px dashed #000; border-radius: 6px; display: flex; align-items: center; justify-content: center; padding: 4px; flex-shrink: 0; cursor: pointer;" onclick="document.getElementById('brand-file-input').click()" title="Click to upload logo from device">
-                                    <img id="brand-logo-preview-img" src="${b.logoUrl || '/images/logo.png'}" style="max-width: 100%; max-height: 100%; object-fit: contain;" onerror="this.src='/images/logo.png'">
+                                    <img id="brand-logo-preview-img" src="${b.logoUrl || 'images/logo.png'}" style="max-width: 100%; max-height: 100%; object-fit: contain;" onerror="this.src='images/logo.png'">
                                 </div>
                             </div>
 
@@ -1459,19 +2642,19 @@ const Admin = {
                             <div style="margin-top: 10px;">
                                 <span style="font-size: 0.72rem; color: #6b7280; font-weight: 700;">Or Pick Preset Brand Logo:</span>
                                 <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;">
-                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('Nike', '/images/brand-nike.png')">Nike</button>
-                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('Adidas', '/images/brand-adidas.png')">Adidas</button>
-                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('Puma', '/images/brand-puma.png')">Puma</button>
-                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('New Balance', '/images/brand-nb.png')">New Balance</button>
-                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('Converse', '/images/brand-converse.png')">Converse</button>
-                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('Vans', '/images/brand-vans.png')">Vans</button>
-                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('Under Armour', '/images/brand-ua.png')">Under Armour</button>
-                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('Asics', '/images/brand-asics.png')">Asics</button>
-                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('Reebok', '/images/brand-reebok.png')">Reebok</button>
-                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('Jordan', '/images/brand-jordan.png')">Jordan</button>
-                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('Casio', '/images/brand-casio.png')">Casio</button>
-                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('Seiko', '/images/brand-seiko.png')">Seiko</button>
-                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('LAZAROPH Signature', '/images/logo.png')">LAZAROPH</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('Nike', 'images/brand-nike.png')">Nike</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('Adidas', 'images/brand-adidas.png')">Adidas</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('Puma', 'images/brand-puma.png')">Puma</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('New Balance', 'images/brand-nb.png')">New Balance</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('Converse', 'images/brand-converse.png')">Converse</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('Vans', 'images/brand-vans.png')">Vans</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('Under Armour', 'images/brand-ua.png')">Under Armour</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('Asics', 'images/brand-asics.png')">Asics</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('Reebok', 'images/brand-reebok.png')">Reebok</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('Jordan', 'images/brand-jordan.png')">Jordan</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('Casio', 'images/brand-casio.png')">Casio</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('Seiko', 'images/brand-seiko.png')">Seiko</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.selectPresetBrandLogo('LAZAROPH Signature', 'images/logo.png')">LAZAROPH</button>
                                 </div>
                             </div>
                         </div>
@@ -1637,6 +2820,712 @@ const Admin = {
             }
         } catch (err) {
             showToast(err.message, 'error');
+        }
+    },
+
+    // =========================================================================
+    // ADMIN MANAGEMENT MODULE (/admin/admin-management)
+    // =========================================================================
+    async loadAdminManagement(container) {
+        container.innerHTML = `<div style="text-align: center; padding: 60px 0;"><span class="btn-spinner"></span> Loading administrator directory...</div>`;
+
+        try {
+            const admins = await API.getAdminList();
+            const currentAdmin = AdminAuth.getAdmin() || {};
+
+            container.innerHTML = `
+                <div class="admin-header">
+                    <div>
+                        <div class="section-subtitle">SUPER ADMIN CONTROL CENTER</div>
+                        <h1 class="admin-page-title">ADMINISTRATOR MANAGEMENT</h1>
+                        <p style="color: var(--color-text-muted); font-size: 0.88rem; margin-top: 4px;">
+                            Manage Super Admin accounts, assign roles, enforce 2-step security verification, and update credentials.
+                        </p>
+                    </div>
+                    <button class="btn btn-primary" onclick="Admin.openCreateAdminModal()">
+                        + Add New Administrator
+                    </button>
+                </div>
+
+                <!-- Super Admin Overview Banner -->
+                <div style="background: rgba(225, 29, 72, 0.08); border: 1px solid rgba(225, 29, 72, 0.25); border-radius: 8px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 1.8rem;">🛡️</span>
+                        <div>
+                            <div style="font-weight: 700; color: #fff; font-size: 0.95rem;">Two-Step Super Admin Security Active</div>
+                            <div style="color: #94a3b8; font-size: 0.82rem;">
+                                Logged in as: <strong style="color: #fff;">${escapeHtml(currentAdmin.name)}</strong> (${escapeHtml(currentAdmin.email)}) • Security Lockout enabled after 5 failed PIN attempts.
+                            </div>
+                        </div>
+                    </div>
+                    <span class="status-badge super-admin" style="font-size: 0.8rem; padding: 4px 12px;">
+                        ${admins.length} Super Admin(s) Seeded &amp; Configured
+                    </span>
+                </div>
+
+                <!-- Admin Accounts Table Card -->
+                <div class="admin-card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 16px 20px; border-bottom: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between;">
+                        <h3 style="font-size: 1.05rem; font-weight: 800; text-transform: uppercase; color: #ffffff; margin: 0;">
+                            Authorized Administrators (${admins.length})
+                        </h3>
+                        <span style="font-size: 0.78rem; color: #94a3b8;">Primary Super Admins (1, 2, 3)</span>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Administrator Name</th>
+                                    <th>Email Address</th>
+                                    <th>Assigned Role</th>
+                                    <th>Account Status</th>
+                                    <th>Security PIN Status</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${admins.map(a => {
+                                    const isSelf = currentAdmin.id === a.id;
+                                    const isActive = a.status === 'ACTIVE';
+                                    const isLocked = !!a.isLocked;
+
+                                    return `
+                                        <tr>
+                                            <td style="font-weight: 700; color: #94a3b8;">#${a.id}</td>
+                                            <td>
+                                                <div style="font-weight: 700; color: #ffffff;">${escapeHtml(a.name)}</div>
+                                                ${isSelf ? '<span style="font-size: 0.7rem; color: var(--color-accent); font-weight: 700;">(YOU)</span>' : ''}
+                                            </td>
+                                            <td>
+                                                <span style="font-family: monospace; color: #cbd5e1;">${escapeHtml(a.email)}</span>
+                                            </td>
+                                            <td>
+                                                <span class="status-badge super-admin">${escapeHtml(a.role || 'SUPER_ADMIN')}</span>
+                                            </td>
+                                            <td>
+                                                <span class="status-badge ${isActive ? 'active' : 'disabled'}">
+                                                    ${isActive ? '● ACTIVE' : '○ DISABLED'}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                ${isLocked ? 
+                                                    '<span style="color: #ef4444; font-weight: 700; font-size: 0.8rem;">🔒 Locked (Failed PINs)</span>' : 
+                                                    '<span style="color: #10b981; font-weight: 600; font-size: 0.8rem;">✓ 2FA Configured</span>'}
+                                            </td>
+                                            <td style="text-align: right; white-space: nowrap;">
+                                                <div style="display: inline-flex; gap: 6px;">
+                                                    <button class="btn btn-sm btn-secondary" style="font-size: 0.78rem; padding: 4px 10px;" onclick="Admin.openResetAdminModal(${a.id}, '${escapeHtml(a.name)}')">
+                                                        🔑 Reset Credentials
+                                                    </button>
+                                                    ${!isSelf ? `
+                                                        <button class="btn btn-sm" style="font-size: 0.78rem; padding: 4px 10px; background: ${isActive ? '#f59e0b' : '#10b981'}; color: #000; font-weight: 700;" onclick="Admin.toggleAdminStatus(${a.id}, '${a.status}')">
+                                                            ${isActive ? 'Disable' : 'Enable'}
+                                                        </button>
+                                                        <button class="btn btn-sm" style="font-size: 0.78rem; padding: 4px 8px; background: rgba(220,38,38,0.2); color: #f87171; border: 1px solid rgba(220,38,38,0.4);" onclick="Admin.deleteAdminUser(${a.id}, '${escapeHtml(a.name)}')">
+                                                            ✕
+                                                        </button>
+                                                    ` : ''}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        } catch (err) {
+            container.innerHTML = `
+                <div class="admin-header">
+                    <h1 class="admin-page-title">ADMINISTRATOR MANAGEMENT</h1>
+                </div>
+                <div class="auth-alert auth-alert-error" style="display: block;">
+                    Failed to load administrators: ${escapeHtml(err.message)}
+                </div>
+            `;
+        }
+    },
+
+    openCreateAdminModal() {
+        let modal = document.getElementById('modal-create-admin');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'modal-create-admin';
+            modal.className = 'modal modal-overlay active';
+            document.body.appendChild(modal);
+        }
+
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.right = '0';
+        modal.style.bottom = '0';
+        modal.style.width = '100vw';
+        modal.style.height = '100vh';
+        modal.style.background = 'rgba(0, 0, 0, 0.85)';
+        modal.style.backdropFilter = 'blur(6px)';
+        modal.style.webkitBackdropFilter = 'blur(6px)';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.zIndex = '999999';
+        modal.style.padding = '20px';
+        modal.style.boxSizing = 'border-box';
+
+        modal.innerHTML = `
+            <div class="modal-backdrop" onclick="Admin.closeCreateAdminModal()" style="position: absolute; top:0; left:0; width:100%; height:100%; cursor:pointer;"></div>
+            <div class="modal-content" style="position: relative; z-index: 1000000; width: 100%; max-width: 520px; padding: 0; background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; box-shadow: 0 25px 70px rgba(0, 0, 0, 0.95); overflow: hidden; max-height: 92vh; overflow-y: auto;">
+                <div style="background: #1e293b; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #334155;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.2rem;">🛡️</span>
+                        <strong style="color: #fff; font-size: 1rem;">Create Super Administrator</strong>
+                    </div>
+                    <button type="button" style="background: none; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer;" onclick="Admin.closeCreateAdminModal()">&times;</button>
+                </div>
+                <div style="padding: 24px;">
+                    <div id="create-admin-alert" class="auth-alert" style="display: none; margin-bottom: 16px;"></div>
+                    <form id="create-admin-form" onsubmit="Admin.handleCreateAdmin(event)">
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label class="form-label" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 6px; display: block;">Full Name *</label>
+                            <input type="text" class="form-control" id="new-admin-name" required placeholder="e.g. Clark Montoya" style="background: #090d16; border: 1px solid #334155; color: #ffffff; border-radius: 6px; padding: 10px 14px; width: 100%; box-sizing: border-box;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label class="form-label" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 6px; display: block;">Administrator Email *</label>
+                            <input type="email" class="form-control" id="new-admin-email" required placeholder="e.g. admin4@lazaroph.com" style="background: #090d16; border: 1px solid #334155; color: #ffffff; border-radius: 6px; padding: 10px 14px; width: 100%; box-sizing: border-box;">
+                        </div>
+                        <div class="form-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 6px; display: block;">Login Password *</label>
+                                <input type="password" class="form-control" id="new-admin-pass" required placeholder="Min 6 chars" style="background: #090d16; border: 1px solid #334155; color: #ffffff; border-radius: 6px; padding: 10px 14px; width: 100%; box-sizing: border-box;">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 6px; display: block;">Confirm Password *</label>
+                                <input type="password" class="form-control" id="new-admin-pass-confirm" required placeholder="Re-enter password" style="background: #090d16; border: 1px solid #334155; color: #ffffff; border-radius: 6px; padding: 10px 14px; width: 100%; box-sizing: border-box;">
+                            </div>
+                        </div>
+                        <div class="form-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 6px; display: block;">Security PIN *</label>
+                                <input type="password" class="form-control" id="new-admin-pin" required maxlength="12" placeholder="e.g. 992104 (min 4)" style="background: #090d16; border: 1px solid #334155; color: #ffffff; border-radius: 6px; padding: 10px 14px; width: 100%; box-sizing: border-box;">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 6px; display: block;">Confirm Security PIN *</label>
+                                <input type="password" class="form-control" id="new-admin-pin-confirm" required maxlength="12" placeholder="Re-enter PIN" style="background: #090d16; border: 1px solid #334155; color: #ffffff; border-radius: 6px; padding: 10px 14px; width: 100%; box-sizing: border-box;">
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label class="form-label" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 6px; display: block;">Assigned Role</label>
+                            <input type="text" class="form-control" value="SUPER_ADMIN" disabled style="background: #1e293b; color: #f43f5e; font-weight: 700; border: 1px solid #334155; border-radius: 6px; padding: 10px 14px; width: 100%; box-sizing: border-box;">
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                            <button type="button" class="btn" style="background: #ffffff; color: #000000; font-weight: 800; border-radius: 4px; padding: 10px 20px; font-size: 0.88rem; border: none; cursor: pointer;" onclick="Admin.closeCreateAdminModal()">CANCEL</button>
+                            <button type="submit" class="btn btn-primary" id="btn-save-new-admin" style="font-weight: 800; border-radius: 4px; padding: 10px 20px; font-size: 0.88rem; cursor: pointer;">CREATE SUPER ADMIN</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+
+        modal.classList.add('active');
+    },
+
+    closeCreateAdminModal() {
+        const modal = document.getElementById('modal-create-admin');
+        if (modal) {
+            modal.classList.remove('active');
+            modal.style.display = 'none';
+        }
+    },
+
+    async handleCreateAdmin(event) {
+        event.preventDefault();
+        const name = (document.getElementById('new-admin-name') ? document.getElementById('new-admin-name').value : '').trim();
+        const email = (document.getElementById('new-admin-email') ? document.getElementById('new-admin-email').value : '').trim();
+        const password = document.getElementById('new-admin-pass') ? document.getElementById('new-admin-pass').value : '';
+        const confirmPassword = document.getElementById('new-admin-pass-confirm') ? document.getElementById('new-admin-pass-confirm').value : '';
+        const securityPassword = document.getElementById('new-admin-pin') ? document.getElementById('new-admin-pin').value : '';
+        const confirmSecurity = document.getElementById('new-admin-pin-confirm') ? document.getElementById('new-admin-pin-confirm').value : '';
+        const alertEl = document.getElementById('create-admin-alert');
+        const btn = document.getElementById('btn-save-new-admin');
+
+        const showError = (msg) => {
+            if (alertEl) {
+                alertEl.style.display = 'block';
+                alertEl.className = 'auth-alert auth-alert-error';
+                alertEl.innerHTML = `<span>❌ ${escapeHtml(msg)}</span>`;
+            } else {
+                showToast(msg, 'error');
+            }
+        };
+
+        if (alertEl) {
+            alertEl.style.display = 'none';
+            alertEl.innerHTML = '';
+        }
+
+        if (!name) {
+            showError('Please enter the administrator\'s full name.');
+            return;
+        }
+
+        if (!email || !email.includes('@')) {
+            showError('Please enter a valid email address.');
+            return;
+        }
+
+        if (!password || password.length < 6) {
+            showError('Login password must be at least 6 characters.');
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            showError('Login passwords do not match.');
+            return;
+        }
+
+        if (!securityPassword || securityPassword.length < 4) {
+            showError('Security PIN must be at least 4 digits/characters.');
+            return;
+        }
+
+        if (securityPassword !== confirmSecurity) {
+            showError('Security PINs do not match.');
+            return;
+        }
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="btn-spinner"></span> Creating...';
+        }
+
+        try {
+            await API.createAdmin({
+                name,
+                email,
+                password,
+                confirmPassword,
+                securityPassword,
+                confirmSecurity,
+                role: 'SUPER_ADMIN'
+            });
+
+            this.closeCreateAdminModal();
+            showToast(`Administrator ${name} created successfully!`, 'success');
+            const content = document.getElementById('admin-content-area');
+            if (content) this.loadAdminManagement(content);
+        } catch (err) {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = 'CREATE SUPER ADMIN';
+            }
+            showError(err.message || 'Failed to create administrator.');
+        }
+    },
+
+    openResetAdminModal(adminId, adminName) {
+        let modal = document.getElementById('modal-reset-admin');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'modal-reset-admin';
+            modal.className = 'modal modal-overlay active';
+            document.body.appendChild(modal);
+        }
+
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.right = '0';
+        modal.style.bottom = '0';
+        modal.style.width = '100vw';
+        modal.style.height = '100vh';
+        modal.style.background = 'rgba(0, 0, 0, 0.85)';
+        modal.style.backdropFilter = 'blur(6px)';
+        modal.style.webkitBackdropFilter = 'blur(6px)';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.zIndex = '999999';
+        modal.style.padding = '20px';
+        modal.style.boxSizing = 'border-box';
+
+        modal.innerHTML = `
+            <div class="modal-backdrop" onclick="Admin.closeResetAdminModal()" style="position: absolute; top:0; left:0; width:100%; height:100%; cursor:pointer;"></div>
+            <div class="modal-content" style="position: relative; z-index: 1000000; width: 100%; max-width: 480px; padding: 0; background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; box-shadow: 0 25px 70px rgba(0, 0, 0, 0.95); overflow: hidden; max-height: 92vh; overflow-y: auto;">
+                <div style="background: #1e293b; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #334155;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.2rem;">🔑</span>
+                        <strong style="color: #fff; font-size: 1rem;">Reset Credentials: ${escapeHtml(adminName)}</strong>
+                    </div>
+                    <button type="button" style="background: none; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer;" onclick="Admin.closeResetAdminModal()">&times;</button>
+                </div>
+                <div style="padding: 24px;">
+                    <div id="reset-admin-alert" class="auth-alert" style="display: none; margin-bottom: 16px;"></div>
+                    <form onsubmit="Admin.handleResetAdmin(event, ${adminId})">
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label class="form-label" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 6px; display: block;">NEW LOGIN PASSWORD</label>
+                            <input type="password" class="form-control" id="reset-admin-pass" placeholder="Leave blank to keep unchanged" style="background: #090d16; border: 1px solid #334155; color: #ffffff; border-radius: 6px; padding: 10px 14px; font-size: 0.95rem; width: 100%; box-sizing: border-box;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 22px;">
+                            <label class="form-label" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 6px; display: block;">NEW SECURITY PIN</label>
+                            <input type="password" class="form-control" id="reset-admin-pin" maxlength="12" placeholder="Leave blank to keep unchanged" style="background: #090d16; border: 1px solid #334155; color: #ffffff; border-radius: 6px; padding: 10px 14px; font-size: 0.95rem; width: 100%; box-sizing: border-box;">
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                            <button type="button" class="btn" style="background: #ffffff; color: #000000; font-weight: 800; border-radius: 4px; padding: 10px 20px; font-size: 0.88rem; border: none; cursor: pointer;" onclick="Admin.closeResetAdminModal()">CANCEL</button>
+                            <button type="submit" class="btn" id="btn-save-reset-admin" style="background: #000000; color: #ffffff; font-weight: 800; border-radius: 4px; padding: 10px 20px; font-size: 0.88rem; border: 1px solid #1e293b; cursor: pointer;">SAVE NEW CREDENTIALS</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+
+        modal.classList.add('active');
+    },
+
+    closeResetAdminModal() {
+        const modal = document.getElementById('modal-reset-admin');
+        if (modal) {
+            modal.classList.remove('active');
+            modal.style.display = 'none';
+        }
+    },
+
+    async handleResetAdmin(event, adminId) {
+        event.preventDefault();
+        const password = document.getElementById('reset-admin-pass').value;
+        const securityPassword = document.getElementById('reset-admin-pin').value;
+        const btn = document.getElementById('btn-save-reset-admin');
+
+        if (!password && !securityPassword) {
+            showToast('Please specify at least one credential to reset.', 'warning');
+            return;
+        }
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
+        }
+
+        try {
+            await API.resetAdminSecurity(adminId, password, securityPassword);
+            this.closeResetAdminModal();
+            showToast('Administrator credentials reset successfully!', 'success');
+            const content = document.getElementById('admin-content-area');
+            if (content) this.loadAdminManagement(content);
+        } catch (err) {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = 'SAVE NEW CREDENTIALS';
+            }
+            showToast(err.message, 'error');
+        }
+    },
+
+    async toggleAdminStatus(adminId, currentStatus) {
+        const newStatus = currentStatus === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
+        if (!confirm(`Are you sure you want to change this administrator status to ${newStatus}?`)) return;
+
+        try {
+            await API.updateAdminStatus(adminId, newStatus);
+            showToast(`Administrator status changed to ${newStatus}.`, 'success');
+            const content = document.getElementById('admin-content-area');
+            if (content) this.loadAdminManagement(content);
+        } catch (err) {
+            showToast(err.message, 'error');
+        }
+    },
+
+    // =========================================================================
+    // HOMEPAGE MANAGEMENT — FEATURED CATEGORIES MODULE
+    // =========================================================================
+    stagedCategoryUploads: {},
+
+    async loadHomepageManagement(container) {
+        container.innerHTML = `<div style="text-align: center; padding: 60px 0;"><span class="btn-spinner"></span> Loading Featured Categories...</div>`;
+
+        try {
+            const categories = await API.getFeaturedCategories();
+
+            container.innerHTML = `
+                <div class="admin-header">
+                    <div>
+                        <div class="section-subtitle">HOMEPAGE MANAGEMENT</div>
+                        <h1 class="admin-page-title">FEATURED CATEGORIES</h1>
+                        <p style="color: var(--color-text-muted); font-size: 0.88rem; margin-top: 4px;">
+                            Manage the 5 homepage category cards (<strong>MEN</strong>, <strong>WOMEN</strong>, <strong>KIDS</strong>, <strong>SLIDES</strong>, <strong>WATCHES</strong>).
+                            Choose and upload photos from your computer to update the storefront homepage in real time.
+                        </p>
+                    </div>
+                    <button class="btn btn-secondary" onclick="App.navigate('home')">
+                        View Storefront ↗
+                    </button>
+                </div>
+
+                <div style="background: #ffffff; border: 1.5px solid #e5e7eb; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+                    <div style="font-size: 1.5rem;">📷</div>
+                    <div style="font-size: 0.84rem; color: #4b5563; line-height: 1.5;">
+                        <strong style="color: #000000;">Super Admin Image Uploader:</strong> Click <strong>Choose Image</strong> to select a photo (JPG, PNG, or WEBP up to 10MB) directly from your computer. You'll see an instant preview of how it looks on the homepage card. Click <strong>Upload / Save</strong> to apply it to the live store.
+                    </div>
+                </div>
+
+                <div class="featured-cats-grid">
+                    ${categories.map(cat => {
+                        const key = (cat.key || '').toLowerCase();
+                        const isUploaded = cat.imageUrl && cat.imageUrl.includes('uploads/');
+                        return `
+                            <div class="category-upload-card" id="cat-card-manage-${key}">
+                                <div class="category-upload-header">
+                                    <div>
+                                        <span style="font-size: 0.72rem; font-weight: 800; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">CATEGORY</span>
+                                        <h3 style="font-size: 1.3rem; font-weight: 900; color: #000000; text-transform: uppercase; margin: 2px 0 0 0;">${cat.name}</h3>
+                                    </div>
+                                    <span class="badge ${isUploaded ? 'badge-primary' : 'badge-secondary'}" id="cat-source-badge-${key}" style="font-size: 0.72rem;">
+                                        ${isUploaded ? 'Custom Photo' : 'Default Image'}
+                                    </span>
+                                </div>
+
+                                <!-- Current Image Preview with Live Card Mockup -->
+                                <div class="category-upload-preview" id="cat-preview-box-${key}">
+                                    <div class="category-upload-preview-bg" id="cat-preview-img-${key}" style="background-image: linear-gradient(rgba(17,22,34,0.35), rgba(17,22,34,0.85)), url('${cat.imageUrl}');"></div>
+                                    <div class="category-upload-preview-overlay">
+                                        <span class="badge badge-brand" style="margin-bottom: 6px; font-size: 0.65rem; width: fit-content;">${cat.badge || cat.name}</span>
+                                        <div style="font-size: 1.15rem; font-weight: 900; color: #ffffff; text-transform: uppercase; letter-spacing: -0.01em;">${cat.name}</div>
+                                        <div style="font-size: 0.75rem; color: #cbd5e1; margin-bottom: 8px; max-width: 90%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cat.description || ''}</div>
+                                        <span style="display: inline-block; background: #ffffff; color: #000000; font-size: 0.68rem; font-weight: 800; padding: 4px 10px; border-radius: 3px; width: fit-content;">${cat.buttonText || 'SHOP ' + cat.name}</span>
+                                    </div>
+                                </div>
+
+                                <!-- Staged File Details -->
+                                <div id="cat-file-detail-${key}" style="display: none; margin-top: 12px; padding: 8px 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; font-size: 0.8rem; color: #166534;"></div>
+
+                                <!-- Error Alert Banner -->
+                                <div id="cat-error-${key}" style="display: none; margin-top: 12px; padding: 8px 12px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; font-size: 0.8rem; color: #991b1b;"></div>
+
+                                <!-- Success Banner -->
+                                <div id="cat-success-${key}" style="display: none; margin-top: 12px; padding: 8px 12px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 6px; font-size: 0.8rem; color: #15803d;"></div>
+
+                                <!-- Action Buttons -->
+                                <div class="category-upload-actions">
+                                    <input type="file" id="cat-file-input-${key}" accept="image/jpeg,image/png,image/webp,image/jpg" style="display: none;" onchange="Admin.handleCategoryFileSelected('${key}', this)">
+
+                                    <div style="display: flex; gap: 8px;">
+                                        <button type="button" class="btn-choose-image" style="flex: 1;" onclick="document.getElementById('cat-file-input-${key}').click()">
+                                            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                            Choose Image
+                                        </button>
+                                        ${isUploaded ? `
+                                            <button type="button" class="btn btn-secondary" style="padding: 8px 12px; font-size: 0.78rem;" title="Reset to default image" onclick="Admin.resetCategoryPhoto('${key}')">
+                                                ↺ Reset
+                                            </button>
+                                        ` : ''}
+                                    </div>
+
+                                    <button type="button" class="btn-upload-save" id="cat-save-btn-${key}" disabled onclick="Admin.uploadCategoryPhoto('${key}')">
+                                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                                        Upload / Save
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        } catch (err) {
+            container.innerHTML = `<div style="padding: 40px; text-align: center; color: #e11d48;">Failed to load featured categories: ${err.message}</div>`;
+        }
+    },
+
+    handleCategoryFileSelected(categoryKey, input) {
+        const errBox = document.getElementById(`cat-error-${categoryKey}`);
+        const successBox = document.getElementById(`cat-success-${categoryKey}`);
+        const detailBox = document.getElementById(`cat-file-detail-${categoryKey}`);
+        const saveBtn = document.getElementById(`cat-save-btn-${categoryKey}`);
+        const previewBg = document.getElementById(`cat-preview-img-${categoryKey}`);
+
+        if (errBox) errBox.style.display = 'none';
+        if (successBox) successBox.style.display = 'none';
+
+        if (!input.files || !input.files[0]) {
+            return;
+        }
+
+        const file = input.files[0];
+
+        // 1. Validate file format
+        const validMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+        const fileName = file.name.toLowerCase();
+        const validExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+        const hasValidExt = validExtensions.some(ext => fileName.endsWith(ext));
+
+        if (!file.type.startsWith('image/') || (!validMimeTypes.includes(file.type) && !hasValidExt)) {
+            if (errBox) {
+                errBox.textContent = 'The file format is unsupported. Please choose a JPG, JPEG, PNG, or WEBP image.';
+                errBox.style.display = 'block';
+            }
+            input.value = '';
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.style.background = '#000000';
+                saveBtn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg> Upload / Save`;
+            }
+            if (detailBox) detailBox.style.display = 'none';
+            return;
+        }
+
+        // 2. Validate file size (Max 10MB)
+        const maxBytes = 10 * 1024 * 1024;
+        if (file.size > maxBytes) {
+            const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+            if (errBox) {
+                errBox.textContent = `The file is too large (${sizeMb}MB). Maximum allowed size is 10MB.`;
+                errBox.style.display = 'block';
+            }
+            input.value = '';
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.style.background = '#000000';
+                saveBtn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg> Upload / Save`;
+            }
+            if (detailBox) detailBox.style.display = 'none';
+            return;
+        }
+
+        // 3. Read image file and show instant local preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const dataUrl = e.target.result;
+
+            Admin.stagedCategoryUploads[categoryKey] = {
+                categoryKey,
+                filename: file.name,
+                fileSize: file.size,
+                dataUrl
+            };
+
+            // Update preview background immediately
+            if (previewBg) {
+                previewBg.style.backgroundImage = `linear-gradient(rgba(17,22,34,0.35), rgba(17,22,34,0.85)), url('${dataUrl}')`;
+            }
+
+            // Display file details
+            if (detailBox) {
+                const formattedSize = file.size > 1024 * 1024
+                    ? (file.size / (1024 * 1024)).toFixed(2) + ' MB'
+                    : (file.size / 1024).toFixed(0) + ' KB';
+                detailBox.innerHTML = `<strong>Selected:</strong> ${file.name} (${formattedSize}) — Ready to save!`;
+                detailBox.style.display = 'block';
+            }
+
+            // Enable and highlight Save button
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.style.background = '#e11d48';
+                saveBtn.innerHTML = `✓ Click to Save & Apply`;
+            }
+        };
+
+        reader.onerror = () => {
+            if (errBox) {
+                errBox.textContent = 'Failed to read image file from your computer.';
+                errBox.style.display = 'block';
+            }
+        };
+
+        reader.readAsDataURL(file);
+    },
+
+    async uploadCategoryPhoto(categoryKey) {
+        const staged = Admin.stagedCategoryUploads[categoryKey];
+        const saveBtn = document.getElementById(`cat-save-btn-${categoryKey}`);
+        const errBox = document.getElementById(`cat-error-${categoryKey}`);
+        const successBox = document.getElementById(`cat-success-${categoryKey}`);
+        const detailBox = document.getElementById(`cat-file-detail-${categoryKey}`);
+
+        if (!staged || !staged.dataUrl) {
+            if (errBox) {
+                errBox.textContent = 'Please choose an image first before saving.';
+                errBox.style.display = 'block';
+            }
+            return;
+        }
+
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = `<span class="btn-spinner"></span> Uploading...`;
+        }
+
+        try {
+            const res = await API.uploadFeaturedCategory({
+                categoryKey: staged.categoryKey,
+                filename: staged.filename,
+                imageData: staged.dataUrl
+            });
+
+            const uploadedUrl = res.imageUrl || res.category.imageUrl;
+
+            if (successBox) {
+                successBox.textContent = `Photo saved successfully! Homepage card background updated.`;
+                successBox.style.display = 'block';
+            }
+
+            if (detailBox) detailBox.style.display = 'none';
+
+            // Clean staged upload cache for this category
+            delete Admin.stagedCategoryUploads[categoryKey];
+
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.style.background = '#000000';
+                saveBtn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg> Upload / Save`;
+            }
+
+            showToast(`Photo for ${categoryKey.toUpperCase()} uploaded and saved successfully!`, 'success');
+
+            // Update storefront homepage in DOM immediately
+            if (typeof Store !== 'undefined' && typeof Store.loadFeaturedCategories === 'function') {
+                Store.loadFeaturedCategories();
+            }
+
+            // Refresh the admin view after short delay to update badges & reset buttons
+            setTimeout(() => {
+                const content = document.getElementById('admin-content-area');
+                if (content && Admin.currentTab === 'homepage-management') {
+                    Admin.loadHomepageManagement(content);
+                }
+            }, 1000);
+
+        } catch (err) {
+            if (errBox) {
+                errBox.textContent = err.message || 'Failed to upload photo.';
+                errBox.style.display = 'block';
+            }
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = `✓ Click to Save & Apply`;
+            }
+            showToast(err.message || 'Failed to upload image.', 'error');
+        }
+    },
+
+    async resetCategoryPhoto(categoryKey) {
+        if (!confirm(`Are you sure you want to reset the ${categoryKey.toUpperCase()} category image back to default?`)) return;
+
+        try {
+            await API.resetFeaturedCategory(categoryKey);
+            showToast(`Category ${categoryKey.toUpperCase()} reset to default image.`, 'success');
+
+            if (typeof Store !== 'undefined' && typeof Store.loadFeaturedCategories === 'function') {
+                Store.loadFeaturedCategories();
+            }
+
+            const content = document.getElementById('admin-content-area');
+            if (content && (Admin.currentTab === 'homepage-management' || Admin.currentTab === 'featured-categories')) {
+                Admin.loadHomepageManagement(content);
+            }
+        } catch (err) {
+            showToast(err.message || 'Failed to reset category image.', 'error');
         }
     }
 };

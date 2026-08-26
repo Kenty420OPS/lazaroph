@@ -6,16 +6,20 @@
     <title>LAZAROPH — Authentic Sneakers, Apparel, Watches & Custom Sportswear</title>
     <meta name="description" content="LAZAROPH — Authentic sneaker, apparel and watch. All are guaranteed legit at below market price. Physical stores in Marikina.">
     
+    <base href="/">
+    
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/images/logo.png">
     
     <!-- CSS Design System -->
     <link rel="stylesheet" href="/css/main.css">
-    <link rel="stylesheet" href="/css/store.css">
+    <link rel="stylesheet" href="/css/store.css?v=20260826_salmon3">
     <link rel="stylesheet" href="/css/product-detail.css">
     <link rel="stylesheet" href="/css/customizer.css">
     <link rel="stylesheet" href="/css/cart-checkout.css">
-    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/chat.css?v=20260826_v4">
+    <link rel="stylesheet" href="/css/admin.css?v=20260826_v4">
+    <link rel="stylesheet" href="/css/auth.css?v=20260826_v4">
     <link rel="stylesheet" href="/css/responsive.css">
 </head>
 <body>
@@ -34,7 +38,7 @@
         <div class="container header-inner">
             <!-- Brand Logo -->
             <a href="#home" class="brand-logo" onclick="App.navigate('home')">
-                <img src="/images/logo.png" alt="LAZAROPH EST 2016 Logo" style="width: 46px; height: 46px; object-fit: contain; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+                <img src="images/logo.png" alt="LAZAROPH EST 2016 Logo" style="width: 46px; height: 46px; object-fit: contain; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
                 <div>
                     <div class="logo-text" style="line-height: 1.05;">LAZAROPH</div>
                     <div style="font-size: 0.65rem; font-weight: 800; letter-spacing: 0.12em; color: var(--color-text-secondary); text-transform: uppercase;">EST. 2016 • AUTHENTIC</div>
@@ -54,9 +58,6 @@
                     <li><a href="#shop?category=Watches" class="nav-link" onclick="App.navigate('shop', { category: 'Watches' })">Watches</a></li>
                     <li><a href="#brands" class="nav-link" id="nav-brands-link" onclick="App.navigate('brands')">Brands</a></li>
                     <li><a href="#shop" class="nav-link" onclick="App.navigate('shop')">New Arrivals</a></li>
-                    <li id="nav-admin-link" class="hidden">
-                        <a href="#admin" class="nav-link" style="color: var(--color-brand-cyan);" onclick="App.navigate('admin')">⚡ Admin Panel</a>
-                    </li>
                 </ul>
             </nav>
 
@@ -64,7 +65,9 @@
             <div class="header-actions">
                 <!-- Search Input -->
                 <div class="search-input-wrapper">
-                    <span class="search-icon">🔍</span>
+                    <span class="search-icon">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
+                    </span>
                     <input type="text" id="main-search-input" placeholder="Search Runner, Tee, SKU...">
                 </div>
 
@@ -86,7 +89,7 @@
 
                 <!-- Mobile Hamburger Toggle -->
                 <button type="button" class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Toggle Navigation">
-                    ☰
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </button>
             </div>
         </div>
@@ -101,8 +104,9 @@
             <div class="hero-section">
                 <div class="container flex items-center justify-between" style="position: relative;">
                     <div class="hero-content">
-                        <div class="hero-tag">
-                            ⭐ 100% Authentic • Legit Check Guarantee
+                        <div class="hero-tag" style="display: inline-flex; align-items: center; gap: 6px;">
+                            <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            <span>100% Authentic • Legit Check Guarantee</span>
                         </div>
                         <h1 class="hero-title">
                             AUTHENTIC. <br>
@@ -132,7 +136,7 @@
                     <div class="hero-visual">
                         <div class="hero-logo-showcase">
                             <div class="hero-logo-halo"></div>
-                            <img src="/images/logo.png" alt="LAZAROPH EST 2016 Official Brand Emblem" class="hero-logo-img">
+                            <img src="images/logo.png" alt="LAZAROPH EST 2016 Official Brand Emblem" class="hero-logo-img">
                         </div>
                     </div>
                 </div>
@@ -143,31 +147,39 @@
                 <div class="container">
                     <div class="trust-grid">
                         <div class="trust-card">
-                            <div class="trust-icon">🛡️</div>
+                            <div class="trust-icon">
+                                <svg width="24" height="24" fill="none" stroke="#000000" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                            </div>
                             <div>
                                 <div class="trust-title">100% Guaranteed Legit</div>
                                 <div class="trust-desc">Every sneaker and watch is physically inspected.</div>
                             </div>
                         </div>
                         <div class="trust-card">
-                            <div class="trust-icon">🏷️</div>
+                            <div class="trust-icon">
+                                <svg width="24" height="24" fill="none" stroke="#000000" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                            </div>
                             <div>
                                 <div class="trust-title">Below Market Price</div>
                                 <div class="trust-desc">Authentic goods at honest Philippine retail pricing.</div>
                             </div>
                         </div>
                         <div class="trust-card">
-                            <div class="trust-icon">🏪</div>
+                            <div class="trust-icon">
+                                <svg width="24" height="24" fill="none" stroke="#000000" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                            </div>
                             <div>
-                                <div class="trust-title">2 Physical Branches</div>
-                                <div class="trust-desc">Concepcion Uno & Malanday, Marikina.</div>
+                                <div class="trust-title">Physical Flagship Store</div>
+                                <div class="trust-desc">911 J.P. Rizal St., Concepcion Uno, Marikina.</div>
                             </div>
                         </div>
                         <div class="trust-card">
-                            <div class="trust-icon">💳</div>
+                            <div class="trust-icon">
+                                <svg width="24" height="24" fill="none" stroke="#000000" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="2" y1="10" x2="22" y2="10" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
                             <div>
                                 <div class="trust-title">Secure Digital Payments</div>
-                                <div class="trust-desc">GCash, Maya, Bank Transfer & Store Pickup.</div>
+                                <div class="trust-desc">GCash, Maya, Bank Transfer &amp; Store Pickup.</div>
                             </div>
                         </div>
                     </div>
@@ -185,10 +197,10 @@
                         <button class="btn btn-secondary" onclick="App.navigate('shop')">View Full Catalog →</button>
                     </div>
 
-                    <div class="categories-grid">
+                    <div class="categories-grid" id="homepage-featured-categories">
                         <!-- Men's Card -->
-                        <div class="category-card cat-large" onclick="App.navigate('shop', { gender: 'MEN' })" style="cursor: pointer;">
-                            <div class="category-bg" style="background-image: linear-gradient(rgba(17,22,34,0.4), rgba(17,22,34,0.8)), url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22400%22 viewBox=%220 0 400 400%22%3E%3Crect width=%22400%22 height=%22400%22 fill=%22%23111622%22/%3E%3Cpath d=%22M50 250 Q200 150 350 250%22 stroke=%22%23ff3b30%22 stroke-width=%2210%22 fill=%22none%22/%3E%3C/svg%3E');"></div>
+                        <div class="category-card cat-large" id="cat-card-men" onclick="App.navigate('shop', { gender: 'MEN' })" style="cursor: pointer;">
+                            <div class="category-bg" id="cat-bg-men" style="background-image: linear-gradient(rgba(17,22,34,0.35), rgba(17,22,34,0.85)), url('images/category-men.jpg');"></div>
                             <div class="category-overlay"></div>
                             <div class="category-info">
                                 <span class="badge badge-brand" style="margin-bottom: 8px;">MEN'S COLLECTION</span>
@@ -199,8 +211,8 @@
                         </div>
 
                         <!-- Women's Card -->
-                        <div class="category-card cat-large" onclick="App.navigate('shop', { gender: 'WOMEN' })" style="cursor: pointer;">
-                            <div class="category-bg" style="background-image: linear-gradient(rgba(17,22,34,0.4), rgba(17,22,34,0.8)), url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22400%22 viewBox=%220 0 400 400%22%3E%3Crect width=%22400%22 height=%22400%22 fill=%22%23161c2c%22/%3E%3Ccircle cx=%22200%22 cy=%22200%22 r=%22100%22 stroke=%22%2300e5ff%22 stroke-width=%228%22 fill=%22none%22/%3E%3C/svg%3E');"></div>
+                        <div class="category-card cat-large" id="cat-card-women" onclick="App.navigate('shop', { gender: 'WOMEN' })" style="cursor: pointer;">
+                            <div class="category-bg" id="cat-bg-women" style="background-image: linear-gradient(rgba(17,22,34,0.35), rgba(17,22,34,0.85)), url('images/category-women.jpg');"></div>
                             <div class="category-overlay"></div>
                             <div class="category-info">
                                 <span class="badge badge-brand" style="margin-bottom: 8px;">WOMEN'S COLLECTION</span>
@@ -211,9 +223,11 @@
                         </div>
 
                         <!-- Kids Card -->
-                        <div class="category-card cat-medium" onclick="App.navigate('shop', { gender: 'KIDS' })" style="cursor: pointer;">
+                        <div class="category-card cat-medium" id="cat-card-kids" onclick="App.navigate('shop', { gender: 'KIDS' })" style="cursor: pointer;">
+                            <div class="category-bg" id="cat-bg-kids" style="background-image: linear-gradient(rgba(17,22,34,0.35), rgba(17,22,34,0.85)), url('images/category-kids.jpg');"></div>
                             <div class="category-overlay"></div>
                             <div class="category-info">
+                                <span class="badge badge-brand" style="margin-bottom: 8px;">YOUTH ATHLETIC</span>
                                 <h3 class="category-name">KIDS</h3>
                                 <p class="category-desc">Youth athletic shoes & sportswear.</p>
                                 <button class="btn btn-secondary btn-sm">SHOP KIDS</button>
@@ -221,8 +235,8 @@
                         </div>
 
                         <!-- Slides Card -->
-                        <div class="category-card cat-medium" onclick="App.navigate('shop', { category: 'Slides' })" style="cursor: pointer;">
-                            <div class="category-bg" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.85)), url('/images/cat-slides.png');"></div>
+                        <div class="category-card cat-medium" id="cat-card-slides" onclick="App.navigate('shop', { category: 'Slides' })" style="cursor: pointer;">
+                            <div class="category-bg" id="cat-bg-slides" style="background-image: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.85)), url('images/cat-slides.png');"></div>
                             <div class="category-overlay"></div>
                             <div class="category-info">
                                 <span class="badge badge-brand" style="margin-bottom: 8px;">COMFORT FOOTWEAR</span>
@@ -233,9 +247,11 @@
                         </div>
 
                         <!-- Watches Card -->
-                        <div class="category-card cat-medium" onclick="App.navigate('shop', { category: 'Watches' })" style="cursor: pointer;">
+                        <div class="category-card cat-medium" id="cat-card-watches" onclick="App.navigate('shop', { category: 'Watches' })" style="cursor: pointer;">
+                            <div class="category-bg" id="cat-bg-watches" style="background-image: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.85)), url('images/category-watches.jpg');"></div>
                             <div class="category-overlay"></div>
                             <div class="category-info">
+                                <span class="badge badge-brand" style="margin-bottom: 8px;">TIMEPIECES</span>
                                 <h3 class="category-name">WATCHES</h3>
                                 <p class="category-desc">Sports, digital, and classic timepieces.</p>
                                 <button class="btn btn-secondary btn-sm">SHOP WATCHES</button>
@@ -296,43 +312,48 @@
                 </div>
             </div>
 
-            <!-- Physical Branches Section -->
+            <!-- Installment Financing via Salmon Section -->
+            <div class="section salmon-financing-section" id="salmon-financing">
+                <div class="container">
+                    <div class="salmon-financing-inner">
+                        <div class="salmon-financing-info">
+                            <div class="salmon-brand-badge">
+                                <img src="images/salmon-logo.png?v=20260826_tight" alt="Salmon" class="salmon-brand-logo">
+                            </div>
+                            <h2 class="salmon-heading">Installment Financing via Salmon</h2>
+                            <p class="salmon-desc">Walk in to our store for the approval process.</p>
+                        </div>
+                        <div class="salmon-financing-requirements">
+                            <h3 class="salmon-req-title">Bring:</h3>
+                            <ul class="salmon-req-list">
+                                <li>Download the Salmon App</li>
+                                <li>2 Valid IDs</li>
+                                <li>2 Contact References</li>
+                                <li>Must be GCash verified</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Physical Store Section -->
             <div class="section branches-section">
                 <div class="container">
-                    <div class="section-header">
-                        <div>
-                            <div class="section-subtitle">VISIT OUR STORES</div>
-                            <h2 class="section-title">OUR PHYSICAL BRANCHES</h2>
+                    <div class="section-header" style="text-align: center; justify-content: center;">
+                        <div style="text-align: center;">
+                            <div class="section-subtitle">VISIT OUR STORE</div>
+                            <h2 class="section-title">OUR PHYSICAL STORE</h2>
                         </div>
                     </div>
 
-                    <div class="branches-grid">
-                        <!-- Branch 1: Concepcion Uno -->
+                    <div class="branches-grid" style="max-width: 640px; margin: 0 auto;">
+                        <!-- Flagship Store: Concepcion Uno -->
                         <div class="branch-card">
-                            <span class="badge badge-brand branch-badge">BRANCH 1</span>
+                            <span class="badge badge-brand branch-badge">FLAGSHIP STORE</span>
                             <h3 class="branch-title">CONCEPCION UNO</h3>
                             <div class="branch-address">
                                 <strong>911 J.P. Rizal Street</strong><br>
                                 Concepcion Uno, Marikina<br>
-                                1805 Metro Manila, Philippines
-                            </div>
-                            <div class="branch-info-row">
-                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-                                <span>Contact: <strong>282948572</strong></span>
-                            </div>
-                            <div class="branch-info-row">
-                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                <span>Mon – Sun: <strong>11:00 AM – 8:00 PM</strong></span>
-                            </div>
-                        </div>
-
-                        <!-- Branch 2: Malanday -->
-                        <div class="branch-card">
-                            <span class="badge badge-brand branch-badge">BRANCH 2</span>
-                            <h3 class="branch-title">MALANDAY</h3>
-                            <div class="branch-address">
-                                <strong>32 F. E. Mendoza Street</strong><br>
-                                Malanday, Marikina<br>
                                 1805 Metro Manila, Philippines
                             </div>
                             <div class="branch-info-row">
@@ -546,6 +567,324 @@
             <!-- Populated dynamically by Orders.track() -->
         </section>
 
+        <!-- VIEW: CUSTOMER LOGIN (/login) -->
+        <section id="view-customer-login" class="view-section hidden">
+            <div class="auth-page-wrapper">
+                <div class="auth-card">
+                    <div class="auth-header">
+                        <div class="auth-brand-emblem">
+                            <img src="images/logo.png" alt="LAZAROPH EST 2016 Official Brand Emblem">
+                        </div>
+                        <div class="auth-brand-title">LAZAROPH</div>
+                        <div class="auth-brand-tagline">AUTHENTIC • LEGIT • BELOW MARKET PRICE</div>
+                        <h2 class="auth-page-title">Welcome Back</h2>
+                        <p class="auth-page-subtitle">Sign in to your LazaroPH customer account</p>
+                    </div>
+
+                    <div id="cust-login-alert" class="auth-alert"></div>
+
+                    <form id="cust-login-form" onsubmit="CustomerAuth.handleLogin(event)">
+                        <div class="form-group">
+                            <label class="form-label" for="cust-login-email">Email</label>
+                            <input type="email" class="form-control" id="cust-login-email" required placeholder="name@example.com" autocomplete="email">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label class="form-label" for="cust-login-password">Password</label>
+                            <input type="password" class="form-control" id="cust-login-password" required placeholder="••••••••" autocomplete="current-password">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block btn-lg" id="cust-login-btn">
+                            LOGIN
+                        </button>
+                    </form>
+
+                    <div class="auth-footer-links" style="margin-top: 18px;">
+                        <a href="#forgot-password" onclick="App.navigate('forgot-password')">Forgot Password?</a>
+                    </div>
+
+                    <div class="auth-divider">
+                        <span>Don't have an account?</span>
+                    </div>
+
+                    <button type="button" class="btn btn-secondary btn-block" onclick="App.navigate('register')">
+                        CREATE ACCOUNT
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW: CUSTOMER REGISTRATION (/register) -->
+        <section id="view-customer-register" class="view-section hidden">
+            <div class="auth-page-wrapper">
+                <div class="auth-card">
+                    <div class="auth-header">
+                        <div class="auth-brand-emblem">
+                            <img src="images/logo.png" alt="LAZAROPH EST 2016 Official Brand Emblem">
+                        </div>
+                        <div class="auth-brand-title">LAZAROPH</div>
+                        <div class="auth-brand-tagline">AUTHENTIC • LEGIT • BELOW MARKET PRICE</div>
+                        <h2 class="auth-page-title">Create Account</h2>
+                        <p class="auth-page-subtitle">Join LazaroPH for authentic streetwear & kicks</p>
+                    </div>
+
+                    <div id="cust-reg-alert" class="auth-alert"></div>
+
+                    <div id="cust-reg-form-container">
+                        <form id="cust-reg-form" onsubmit="CustomerAuth.handleRegister(event)">
+                            <div class="form-group">
+                                <label class="form-label" for="cust-reg-name">Full Name *</label>
+                                <input type="text" class="form-control" id="cust-reg-name" required placeholder="Juan Dela Cruz" autocomplete="name">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="cust-reg-email">Email Address *</label>
+                                <input type="email" class="form-control" id="cust-reg-email" required placeholder="juan@example.com" autocomplete="email">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="cust-reg-password">Password *</label>
+                                <input type="password" class="form-control" id="cust-reg-password" required placeholder="Minimum 6 characters" autocomplete="new-password">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 22px;">
+                                <label class="form-label" for="cust-reg-confirm">Confirm Password *</label>
+                                <input type="password" class="form-control" id="cust-reg-confirm" required placeholder="Re-enter password" autocomplete="new-password">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block btn-lg" id="cust-reg-btn">
+                                CREATE ACCOUNT
+                            </button>
+                        </form>
+
+                        <div class="auth-divider">
+                            <span>Already have an account?</span>
+                        </div>
+
+                        <button type="button" class="btn btn-secondary btn-block" onclick="App.navigate('login')">
+                            LOGIN HERE
+                        </button>
+                    </div>
+
+                    <!-- Post-Registration Pending Verification Success Message -->
+                    <div id="cust-reg-success-container" style="display: none;" class="verify-state-card">
+                        <div class="verify-icon-pulse">✉️</div>
+                        <h3 style="color: #ffffff; margin-bottom: 8px;">Check Your Email!</h3>
+                        <p style="color: var(--color-text-muted); font-size: 0.9rem; line-height: 1.5; margin-bottom: 16px;">
+                            We've sent an activation link to <strong id="cust-reg-success-email" style="color: #ffffff;">your email</strong>. Please click <strong>"VERIFY MY EMAIL"</strong> in that message to activate your account.
+                        </p>
+                        <div style="background: rgba(255,255,255,0.03); border: 1px dashed var(--color-border); border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 0.82rem; color: #94a3b8;">
+                            💡 <em>Local Testing Tip:</em> Look at the incoming email notification popup or click below to simulate opening your inbox.
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <button type="button" class="btn btn-primary btn-block" onclick="EmailSimulator.openModal()">
+                                📬 Open Email Inbox Simulator
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-block" onclick="App.navigate('login')">
+                                Back to Login
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW: CUSTOMER EMAIL VERIFICATION (/verify-email) -->
+        <section id="view-customer-verify-email" class="view-section hidden">
+            <div class="auth-page-wrapper">
+                <div class="auth-card">
+                    <div class="auth-header">
+                        <div class="auth-brand-emblem">
+                            <img src="images/logo.png" alt="LAZAROPH">
+                        </div>
+                        <div class="auth-brand-title">LAZAROPH</div>
+                        <h2 class="auth-page-title">Email Verification</h2>
+                    </div>
+
+                    <div id="verify-loading-card" class="verify-state-card">
+                        <div class="btn-spinner" style="width: 36px; height: 36px; margin-bottom: 16px;"></div>
+                        <p style="color: var(--color-text-muted);">Verifying your customer account...</p>
+                    </div>
+
+                    <div id="verify-success-card" class="verify-state-card" style="display: none;">
+                        <div class="verify-icon-pulse">✓</div>
+                        <h3 style="color: #10b981; margin-bottom: 8px;">Email Verified!</h3>
+                        <p style="color: var(--color-text-muted); font-size: 0.92rem; line-height: 1.5; margin-bottom: 24px;">
+                            Your email address has been verified successfully. Your account is now active and you can log in to start shopping.
+                        </p>
+                        <button type="button" class="btn btn-primary btn-block btn-lg" onclick="App.navigate('login')">
+                            GO TO LOGIN
+                        </button>
+                    </div>
+
+                    <div id="verify-error-card" class="verify-state-card" style="display: none;">
+                        <div class="verify-icon-pulse verify-icon-error">✕</div>
+                        <h3 style="color: #ef4444; margin-bottom: 8px;">Verification Failed</h3>
+                        <p id="verify-error-message" style="color: var(--color-text-muted); font-size: 0.9rem; margin-bottom: 20px;">
+                            The verification link is invalid or has expired.
+                        </p>
+                        <button type="button" class="btn btn-secondary btn-block" onclick="App.navigate('login')">
+                            Back to Login
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW: CUSTOMER FORGOT PASSWORD (/forgot-password) -->
+        <section id="view-customer-forgot-password" class="view-section hidden">
+            <div class="auth-page-wrapper">
+                <div class="auth-card">
+                    <div class="auth-header">
+                        <div class="auth-brand-emblem">
+                            <img src="images/logo.png" alt="LAZAROPH">
+                        </div>
+                        <div class="auth-brand-title">LAZAROPH</div>
+                        <h2 class="auth-page-title">Reset Your Password</h2>
+                        <p class="auth-page-subtitle">Enter your registered email and we will send you a secure link to reset your password.</p>
+                    </div>
+
+                    <div id="cust-forgot-alert" class="auth-alert"></div>
+
+                    <form id="cust-forgot-form" onsubmit="CustomerAuth.handleForgotPassword(event)">
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label class="form-label" for="cust-forgot-email">Registered Email *</label>
+                            <input type="email" class="form-control" id="cust-forgot-email" required placeholder="name@example.com" autocomplete="email">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block btn-lg" id="cust-forgot-btn">
+                            SEND PASSWORD RESET LINK
+                        </button>
+                    </form>
+
+                    <div class="auth-divider">
+                        <span>Remember your password?</span>
+                    </div>
+
+                    <button type="button" class="btn btn-secondary btn-block" onclick="App.navigate('login')">
+                        BACK TO LOGIN
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW: CUSTOMER RESET PASSWORD (/reset-password) -->
+        <section id="view-customer-reset-password" class="view-section hidden">
+            <div class="auth-page-wrapper">
+                <div class="auth-card">
+                    <div class="auth-header">
+                        <div class="auth-brand-emblem">
+                            <img src="images/logo.png" alt="LAZAROPH">
+                        </div>
+                        <div class="auth-brand-title">LAZAROPH</div>
+                        <h2 class="auth-page-title">Set New Password</h2>
+                        <p class="auth-page-subtitle">Please choose a new, secure password for your account.</p>
+                    </div>
+
+                    <div id="cust-reset-alert" class="auth-alert"></div>
+
+                    <div id="cust-reset-form-card">
+                        <form id="cust-reset-form" onsubmit="CustomerAuth.handleResetPassword(event, App.currentRouteParams ? App.currentRouteParams.token : '')">
+                            <div class="form-group">
+                                <label class="form-label" for="cust-reset-pass">New Password *</label>
+                                <input type="password" class="form-control" id="cust-reset-pass" required placeholder="Minimum 6 characters" autocomplete="new-password">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 22px;">
+                                <label class="form-label" for="cust-reset-confirm">Confirm New Password *</label>
+                                <input type="password" class="form-control" id="cust-reset-confirm" required placeholder="Re-enter new password" autocomplete="new-password">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block btn-lg" id="cust-reset-btn">
+                                RESET PASSWORD
+                            </button>
+                        </form>
+                    </div>
+
+                    <div id="cust-reset-success-card" style="display: none;" class="verify-state-card">
+                        <div class="verify-icon-pulse">✓</div>
+                        <h3 style="color: #10b981; margin-bottom: 8px;">Password Reset!</h3>
+                        <p style="color: var(--color-text-muted); font-size: 0.92rem; line-height: 1.5; margin-bottom: 24px;">
+                            Your password has been successfully reset. You can now log in using your new password.
+                        </p>
+                        <button type="button" class="btn btn-primary btn-block btn-lg" onclick="App.navigate('login')">
+                            LOGIN NOW
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW: ADMIN PORTAL LOGIN STEP 1 (/admin/login) -->
+        <section id="view-admin-login" class="view-section hidden">
+            <div class="auth-page-wrapper" style="background: radial-gradient(circle at 50% 10%, rgba(225, 29, 72, 0.08) 0%, transparent 60%), #04060b !important;">
+                <div class="auth-card auth-card-admin" style="background: #090d16 !important; border: 1px solid #1e293b !important; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7) !important;">
+                    <div class="auth-header">
+                        <div class="auth-brand-emblem" style="background: #0f172a !important; border-color: #1e293b !important;">
+                            <img src="images/logo.png" alt="LAZAROPH EST 2016">
+                        </div>
+                        <div class="auth-brand-title" style="color: #ffffff !important;">LAZAROPH ADMIN</div>
+                        <div class="badge badge-brand" style="margin-bottom: 12px; font-size: 0.68rem; padding: 3px 8px;">
+                            EST 2016 • AUTHORIZED PERSONNEL ONLY
+                        </div>
+                        <h2 class="auth-page-title" style="color: #ffffff !important; font-size: 1.35rem;">Administrator Access</h2>
+                        <p class="auth-page-subtitle" style="color: #94a3b8 !important;">Step 1 of 2 — Administrator Verification</p>
+                    </div>
+
+                    <div id="admin-login-alert" class="auth-alert"></div>
+
+                    <form id="admin-login-form" onsubmit="AdminAuth.handleStep1(event)">
+                        <div class="form-group">
+                            <label class="form-label" for="admin-login-email" style="color: #cbd5e1 !important; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; display: block;">Admin Email Address *</label>
+                            <input type="email" class="form-control" id="admin-login-email" required placeholder="admin1@lazaroph.com" autocomplete="email" style="background: #0f172a !important; border: 1px solid #334155 !important; color: #ffffff !important; border-radius: 8px !important; padding: 12px 14px !important; font-size: 0.95rem !important;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 22px;">
+                            <label class="form-label" for="admin-login-password" style="color: #cbd5e1 !important; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; display: block;">Login Password *</label>
+                            <input type="password" class="form-control" id="admin-login-password" required placeholder="••••••••" autocomplete="current-password" style="background: #0f172a !important; border: 1px solid #334155 !important; color: #ffffff !important; border-radius: 8px !important; padding: 12px 14px !important; font-size: 0.95rem !important;">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block btn-lg" id="admin-login-btn">
+                            CONTINUE TO STEP 2 →
+                        </button>
+                    </form>
+
+                    <div class="auth-info-box" style="background: #0f172a !important; border: 1px solid #1e293b !important; color: #94a3b8 !important;">
+                        🔒 <strong>High-Security Restricted Portal:</strong> All access attempts are logged and monitored. Two-step cryptographic security verification is strictly enforced.
+                    </div>
+
+                    <div class="auth-footer-links" style="margin-top: 16px;">
+                        <a href="#home" onclick="App.navigate('home')" style="color: #64748b !important;">← Return to Storefront</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW: ADMIN TWO-STEP SECURITY VERIFICATION (/admin/security-verification) -->
+        <section id="view-admin-security" class="view-section hidden">
+            <div class="auth-page-wrapper" style="background: radial-gradient(circle at 50% 10%, rgba(225, 29, 72, 0.08) 0%, transparent 60%), #04060b !important;">
+                <div class="auth-card auth-card-admin" style="background: #090d16 !important; border: 1px solid #1e293b !important; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7) !important;">
+                    <div class="auth-header">
+                        <div style="font-size: 2.4rem; margin-bottom: 8px;">🛡️</div>
+                        <div class="auth-brand-title" style="color: #ffffff !important;">SECURITY VERIFICATION</div>
+                        <div class="badge badge-brand" style="margin-bottom: 12px; font-size: 0.68rem; padding: 3px 8px; background: #f59e0b; color: #000;">
+                            STEP 2 OF 2 • TWO-FACTOR PROTECTION
+                        </div>
+                        <h2 class="auth-page-title" style="color: #ffffff !important; font-size: 1.25rem;">Enter Security Password</h2>
+                        <p class="auth-page-subtitle" style="color: #94a3b8 !important;">
+                            Please provide the secondary security PIN assigned to your administrator account.
+                        </p>
+                    </div>
+
+                    <div id="admin-security-alert" class="auth-alert"></div>
+
+                    <form id="admin-security-form" onsubmit="AdminAuth.handleStep2(event)">
+                        <div class="form-group" style="margin-bottom: 22px;">
+                            <label class="form-label" style="text-align: center; display: block; color: #cbd5e1 !important; font-weight: 700; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;" for="admin-security-pin">Security Password / PIN *</label>
+                            <input type="password" class="form-control security-pin-input" id="admin-security-pin" required maxlength="12" placeholder="••••••" autocomplete="off" style="background: #0f172a !important; border: 1px solid #334155 !important; color: #ffffff !important; border-radius: 8px !important; letter-spacing: 0.5em; text-align: center; font-size: 1.5rem; font-weight: 800;">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block btn-lg" id="admin-security-btn" style="background: #e11d48 !important; color: #ffffff !important; font-weight: 800;">
+                            VERIFY SECURITY ACCESS
+                        </button>
+                    </form>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: 20px; font-size: 0.82rem;">
+                        <a href="#admin/login" onclick="App.navigate('admin/login')" style="color: #64748b; text-decoration: none;">← Back to Step 1</a>
+                        <a href="#home" onclick="AdminAuth.setPreToken(null); App.navigate('home');" style="color: #e11d48; text-decoration: none;">Cancel &amp; Exit</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- VIEW: CUSTOMER ACCOUNT -->
         <section id="view-account" class="view-section hidden">
             <!-- Populated dynamically by App.loadAccountView() -->
@@ -557,7 +896,7 @@
                 <!-- Admin Sidebar -->
                 <aside class="admin-sidebar">
                     <div class="admin-brand" style="display: flex; align-items: center; gap: 12px;">
-                        <img src="/images/logo.png" alt="LAZAROPH EST 2016" style="width: 44px; height: 44px; border-radius: 50%; object-fit: contain;">
+                        <img src="images/logo.png" alt="LAZAROPH EST 2016" style="width: 44px; height: 44px; border-radius: 50%; object-fit: contain;">
                         <div>
                             <div class="logo-text" style="font-size: 1.3rem; line-height: 1.1;">LAZAROPH</div>
                             <span class="badge badge-brand" style="font-size: 0.6rem; padding: 2px 6px;">EST 2016 • ADMIN</span>
@@ -590,6 +929,12 @@
                             </button>
                         </li>
                         <li>
+                            <button type="button" class="admin-nav-btn" data-tab="homepage-management" onclick="Admin.switchTab('homepage-management')">
+                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                Homepage Management
+                            </button>
+                        </li>
+                        <li>
                             <button type="button" class="admin-nav-btn" data-tab="inventory" onclick="Admin.switchTab('inventory')">
                                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                                 Variant Stock Matrix
@@ -599,6 +944,13 @@
                             <button type="button" class="admin-nav-btn" data-tab="orders" onclick="Admin.switchTab('orders')">
                                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                                 Customer Orders
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button" class="admin-nav-btn" data-tab="chat" onclick="Admin.switchTab('chat')">
+                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                <span>Messages</span>
+                                <span class="badge badge-danger" id="admin-chat-unread-badge" style="display:none; margin-left:auto; font-size:0.7rem; padding: 2px 6px; border-radius:10px; background:#e11d48; color:#fff;">0</span>
                             </button>
                         </li>
                         <li>
@@ -613,12 +965,27 @@
                                 Store & Admin Settings
                             </button>
                         </li>
+                        <li>
+                            <button type="button" class="admin-nav-btn" data-tab="admin-management" onclick="Admin.switchTab('admin-management')">
+                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                Admin Management
+                            </button>
+                        </li>
                     </ul>
 
                     <div class="admin-sidebar-footer">
-                        <button type="button" class="btn btn-secondary btn-block btn-sm" onclick="App.navigate('home')">
-                            ← Return to Storefront
-                        </button>
+                        <div style="padding: 10px 12px; background: rgba(0,0,0,0.3); border: 1px solid #1e293b; border-radius: 6px; margin-bottom: 10px;">
+                            <div style="font-size: 0.68rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">SUPER ADMIN</div>
+                            <div id="admin-sidebar-user-name" style="font-size: 0.85rem; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Clark Montoya</div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="btn btn-secondary btn-sm" style="flex: 1; padding: 6px 10px; font-size: 0.75rem;" onclick="App.navigate('home')">
+                                Storefront
+                            </button>
+                            <button type="button" class="btn btn-sm" style="background: #e11d48; color: #fff; font-weight: 700; font-size: 0.75rem; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer;" onclick="AdminAuth.logout()">
+                                Logout
+                            </button>
+                        </div>
                     </div>
                 </aside>
 
@@ -638,7 +1005,7 @@
                 <!-- Brand & Tagline -->
                 <div class="footer-brand">
                     <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 16px;">
-                        <img src="/images/logo.png" alt="LAZAROPH EST 2016" style="width: 58px; height: 58px; object-fit: contain; border-radius: 50%;">
+                        <img src="images/logo.png" alt="LAZAROPH EST 2016" style="width: 58px; height: 58px; object-fit: contain; border-radius: 50%;">
                         <div>
                             <div class="logo-text" style="color: #ffffff; font-size: 1.6rem; line-height: 1;">LAZAROPH</div>
                             <span style="font-size: 0.68rem; font-weight: 800; letter-spacing: 0.14em; color: #a3a3a3;">EST. 2016 • MARIKINA CITY</span>
@@ -648,11 +1015,6 @@
                     <p class="footer-tagline-desc">
                         "We sell authentic sneaker, apparel and watch. All are guaranteed legit at below market price."
                     </p>
-                    <div class="social-links">
-                        <a href="https://facebook.com/LazaroPH" target="_blank" rel="noopener" class="social-icon-btn" title="Facebook: LazaroPH">FB</a>
-                        <a href="https://instagram.com" target="_blank" rel="noopener" class="social-icon-btn" title="Instagram: Lazaro Philippines">IG</a>
-                        <a href="mailto:lazarophilippines20@gmail.com" class="social-icon-btn" title="Email Us">✉</a>
-                    </div>
                 </div>
 
                 <!-- Quick Navigation Links -->
@@ -679,17 +1041,12 @@
                     </ul>
                 </div>
 
-                <!-- Physical Store Branches -->
+                <!-- Physical Store -->
                 <div>
-                    <h4 class="footer-column-title">Store Branches</h4>
+                    <h4 class="footer-column-title">Physical Store</h4>
                     <div class="footer-branch-item">
-                        <div class="footer-branch-name">📍 Branch 1 — Concepcion Uno</div>
+                        <div class="footer-branch-name">📍 Flagship Store — Concepcion Uno</div>
                         <div class="footer-branch-text">911 J.P. Rizal St., Concepcion Uno, Marikina (1805)</div>
-                        <div class="footer-branch-text">Tel: <strong>282948572</strong> • Mon–Sun 11AM–8PM</div>
-                    </div>
-                    <div class="footer-branch-item">
-                        <div class="footer-branch-name">📍 Branch 2 — Malanday</div>
-                        <div class="footer-branch-text">32 F. E. Mendoza St., Malanday, Marikina (1805)</div>
                         <div class="footer-branch-text">Tel: <strong>282948572</strong> • Mon–Sun 11AM–8PM</div>
                     </div>
                 </div>
@@ -821,101 +1178,20 @@
     <!-- 6. TOAST NOTIFICATION CONTAINER -->
     <div id="toast-container"></div>
 
-    <!-- 7. SITE FOOTER -->
-    <footer class="site-footer" id="site-footer">
-        <div class="container">
-            <div class="footer-grid">
-                <!-- Brand & Mission Column -->
-                <div class="footer-brand">
-                    <div class="logo-text">LAZAROPH</div>
-                    <div class="footer-tagline-bold">AUTHENTIC. LEGIT. BELOW MARKET PRICE.</div>
-                    <p class="footer-tagline-desc">
-                        "We sell authentic sneaker, apparel and watch. All are guaranteed legit at below market price."
-                    </p>
-                    <div class="social-links">
-                        <a href="https://facebook.com/LazaroPH" target="_blank" rel="noopener" class="social-icon-btn" title="Facebook — LazaroPH">
-                            f
-                        </a>
-                        <a href="https://instagram.com/LazaroPhilippines" target="_blank" rel="noopener" class="social-icon-btn" title="Instagram — Lazaro Philippines">
-                            📸
-                        </a>
-                        <a href="mailto:lazarophilippines20@gmail.com" class="social-icon-btn" title="Email Us">
-                            ✉
-                        </a>
-                    </div>
-                </div>
 
-                <!-- Quick Shop Column -->
-                <div>
-                    <h4 class="footer-column-title">SHOP</h4>
-                    <ul class="footer-links">
-                        <li><a href="#shop?gender=MEN" onclick="App.navigate('shop', { gender: 'MEN' })">Men's Sneakers & Apparel</a></li>
-                        <li><a href="#shop?gender=WOMEN" onclick="App.navigate('shop', { gender: 'WOMEN' })">Women's Collection</a></li>
-                        <li><a href="#shop?gender=KIDS" onclick="App.navigate('shop', { gender: 'KIDS' })">Kids' Footwear</a></li>
-                        <li><a href="#shop?category=Shoes" onclick="App.navigate('shop', { category: 'Shoes' })">All Shoes</a></li>
-                        <li><a href="#shop?category=Apparel" onclick="App.navigate('shop', { category: 'Apparel' })">Sportswear & Tees</a></li>
-                        <li><a href="#customizer" onclick="App.navigate('customizer')">Customized Jerseys</a></li>
-                        <li><a href="#shop?category=Watches" onclick="App.navigate('shop', { category: 'Watches' })">Authentic Watches</a></li>
-                    </ul>
-                </div>
-
-                <!-- Customer Service Column -->
-                <div>
-                    <h4 class="footer-column-title">CUSTOMER SERVICE</h4>
-                    <ul class="footer-links">
-                        <li><a href="#order-track" onclick="App.navigate('order-track')">Track Your Order</a></li>
-                        <li><a href="javascript:void(0)" onclick="showToast('Authenticity Guarantee: 100% money back if found unauthentic.', 'info')">Authenticity Guarantee</a></li>
-                        <li><a href="javascript:void(0)" onclick="showToast('Shipping: Metro Manila 1-3 days, Provincial 3-7 days.', 'info')">Shipping & Delivery</a></li>
-                        <li><a href="javascript:void(0)" onclick="showToast('Returns: 7-day hassle-free replacement on unworn items.', 'info')">Return Policy</a></li>
-                        <li><a href="mailto:lazarophilippines20@gmail.com">Contact Support</a></li>
-                    </ul>
-                </div>
-
-                <!-- Physical Store Branches Column -->
-                <div>
-                    <h4 class="footer-column-title">OUR BRANCHES</h4>
-                    <div class="footer-branch-item">
-                        <div class="footer-branch-name">📍 CONCEPCION UNO BRANCH</div>
-                        <div class="footer-branch-text">
-                            911 J.P. Rizal Street, Concepcion Uno, Marikina, 1805 Metro Manila
-                        </div>
-                    </div>
-                    <div class="footer-branch-item">
-                        <div class="footer-branch-name">📍 MALANDAY BRANCH</div>
-                        <div class="footer-branch-text">
-                            32 F. E. Mendoza Street, Malanday, Marikina, 1805 Metro Manila
-                        </div>
-                    </div>
-                    <div style="margin-top: 12px; font-size: 0.82rem; color: var(--color-text-secondary);">
-                        <div>Hours: <strong>Mon – Sun: 11:00 AM – 8:00 PM</strong></div>
-                        <div>Phone: <strong>282948572</strong></div>
-                        <div>Email: <strong>lazarophilippines20@gmail.com</strong></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Footer Bottom -->
-            <div class="footer-bottom">
-                <div>© 2026 LAZAROPH. All Rights Reserved. Guaranteed Authentic Sportswear & Timepieces.</div>
-                <div style="display: flex; gap: 20px;">
-                    <span>Marikina City, Philippines</span>
-                    <a href="javascript:void(0)" onclick="Auth.openAuthModal('login')">Account Access</a>
-                </div>
-            </div>
-        </div>
-    </footer>
 
     <!-- JavaScript Application Modules -->
     <script src="/js/api.js"></script>
     <script src="/js/auth.js"></script>
     <script src="/js/brands.js"></script>
     <script src="/js/store.js"></script>
-    <script src="/js/product-detail.js"></script>
+    <script src="/js/product-detail.js?v=20260826_1branch"></script>
     <script src="/js/customizer.js"></script>
     <script src="/js/cart.js"></script>
-    <script src="/js/checkout.js"></script>
+    <script src="/js/checkout.js?v=20260826_1branch"></script>
     <script src="/js/orders.js"></script>
-    <script src="/js/admin.js"></script>
-    <script src="/js/app.js"></script>
+    <script src="/js/chat.js?v=20260826_v4"></script>
+    <script src="/js/admin.js?v=20260826_v4"></script>
+    <script src="/js/app.js?v=20260826_v4"></script>
 </body>
 </html>

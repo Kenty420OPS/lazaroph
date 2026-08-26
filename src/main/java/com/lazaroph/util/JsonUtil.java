@@ -85,6 +85,21 @@ public class JsonUtil {
             m.put("imageUrl", c.getImageUrl());
             return toJson(m);
         }
+        if (obj instanceof FeaturedCategory) {
+            FeaturedCategory fc = (FeaturedCategory) obj;
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("key", fc.getKey());
+            m.put("name", fc.getName());
+            m.put("badge", fc.getBadge());
+            m.put("description", fc.getDescription());
+            m.put("buttonText", fc.getButtonText());
+            m.put("targetRoute", fc.getTargetRoute());
+            m.put("cardSize", fc.getCardSize());
+            m.put("imageUrl", fc.getImageUrl());
+            m.put("updatedAt", fc.getUpdatedAt());
+            m.put("updatedBy", fc.getUpdatedBy());
+            return toJson(m);
+        }
         if (obj instanceof Brand) {
             Brand b = (Brand) obj;
             Map<String, Object> m = new LinkedHashMap<>();
@@ -204,9 +219,73 @@ public class JsonUtil {
             m.put("shippingFee", o.getShippingFee());
             m.put("total", o.getTotal());
             m.put("status", o.getStatus());
+            m.put("courier", o.getCourier());
+            m.put("courierTrackingNumber", o.getCourierTrackingNumber());
+            m.put("courierTrackingUrl", o.getCourierTrackingUrl());
+            m.put("courierStatus", o.getCourierStatus());
+            m.put("pickupBranch", o.getPickupBranch());
+            m.put("driverName", o.getDriverName());
+            m.put("driverPhone", o.getDriverPhone());
+            m.put("driverPlate", o.getDriverPlate());
+            m.put("estimatedDelivery", o.getEstimatedDelivery());
+            m.put("waybillUrl", o.getWaybillUrl());
             m.put("notes", o.getNotes());
+            m.put("deliveryFeeConfirmed", o.isDeliveryFeeConfirmed());
+            m.put("riderName", o.getRiderName());
+            m.put("riderPhone", o.getRiderPhone());
+            m.put("estimatedDeliveryTime", o.getEstimatedDeliveryTime());
+            m.put("lbcTrackingNumber", o.getLbcTrackingNumber());
+            m.put("shippingDate", o.getShippingDate());
+            m.put("estimatedDeliveryDate", o.getEstimatedDeliveryDate());
+            m.put("deliveryNotes", o.getDeliveryNotes());
             m.put("createdAt", o.getCreatedAt());
             m.put("items", o.getItems());
+            return toJson(m);
+        }
+        if (obj instanceof Conversation) {
+            Conversation conv = (Conversation) obj;
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", conv.getId());
+            m.put("customerId", conv.getCustomerId());
+            m.put("customerName", conv.getCustomerName());
+            m.put("customerEmail", conv.getCustomerEmail());
+            m.put("customerPhone", conv.getCustomerPhone());
+            m.put("orderId", conv.getOrderId());
+            m.put("orderNumber", conv.getOrderNumber());
+            m.put("lastMessage", conv.getLastMessage());
+            m.put("lastMessageTime", conv.getLastMessageTime());
+            m.put("unreadCustomerCount", conv.getUnreadCustomerCount());
+            m.put("unreadAdminCount", conv.getUnreadAdminCount());
+            m.put("status", conv.getStatus());
+            m.put("createdAt", conv.getCreatedAt());
+            m.put("updatedAt", conv.getUpdatedAt());
+            return toJson(m);
+        }
+        if (obj instanceof ChatMessage) {
+            ChatMessage msg = (ChatMessage) obj;
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", msg.getId());
+            m.put("conversationId", msg.getConversationId());
+            m.put("senderId", msg.getSenderId());
+            m.put("senderName", msg.getSenderName());
+            m.put("senderRole", msg.getSenderRole());
+            m.put("message", msg.getMessage());
+            m.put("imageUrl", msg.getImageUrl());
+            m.put("messageType", msg.getMessageType());
+            m.put("isRead", msg.isRead());
+            m.put("createdAt", msg.getCreatedAt());
+            return toJson(m);
+        }
+        if (obj instanceof com.lazaroph.service.CourierService.CourierQuote) {
+            com.lazaroph.service.CourierService.CourierQuote q = (com.lazaroph.service.CourierService.CourierQuote) obj;
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("courier", q.courier);
+            m.put("courierName", q.courierName);
+            m.put("fee", q.fee);
+            m.put("formattedFee", q.formattedFee);
+            m.put("estimatedDelivery", q.estimatedDelivery);
+            m.put("isAvailable", q.isAvailable);
+            m.put("note", q.note);
             return toJson(m);
         }
         if (obj instanceof CustomOrder) {
@@ -242,6 +321,47 @@ public class JsonUtil {
             m.put("lowStockProducts", ds.getLowStockProducts());
             m.put("salesByCategory", ds.getSalesByCategory());
             m.put("dailySalesTrend", ds.getDailySalesTrend());
+            return toJson(m);
+        }
+        if (obj instanceof CustomerUser) {
+            CustomerUser cu = (CustomerUser) obj;
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", cu.getId());
+            m.put("name", cu.getName());
+            m.put("email", cu.getEmail());
+            m.put("phone", cu.getPhone());
+            m.put("address", cu.getAddress());
+            m.put("city", cu.getCity());
+            m.put("province", cu.getProvince());
+            m.put("zipCode", cu.getZipCode());
+            m.put("status", cu.getStatus());
+            m.put("isVerified", cu.isVerified());
+            m.put("createdAt", cu.getCreatedAt());
+            return toJson(m);
+        }
+        if (obj instanceof AdminUser) {
+            AdminUser au = (AdminUser) obj;
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", au.getId());
+            m.put("name", au.getName());
+            m.put("email", au.getEmail());
+            m.put("role", au.getRole());
+            m.put("status", au.getStatus());
+            m.put("isLocked", au.isLocked());
+            m.put("createdAt", au.getCreatedAt());
+            return toJson(m);
+        }
+        if (obj instanceof com.lazaroph.service.AuthService.SimulatedEmail) {
+            com.lazaroph.service.AuthService.SimulatedEmail se = (com.lazaroph.service.AuthService.SimulatedEmail) obj;
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("toEmail", se.toEmail);
+            m.put("toName", se.toName);
+            m.put("subject", se.subject);
+            m.put("type", se.type);
+            m.put("token", se.token);
+            m.put("actionUrl", se.actionUrl);
+            m.put("snippet", se.snippet);
+            m.put("sentAt", se.sentAt);
             return toJson(m);
         }
 

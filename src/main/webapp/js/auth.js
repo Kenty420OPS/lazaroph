@@ -1,42 +1,794 @@
 /**
- * LAZAROPH — Authentication & User State Module
+ * LAZAROPH — Complete Customer & Administrator Authentication System
+ * 
+ * Strict logical, visual, and architectural separation between Customer and Admin domains.
  */
 
-const Auth = {
-    currentUser: null,
+// =========================================================================
+// 1. CUSTOMER AUTHENTICATION
+// =========================================================================
+const CustomerAuth = {
+    TOKEN_KEY: 'lazaroph_customer_token',
+    USER_KEY: 'lazaroph_customer_user',
+    currentCustomer: null,
 
-    async init() {
-        const token = API.getToken();
+    getToken() {
+        return localStorage.getItem(this.TOKEN_KEY) || '';
+    },
+
+    setToken(token) {
         if (token) {
-            try {
-                this.currentUser = await API.getMe();
-                this.updateUI();
-            } catch (e) {
-                console.warn('Session expired or invalid:', e);
-                API.setToken(null);
-                this.currentUser = null;
-                this.updateUI();
+            localStorage.setItem(this.TOKEN_KEY, token);
+            // Also sync to active API token if not in admin context
+            if (!AdminAuth.getToken()) {
+                localStorage.setItem('lazaroph_token', token);
             }
         } else {
-            this.updateUI();
+            localStorage.removeItem(this.TOKEN_KEY);
+            if (!AdminAuth.getToken()) {
+                localStorage.removeItem('lazaroph_token');
+            }
         }
+    },
+
+    getCustomer() {
+        if (this.currentCustomer) return this.currentCustomer;
+        const saved = localStorage.getItem(this.USER_KEY);
+        if (saved) {
+            try { this.currentCustomer = JSON.parse(saved); } catch (e) {}
+        }
+        return this.currentCustomer;
+    },
+
+    setCustomer(user) {
+        this.currentCustomer = user;
+        if (user) {
+            localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+        } else {
+            localStorage.removeItem(this.USER_KEY);
+        }
+        Auth.updateUI();
+    },
+
+    isLoggedIn() {
+        return !!this.getToken() && !!this.getCustomer();
+    },
+
+    async init() {
+        const token = this.getToken();
+        if (token) {
+            try {
+                // Temporarily set active API token to customer token for verification
+                const prev = API.getToken();
+                API.setToken(token);
+                const user = await API.customerGetMe();
+                this.setCustomer(user);
+            } catch (err) {
+                console.warn('[CustomerAuth] Session expired:', err.message);
+                this.setToken(null);
+                this.setCustomer(null);
+            }
+        } else {
+            this.setCustomer(null);
+        }
+    },
+
+    // Customer Login Handler
+    async handleLogin(event) {
+        if (event) event.preventDefault();
+        const emailEl = document.getElementById('cust-login-email');
+        const passEl = document.getElementById('cust-login-password');
+        const alertEl = document.getElementById('cust-login-alert');
+        const btn = document.getElementById('cust-login-btn');
+
+        if (!emailEl || !passEl) return;
+        const email = emailEl.value.trim();
+        const password = passEl.value;
+
+        if (alertEl) {
+            alertEl.style.display = 'none';
+            alertEl.innerHTML = '';
+        }
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="btn-spinner"></span> LOGGING IN...';
+        }
+
+        try {
+            const data = await API.customerLogin(email, password);
+            this.setToken(data.token);
+            this.setCustomer(data.customer);
+            showToast(`Welcome back, ${data.customer.name}!`, 'success');
+
+            // Redirect to customer account or previous destination
+            if (window.location.hash === '#login' || window.location.hash.startsWith('#login')) {
+                App.navigate('account');
+            } else {
+                App.navigate('home');
+            }
+        } catch (err) {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = 'LOGIN';
+            }
+
+            const isPending = (err.data && err.data.status === 'PENDING') || (err.message && err.message.includes('verify your email'));
+
+            if (alertEl) {
+                alertEl.style.display = 'block';
+                if (isPending) {
+                    alertEl.className = 'auth-alert auth-alert-warning';
+                    alertEl.innerHTML = `
+                        <div style="font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                            <span>⚠️ Email Verification Required</span>
+                        </div>
+                        <div style="font-size: 0.88rem; line-height: 1.4; margin-bottom: 10px;">
+                            Please verify your email address before logging in. We previously sent an activation link to <strong>${escapeHtml(email)}</strong>.
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="CustomerAuth.resendVerification('${escapeHtml(email)}')">
+                            📧 Resend Verification Email
+                        </button>
+                    `;
+                } else {
+                    alertEl.className = 'auth-alert auth-alert-error';
+                    alertEl.innerHTML = `<span>❌ ${escapeHtml(err.message || 'Invalid email or password.')}</span>`;
+                }
+            } else {
+                showToast(err.message, 'error');
+            }
+        } finally {
+            if (btn && !this.isLoggedIn()) {
+                btn.disabled = false;
+                btn.innerHTML = 'LOGIN';
+            }
+        }
+    },
+
+    // Customer Registration Handler
+    async handleRegister(event) {
+        if (event) event.preventDefault();
+        const nameEl = document.getElementById('cust-reg-name');
+        const emailEl = document.getElementById('cust-reg-email');
+        const passEl = document.getElementById('cust-reg-password');
+        const confirmEl = document.getElementById('cust-reg-confirm');
+        const alertEl = document.getElementById('cust-reg-alert');
+        const btn = document.getElementById('cust-reg-btn');
+
+        if (!nameEl || !emailEl || !passEl || !confirmEl) return;
+        const name = nameEl.value.trim();
+        const email = emailEl.value.trim();
+        const password = passEl.value;
+        const confirmPassword = confirmEl.value;
+
+        if (alertEl) {
+            alertEl.style.display = 'none';
+            alertEl.innerHTML = '';
+        }
+
+        if (password !== confirmPassword) {
+            if (alertEl) {
+                alertEl.style.display = 'block';
+                alertEl.className = 'auth-alert auth-alert-error';
+                alertEl.innerHTML = '<span>❌ Passwords do not match. Please re-enter your password.</span>';
+            } else {
+                showToast('Passwords do not match.', 'error');
+            }
+            return;
+        }
+
+        if (password.length < 6) {
+            if (alertEl) {
+                alertEl.style.display = 'block';
+                alertEl.className = 'auth-alert auth-alert-error';
+                alertEl.innerHTML = '<span>❌ Password must be at least 6 characters long.</span>';
+            } else {
+                showToast('Password must be at least 6 characters.', 'error');
+            }
+            return;
+        }
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="btn-spinner"></span> CREATING ACCOUNT...';
+        }
+
+        try {
+            const data = await API.customerRegister({ name, email, password, confirmPassword });
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = 'CREATE ACCOUNT';
+            }
+
+            // Show success state on register card
+            const formContainer = document.getElementById('cust-reg-form-container');
+            const successContainer = document.getElementById('cust-reg-success-container');
+            if (formContainer && successContainer) {
+                formContainer.style.display = 'none';
+                successContainer.style.display = 'block';
+                const emailSpan = document.getElementById('cust-reg-success-email');
+                if (emailSpan) emailSpan.textContent = email;
+            } else {
+                showToast('Account created! Please verify your email.', 'success');
+                App.navigate('login');
+            }
+
+            // Trigger preview check of simulated email
+            EmailSimulator.checkNewEmail();
+        } catch (err) {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = 'CREATE ACCOUNT';
+            }
+            if (alertEl) {
+                alertEl.style.display = 'block';
+                alertEl.className = 'auth-alert auth-alert-error';
+                alertEl.innerHTML = `<span>❌ ${escapeHtml(err.message)}</span>`;
+            } else {
+                showToast(err.message, 'error');
+            }
+        }
+    },
+
+    // Resend Verification Link
+    async resendVerification(email) {
+        try {
+            showToast('Sending new verification email...', 'info');
+            await API.customerResendVerification(email);
+            showToast('Verification email resent! Please check your inbox.', 'success');
+            EmailSimulator.checkNewEmail();
+        } catch (err) {
+            showToast(err.message, 'error');
+        }
+    },
+
+    // Verify Email Execution (when visiting /verify-email?token=...)
+    async runVerifyEmail(token) {
+        const loadingCard = document.getElementById('verify-loading-card');
+        const successCard = document.getElementById('verify-success-card');
+        const errorCard = document.getElementById('verify-error-card');
+        const errorMsg = document.getElementById('verify-error-message');
+
+        if (loadingCard) loadingCard.style.display = 'block';
+        if (successCard) successCard.style.display = 'none';
+        if (errorCard) errorCard.style.display = 'none';
+
+        try {
+            const res = await API.customerVerifyEmail(token);
+            if (loadingCard) loadingCard.style.display = 'none';
+            if (successCard) successCard.style.display = 'block';
+            showToast('Email verified successfully! You can now log in.', 'success');
+        } catch (err) {
+            if (loadingCard) loadingCard.style.display = 'none';
+            if (errorCard) {
+                errorCard.style.display = 'block';
+                if (errorMsg) errorMsg.textContent = err.message || 'Invalid or expired verification link.';
+            }
+            showToast(err.message, 'error');
+        }
+    },
+
+    // Customer Forgot Password
+    async handleForgotPassword(event) {
+        if (event) event.preventDefault();
+        const emailEl = document.getElementById('cust-forgot-email');
+        const alertEl = document.getElementById('cust-forgot-alert');
+        const btn = document.getElementById('cust-forgot-btn');
+        if (!emailEl) return;
+
+        const email = emailEl.value.trim();
+        if (!email) return;
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="btn-spinner"></span> SENDING...';
+        }
+
+        try {
+            await API.customerForgotPassword(email);
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = 'SEND PASSWORD RESET LINK';
+            }
+            if (alertEl) {
+                alertEl.style.display = 'block';
+                alertEl.className = 'auth-alert auth-alert-success';
+                alertEl.innerHTML = `
+                    <div style="font-weight: 700; margin-bottom: 4px;">✅ Check Your Email</div>
+                    <div>If an account exists for <strong>${escapeHtml(email)}</strong>, we have sent a password reset link. Please check your inbox or local email preview.</div>
+                `;
+            }
+            EmailSimulator.checkNewEmail();
+        } catch (err) {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = 'SEND PASSWORD RESET LINK';
+            }
+            if (alertEl) {
+                alertEl.style.display = 'block';
+                alertEl.className = 'auth-alert auth-alert-error';
+                alertEl.innerHTML = `<span>❌ ${escapeHtml(err.message)}</span>`;
+            }
+        }
+    },
+
+    // Customer Reset Password
+    async handleResetPassword(event, token) {
+        if (event) event.preventDefault();
+        const passEl = document.getElementById('cust-reset-pass');
+        const confirmEl = document.getElementById('cust-reset-confirm');
+        const alertEl = document.getElementById('cust-reset-alert');
+        const btn = document.getElementById('cust-reset-btn');
+
+        if (!passEl || !confirmEl) return;
+        const newPassword = passEl.value;
+        const confirmPassword = confirmEl.value;
+
+        if (newPassword !== confirmPassword) {
+            if (alertEl) {
+                alertEl.style.display = 'block';
+                alertEl.className = 'auth-alert auth-alert-error';
+                alertEl.innerHTML = '<span>❌ Passwords do not match. Please re-enter your password.</span>';
+            }
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            if (alertEl) {
+                alertEl.style.display = 'block';
+                alertEl.className = 'auth-alert auth-alert-error';
+                alertEl.innerHTML = '<span>❌ Password must be at least 6 characters long.</span>';
+            }
+            return;
+        }
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="btn-spinner"></span> RESETTING PASSWORD...';
+        }
+
+        try {
+            await API.customerResetPassword(token, newPassword, confirmPassword);
+            const formCard = document.getElementById('cust-reset-form-card');
+            const successCard = document.getElementById('cust-reset-success-card');
+            if (formCard && successCard) {
+                formCard.style.display = 'none';
+                successCard.style.display = 'block';
+            } else {
+                showToast('Password reset successfully! You can now log in.', 'success');
+                App.navigate('login');
+            }
+        } catch (err) {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = 'RESET PASSWORD';
+            }
+            if (alertEl) {
+                alertEl.style.display = 'block';
+                alertEl.className = 'auth-alert auth-alert-error';
+                alertEl.innerHTML = `<span>❌ ${escapeHtml(err.message)}</span>`;
+            } else {
+                showToast(err.message, 'error');
+            }
+        }
+    },
+
+    // Customer Logout
+    async logout() {
+        try {
+            await API.customerLogout();
+        } catch (ignored) {}
+        this.setToken(null);
+        this.setCustomer(null);
+        showToast('Logged out of customer account.', 'info');
+        App.navigate('login');
+    }
+};
+
+// =========================================================================
+// 2. ADMINISTRATOR TWO-STEP AUTHENTICATION
+// =========================================================================
+const AdminAuth = {
+    TOKEN_KEY: 'lazaroph_admin_token',
+    PRETOKEN_KEY: 'lazaroph_admin_pretoken',
+    ADMIN_USER_KEY: 'lazaroph_admin_user',
+    currentAdmin: null,
+
+    getToken() {
+        return localStorage.getItem(this.TOKEN_KEY) || '';
+    },
+
+    setToken(token) {
+        if (token) {
+            localStorage.setItem(this.TOKEN_KEY, token);
+            localStorage.setItem('lazaroph_token', token); // Set main API bearer
+        } else {
+            localStorage.removeItem(this.TOKEN_KEY);
+            // Revert main API bearer to customer token if logged in, else null
+            const custToken = CustomerAuth.getToken();
+            if (custToken) {
+                localStorage.setItem('lazaroph_token', custToken);
+            } else {
+                localStorage.removeItem('lazaroph_token');
+            }
+        }
+    },
+
+    getPreToken() {
+        return sessionStorage.getItem(this.PRETOKEN_KEY) || '';
+    },
+
+    setPreToken(token) {
+        if (token) {
+            sessionStorage.setItem(this.PRETOKEN_KEY, token);
+        } else {
+            sessionStorage.removeItem(this.PRETOKEN_KEY);
+        }
+    },
+
+    getAdmin() {
+        if (this.currentAdmin) return this.currentAdmin;
+        const saved = localStorage.getItem(this.ADMIN_USER_KEY);
+        if (saved) {
+            try { this.currentAdmin = JSON.parse(saved); } catch (e) {}
+        }
+        return this.currentAdmin;
+    },
+
+    setAdmin(user) {
+        this.currentAdmin = user;
+        if (user) {
+            localStorage.setItem(this.ADMIN_USER_KEY, JSON.stringify(user));
+        } else {
+            localStorage.removeItem(this.ADMIN_USER_KEY);
+        }
+        Auth.updateUI();
+    },
+
+    isVerified() {
+        return !!this.getToken() && !!this.getAdmin();
+    },
+
+    async init() {
+        const token = this.getToken();
+        if (token) {
+            try {
+                API.setToken(token);
+                const admin = await API.adminGetMe();
+                this.setAdmin(admin);
+            } catch (err) {
+                console.warn('[AdminAuth] Admin session expired:', err.message);
+                this.setToken(null);
+                this.setAdmin(null);
+            }
+        } else {
+            this.setAdmin(null);
+        }
+    },
+
+    // Step 1: Email + Login Password
+    async handleStep1(event) {
+        if (event) event.preventDefault();
+        const emailEl = document.getElementById('admin-login-email');
+        const passEl = document.getElementById('admin-login-password');
+        const alertEl = document.getElementById('admin-login-alert');
+        const btn = document.getElementById('admin-login-btn');
+
+        if (!emailEl || !passEl) return;
+        const email = emailEl.value.trim();
+        const password = passEl.value;
+
+        if (alertEl) {
+            alertEl.style.display = 'none';
+            alertEl.innerHTML = '';
+        }
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="btn-spinner"></span> VERIFYING STEP 1...';
+        }
+
+        try {
+            const data = await API.adminLoginStep1(email, password);
+            this.setPreToken(data.preAuthToken);
+            sessionStorage.setItem('lazaroph_admin_pre_name', data.adminName || 'Super Admin');
+            sessionStorage.setItem('lazaroph_admin_pre_email', data.adminEmail || email);
+
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = 'CONTINUE TO STEP 2';
+            }
+
+            showToast('Step 1 verified. Please enter your Security Password.', 'info');
+            App.navigate('admin/security-verification');
+        } catch (err) {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = 'CONTINUE TO STEP 2';
+            }
+            if (alertEl) {
+                alertEl.style.display = 'block';
+                alertEl.className = 'auth-alert auth-alert-error';
+                alertEl.innerHTML = `<span>❌ ${escapeHtml(err.message || 'Invalid administrator credentials.')}</span>`;
+            } else {
+                showToast(err.message, 'error');
+            }
+        }
+    },
+
+    // Step 2: Security Password / PIN Verification
+    async handleStep2(event) {
+        if (event) event.preventDefault();
+        const pinEl = document.getElementById('admin-security-pin');
+        const alertEl = document.getElementById('admin-security-alert');
+        const btn = document.getElementById('admin-security-btn');
+        const preToken = this.getPreToken();
+
+        if (!preToken) {
+            showToast('Session expired. Please restart login from Step 1.', 'error');
+            App.navigate('admin/login');
+            return;
+        }
+
+        if (!pinEl) return;
+        const securityPassword = pinEl.value.trim();
+
+        if (alertEl) {
+            alertEl.style.display = 'none';
+            alertEl.innerHTML = '';
+        }
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="btn-spinner"></span> VERIFYING PIN...';
+        }
+
+        try {
+            const data = await API.adminVerifyStep2(preToken, securityPassword);
+            this.setToken(data.adminToken);
+            this.setAdmin(data.admin);
+            this.setPreToken(null);
+            sessionStorage.removeItem('lazaroph_admin_pre_name');
+            sessionStorage.removeItem('lazaroph_admin_pre_email');
+
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = 'VERIFY SECURITY ACCESS';
+            }
+
+            showToast(`Welcome, ${data.admin.name}! Two-step security verified.`, 'success');
+            App.navigate('admin');
+        } catch (err) {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = 'VERIFY SECURITY ACCESS';
+            }
+            if (alertEl) {
+                alertEl.style.display = 'block';
+                alertEl.className = 'auth-alert auth-alert-error';
+                alertEl.innerHTML = `<span>❌ ${escapeHtml(err.message || 'Incorrect security password.')}</span>`;
+            } else {
+                showToast(err.message, 'error');
+            }
+        }
+    },
+
+    // Admin Logout
+    async logout() {
+        const token = this.getToken();
+        if (token) {
+            try {
+                API.setToken(token);
+                await API.adminLogout();
+            } catch (ignored) {}
+        }
+        this.setToken(null);
+        this.setAdmin(null);
+        this.setPreToken(null);
+        showToast('Administrator session ended securely.', 'info');
+        App.navigate('admin/login');
+    }
+};
+
+// =========================================================================
+// 3. LIVE EMAIL SIMULATOR (DEV / LOCAL TESTING MODAL)
+// =========================================================================
+const EmailSimulator = {
+    emails: [],
+    lastCheckedId: null,
+
+    async checkNewEmail() {
+        try {
+            const emails = await API.getSimulatedEmails();
+            if (emails && emails.length > 0) {
+                this.emails = emails;
+                const latest = emails[0];
+                if (latest.token !== this.lastCheckedId) {
+                    this.lastCheckedId = latest.token;
+                    this.showNotification(latest);
+                }
+            }
+        } catch (e) {}
+    },
+
+    showNotification(email) {
+        const isVerify = email.type === 'VERIFICATION';
+        const actionLabel = isVerify ? 'VERIFY MY EMAIL' : 'RESET MY PASSWORD';
+        const actionHash = isVerify ? `#verify-email?token=${email.token}` : `#reset-password?token=${email.token}`;
+
+        // Show prominent toast with direct action link
+        const toastId = 'toast-email-' + Date.now();
+        const toast = document.createElement('div');
+        toast.className = 'toast toast-email-preview';
+        toast.id = toastId;
+        toast.style.cssText = 'background: #0f172a; border: 1px solid #00c853; box-shadow: 0 10px 25px rgba(0,200,83,0.3); padding: 14px 18px; border-radius: 8px; margin-bottom: 10px; max-width: 420px;';
+        toast.innerHTML = `
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <span style="font-size: 1.5rem;">📬</span>
+                <div style="flex: 1;">
+                    <div style="font-size: 0.75rem; color: #00c853; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
+                        Simulated Email Delivered
+                    </div>
+                    <div style="font-size: 0.92rem; font-weight: 600; color: #ffffff; margin: 2px 0;">
+                        ${escapeHtml(email.subject)}
+                    </div>
+                    <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 8px;">
+                        To: <strong>${escapeHtml(email.toEmail)}</strong>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <a href="${actionHash}" class="btn btn-sm" style="background: #00c853; color: #000; font-weight: 700; padding: 4px 10px;" onclick="document.getElementById('${toastId}').remove()">
+                            ${actionLabel}
+                        </a>
+                        <button class="btn btn-sm btn-secondary" style="padding: 4px 8px;" onclick="EmailSimulator.openModal()">
+                            View Email
+                        </button>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('${toastId}').remove()" style="background: none; border: none; color: #64748b; font-size: 1.1rem; cursor: pointer;">&times;</button>
+            </div>
+        `;
+        const container = document.getElementById('toast-container');
+        if (container) container.appendChild(toast);
+    },
+
+    async openModal() {
+        try {
+            const emails = await API.getSimulatedEmails();
+            this.emails = emails || [];
+        } catch (e) {}
+
+        let modal = document.getElementById('modal-email-simulator');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'modal-email-simulator';
+            modal.className = 'modal';
+            document.body.appendChild(modal);
+        }
+
+        const latest = this.emails.length > 0 ? this.emails[0] : null;
+        if (!latest) {
+            modal.innerHTML = `
+                <div class="modal-backdrop" onclick="EmailSimulator.closeModal()"></div>
+                <div class="modal-content" style="max-width: 520px; text-align: center; padding: 30px;">
+                    <div style="font-size: 3rem; margin-bottom: 12px;">📭</div>
+                    <h3 style="margin-bottom: 8px;">No Emails Sent Yet</h3>
+                    <p style="color: var(--color-text-muted); font-size: 0.9rem;">
+                        Register a customer account or request a password reset to see simulated emails here.
+                    </p>
+                    <button class="btn btn-secondary" style="margin-top: 16px;" onclick="EmailSimulator.closeModal()">Close</button>
+                </div>
+            `;
+            modal.classList.add('active');
+            return;
+        }
+
+        const isVerify = latest.type === 'VERIFICATION';
+        const actionLabel = isVerify ? 'VERIFY MY EMAIL' : 'RESET MY PASSWORD';
+        const actionHash = isVerify ? `#verify-email?token=${latest.token}` : `#reset-password?token=${latest.token}`;
+
+        modal.innerHTML = `
+            <div class="modal-backdrop" onclick="EmailSimulator.closeModal()"></div>
+            <div class="modal-content" style="max-width: 560px; padding: 0; overflow: hidden; border: 1px solid var(--color-border); background: #0f172a;">
+                <div style="background: #1e293b; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #334155;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.2rem;">📬</span>
+                        <strong style="color: #fff; font-size: 0.95rem;">LAZAROPH Email Simulator</strong>
+                    </div>
+                    <button type="button" style="background: none; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer;" onclick="EmailSimulator.closeModal()">&times;</button>
+                </div>
+                <div style="padding: 24px; background: #0b0f19;">
+                    <div style="background: #111827; border: 1px solid #1f2937; border-radius: 8px; padding: 20px;">
+                        <div style="border-bottom: 1px solid #1f2937; padding-bottom: 12px; margin-bottom: 16px;">
+                            <div style="font-size: 0.8rem; color: #9ca3af;">FROM: <strong style="color: #fff;">LAZAROPH &lt;support@lazaroph.com&gt;</strong></div>
+                            <div style="font-size: 0.8rem; color: #9ca3af;">TO: <strong style="color: #fff;">${escapeHtml(latest.toName)} &lt;${escapeHtml(latest.toEmail)}&gt;</strong></div>
+                            <div style="font-size: 0.8rem; color: #9ca3af;">SUBJECT: <strong style="color: #60a5fa;">${escapeHtml(latest.subject)}</strong></div>
+                        </div>
+                        <div style="text-align: center; padding: 10px 0;">
+                            <div style="font-size: 1.3rem; font-weight: 800; letter-spacing: 0.05em; color: #fff; margin-bottom: 6px;">LAZAROPH</div>
+                            <div style="font-size: 0.72rem; color: var(--color-accent); font-weight: 700; letter-spacing: 0.1em; margin-bottom: 18px;">
+                                AUTHENTIC • LEGIT • BELOW MARKET PRICE
+                            </div>
+                            <p style="font-size: 0.95rem; color: #e5e7eb; margin-bottom: 20px;">
+                                ${escapeHtml(latest.snippet)}
+                            </p>
+                            <a href="${actionHash}" class="btn btn-primary btn-lg" style="display: inline-block; font-weight: 800; letter-spacing: 0.05em; padding: 12px 28px;" onclick="EmailSimulator.closeModal()">
+                                ${actionLabel}
+                            </a>
+                            <div style="font-size: 0.75rem; color: #6b7280; margin-top: 20px;">
+                                Or copy this link to your browser:<br>
+                                <span style="word-break: break-all; color: #9ca3af; font-family: monospace;">${latest.actionUrl}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        modal.classList.add('active');
+    },
+
+    closeModal() {
+        const modal = document.getElementById('modal-email-simulator');
+        if (modal) modal.classList.remove('active');
+    }
+};
+
+// =========================================================================
+// 4. LEGACY / SHARED AUTH INTERFACE (FOR HEADER CHROME & COMPATIBILITY)
+// =========================================================================
+const Auth = {
+    get currentUser() {
+        if (AdminAuth.isVerified()) {
+            const admin = AdminAuth.getAdmin();
+            return {
+                id: admin.id,
+                name: admin.name,
+                email: admin.email,
+                role: 'ADMIN',
+                isAdmin: true
+            };
+        }
+        if (CustomerAuth.isLoggedIn()) {
+            const cust = CustomerAuth.getCustomer();
+            return {
+                id: cust.id,
+                name: cust.name,
+                email: cust.email,
+                role: 'CUSTOMER',
+                isAdmin: false
+            };
+        }
+        return null;
+    },
+
+    async init() {
+        await Promise.all([
+            CustomerAuth.init(),
+            AdminAuth.init()
+        ]);
+        this.updateUI();
+
+        // Check for incoming simulated emails periodically during local testing
+        setInterval(() => EmailSimulator.checkNewEmail(), 4000);
     },
 
     updateUI() {
         const userBtn = document.getElementById('btn-header-account');
         const adminNavLink = document.getElementById('nav-admin-link');
 
-        if (this.currentUser) {
+        if (AdminAuth.isVerified()) {
+            const admin = AdminAuth.getAdmin();
             if (userBtn) {
-                userBtn.title = `Logged in as ${this.currentUser.name}`;
+                userBtn.title = `Admin: ${admin.name}`;
+                userBtn.innerHTML = `<svg width="20" height="20" fill="var(--color-accent)" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
+            }
+            if (adminNavLink) {
+                adminNavLink.classList.remove('hidden');
+            }
+        } else if (CustomerAuth.isLoggedIn()) {
+            const customer = CustomerAuth.getCustomer();
+            if (userBtn) {
+                userBtn.title = `Account: ${customer.name}`;
                 userBtn.innerHTML = `<svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
             }
             if (adminNavLink) {
-                if (this.currentUser.role === 'ADMIN') {
-                    adminNavLink.classList.remove('hidden');
-                } else {
-                    adminNavLink.classList.add('hidden');
-                }
+                adminNavLink.classList.add('hidden');
             }
         } else {
             if (userBtn) {
@@ -50,10 +802,12 @@ const Auth = {
     },
 
     openAuthModal(defaultTab = 'login') {
-        const modal = document.getElementById('modal-auth');
-        if (!modal) return;
-        this.switchAuthTab(defaultTab);
-        modal.classList.add('active');
+        // Direct to dedicated /login or /register view as requested!
+        if (defaultTab === 'register') {
+            App.navigate('register');
+        } else {
+            App.navigate('login');
+        }
     },
 
     closeAuthModal() {
@@ -62,76 +816,36 @@ const Auth = {
     },
 
     switchAuthTab(tab) {
-        const loginForm = document.getElementById('auth-login-form');
-        const registerForm = document.getElementById('auth-register-form');
-        const tabLoginBtn = document.getElementById('tab-btn-login');
-        const tabRegisterBtn = document.getElementById('tab-btn-register');
-
-        if (tab === 'login') {
-            if (loginForm) loginForm.classList.remove('hidden');
-            if (registerForm) registerForm.classList.add('hidden');
-            if (tabLoginBtn) tabLoginBtn.classList.add('active');
-            if (tabRegisterBtn) tabRegisterBtn.classList.remove('active');
+        if (tab === 'register') {
+            App.navigate('register');
         } else {
-            if (loginForm) loginForm.classList.add('hidden');
-            if (registerForm) registerForm.classList.remove('hidden');
-            if (tabLoginBtn) tabLoginBtn.classList.remove('active');
-            if (tabRegisterBtn) tabRegisterBtn.classList.add('active');
+            App.navigate('login');
         }
     },
 
-    async handleLogin(e) {
-        e.preventDefault();
-        const email = document.getElementById('login-email').value;
-        const password = document.getElementById('login-password').value;
-
-        try {
-            const data = await API.login(email, password);
-            API.setToken(data.token);
-            this.currentUser = data.user;
-            this.updateUI();
-            this.closeAuthModal();
-            showToast(`Welcome back, ${data.user.name}!`, 'success');
-
-            if (data.user.role === 'ADMIN' && window.location.hash === '#admin') {
-                App.navigate('admin');
-            }
-        } catch (err) {
-            showToast(err.message, 'error');
-        }
+    handleLogin(e) {
+        return CustomerAuth.handleLogin(e);
     },
 
-    async handleRegister(e) {
-        e.preventDefault();
-        const name = document.getElementById('reg-name').value;
-        const email = document.getElementById('reg-email').value;
-        const password = document.getElementById('reg-password').value;
-        const phone = document.getElementById('reg-phone').value;
-        const address = document.getElementById('reg-address').value;
-        const city = document.getElementById('reg-city').value;
-        const province = document.getElementById('reg-province').value;
-        const zipCode = document.getElementById('reg-zip').value;
-
-        try {
-            const data = await API.register({ name, email, password, phone, address, city, province, zipCode });
-            API.setToken(data.token);
-            this.currentUser = data.user;
-            this.updateUI();
-            this.closeAuthModal();
-            showToast(`Account created successfully! Welcome to LAZAROPH.`, 'success');
-        } catch (err) {
-            showToast(err.message, 'error');
-        }
+    handleRegister(e) {
+        return CustomerAuth.handleRegister(e);
     },
 
     async logout() {
-        try {
-            await API.logout();
-        } catch (ignored) {}
-        API.setToken(null);
-        this.currentUser = null;
-        this.updateUI();
-        showToast('Logged out successfully.', 'info');
-        App.navigate('home');
+        if (AdminAuth.isVerified()) {
+            await AdminAuth.logout();
+        } else {
+            await CustomerAuth.logout();
+        }
     }
 };
+
+function escapeHtml(text) {
+    if (!text) return '';
+    return text.toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}

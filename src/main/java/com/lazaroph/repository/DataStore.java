@@ -29,9 +29,17 @@ public class DataStore {
     private final AtomicInteger orderIdSeq = new AtomicInteger(10);
     private final AtomicInteger orderItemIdSeq = new AtomicInteger(50);
     private final AtomicInteger customOrderIdSeq = new AtomicInteger(10);
+    private final AtomicInteger conversationIdSeq = new AtomicInteger(100);
+    private final AtomicInteger messageIdSeq = new AtomicInteger(1000);
 
+    private final AtomicInteger adminIdSeq = new AtomicInteger(10);
+    private final AtomicInteger customerIdSeq = new AtomicInteger(10);
+
+    private final Map<Integer, AdminUser> admins = new ConcurrentHashMap<>();
+    private final Map<Integer, CustomerUser> customers = new ConcurrentHashMap<>();
     private final Map<Integer, User> users = new ConcurrentHashMap<>();
     private final Map<Integer, Category> categories = new ConcurrentHashMap<>();
+    private final Map<String, FeaturedCategory> featuredCategories = new ConcurrentHashMap<>();
     private final Map<Integer, Brand> brands = new ConcurrentHashMap<>();
     private final Map<Integer, Product> products = new ConcurrentHashMap<>();
     private final Map<Integer, ProductVariant> variants = new ConcurrentHashMap<>();
@@ -43,22 +51,57 @@ public class DataStore {
     private final Map<Integer, Set<Integer>> wishlists = new ConcurrentHashMap<>(); // userId -> Set of productIds
     private final Map<String, User> sessionTokens = new ConcurrentHashMap<>();
     private final Map<String, String> storeSettings = new ConcurrentHashMap<>();
+    private final Map<Integer, Conversation> conversations = new ConcurrentHashMap<>();
+    private final List<ChatMessage> chatMessages = Collections.synchronizedList(new ArrayList<>());
 
     private DataStore() {
         seedInitialData();
     }
 
     private void seedInitialData() {
-        // Users: Admin & Customer
-        User admin = new User(1, "LAZAROPH Administrator", "admin@lazaroph.com", PasswordHasher.hashPassword("admin123"), "ADMIN", "282948572", "911 J.P. Rizal Street, Concepcion Uno", "Marikina", "Metro Manila", "1805");
-        admin.setCreatedAt(new Timestamp(System.currentTimeMillis()));
-        users.put(admin.getId(), admin);
+        // 3 Super Admin Accounts (with individual login credentials & security passwords/PINs)
+        // Super Admin 1: Clark Montoya (Owner/Founder)
+        AdminUser admin1 = new AdminUser(1, "Clark Montoya (Super Admin 1)", "admin1@lazaroph.com",
+                PasswordHasher.hashPassword("AdminPassword123!"),
+                PasswordHasher.hashPassword("992104"),
+                "SUPER_ADMIN", "ACTIVE");
+        admins.put(1, admin1);
 
-        User customer = new User(2, "Juan Dela Cruz", "customer@example.com", PasswordHasher.hashPassword("customer123"), "CUSTOMER", "09171234567", "32 F. E. Mendoza Street, Malanday", "Marikina", "Metro Manila", "1805");
-        customer.setCreatedAt(new Timestamp(System.currentTimeMillis()));
-        users.put(customer.getId(), customer);
+        // Super Admin 2: Mark Lazaro (Operations Lead)
+        AdminUser admin2 = new AdminUser(2, "Mark Lazaro (Super Admin 2)", "admin2@lazaroph.com",
+                PasswordHasher.hashPassword("AdminPassword456!"),
+                PasswordHasher.hashPassword("882910"),
+                "SUPER_ADMIN", "ACTIVE");
+        admins.put(2, admin2);
 
-        // Store Settings
+        // Super Admin 3: Elena Santos (Inventory & Finance Director)
+        AdminUser admin3 = new AdminUser(3, "Elena Santos (Super Admin 3)", "admin3@lazaroph.com",
+                PasswordHasher.hashPassword("AdminPassword789!"),
+                PasswordHasher.hashPassword("773821"),
+                "SUPER_ADMIN", "ACTIVE");
+        admins.put(3, admin3);
+
+        // Legacy / default admin alias for compatibility
+        AdminUser legacyAdmin = new AdminUser(4, "LAZAROPH Administrator", "admin@lazaroph.com",
+                PasswordHasher.hashPassword("admin123"),
+                PasswordHasher.hashPassword("992104"),
+                "SUPER_ADMIN", "ACTIVE");
+        admins.put(4, legacyAdmin);
+
+        // Seed Verified Customer Account
+        CustomerUser customer1 = new CustomerUser(1, "Juan Dela Cruz", "customer@example.com",
+                PasswordHasher.hashPassword("customer123"),
+                "09171234567", "32 F. E. Mendoza Street, Malanday", "Marikina", "Metro Manila", "1805",
+                "VERIFIED");
+        customers.put(1, customer1);
+
+        // Legacy Users mapping for backward compatibility
+        User adminUser = new User(1, "LAZAROPH Administrator", "admin1@lazaroph.com", PasswordHasher.hashPassword("AdminPassword123!"), "ADMIN", "282948572", "911 J.P. Rizal Street, Concepcion Uno", "Marikina", "Metro Manila", "1805");
+        users.put(1, adminUser);
+        User custUser = new User(2, "Juan Dela Cruz", "customer@example.com", PasswordHasher.hashPassword("customer123"), "CUSTOMER", "09171234567", "32 F. E. Mendoza Street, Malanday", "Marikina", "Metro Manila", "1805");
+        users.put(2, custUser);
+
+        // Store Settings & Logistics Configuration
         storeSettings.put("adminPhone", "282948572");
         storeSettings.put("storePhone", "282948572");
         storeSettings.put("storeEmail", "lazarophilippines20@gmail.com");
@@ -70,9 +113,20 @@ public class DataStore {
         storeSettings.put("mayaQrUrl", "/images/qr-maya-demo.png");
         storeSettings.put("bankQrUrl", "");
         storeSettings.put("bdoAccount", "0012-3456-7890 (Lazaro PH)");
+        storeSettings.put("bdoQrUrl", "");
         storeSettings.put("bpiAccount", "9876-5432-10 (Lazaro PH)");
+        storeSettings.put("bpiQrUrl", "");
         storeSettings.put("branch1Address", "911 J.P. Rizal Street, Concepcion Uno, Marikina, 1805 Metro Manila");
-        storeSettings.put("branch2Address", "32 F. E. Mendoza Street, Malanday, Marikina, 1805 Metro Manila");
+
+        // Lalamove & LBC Logistics API Credentials
+        storeSettings.put("lalamoveApiKey", "SANDBOX_LLM_KEY_PH_882910");
+        storeSettings.put("lalamoveApiSecret", "SANDBOX_LLM_SECRET_PH_992104");
+        storeSettings.put("lalamoveEnv", "SANDBOX");
+        storeSettings.put("lalamoveMarket", "PH");
+        storeSettings.put("lbcAccountNumber", "LBC-CORP-18059921");
+        storeSettings.put("lbcApiToken", "LBC_BEARER_TOKEN_LIVE_1805");
+        storeSettings.put("lbcPackaging", "KB_LARGE");
+        storeSettings.put("defaultDispatchBranch", "Concepcion Uno, Marikina");
 
         // Categories
         Category catShoes = new Category(1, "Shoes", "shoes", "Men's, women's, and kids' performance, lifestyle, and streetwear sneakers.", "/images/category-shoes.jpg");
@@ -85,12 +139,57 @@ public class DataStore {
         categories.put(3, catSlides);
         categories.put(4, catWatches);
 
-        // Brands (Nike and Adidas default active brands)
+        // Featured Homepage Categories (5 core cards)
+        long now = System.currentTimeMillis();
+        featuredCategories.put("men", new FeaturedCategory("men", "MEN", "MEN'S COLLECTION",
+                "Authentic shoes, performance apparel, shorts, and gear.",
+                "SHOP MEN", "shop?gender=MEN", "cat-large",
+                "/images/category-men.jpg", now, "Clark Montoya"));
+
+        featuredCategories.put("women", new FeaturedCategory("women", "WOMEN", "WOMEN'S COLLECTION",
+                "Street classics, running sneakers, and athletic lifestyle.",
+                "SHOP WOMEN", "shop?gender=WOMEN", "cat-large",
+                "/images/category-women.jpg", now, "Clark Montoya"));
+
+        featuredCategories.put("kids", new FeaturedCategory("kids", "KIDS", "YOUTH ATHLETIC",
+                "Youth athletic shoes & sportswear.",
+                "SHOP KIDS", "shop?gender=KIDS", "cat-medium",
+                "/images/category-kids.jpg", now, "Clark Montoya"));
+
+        featuredCategories.put("slides", new FeaturedCategory("slides", "SLIDES", "COMFORT FOOTWEAR",
+                "Authentic athletic slides, recovery slide sandals & comfort footwear.",
+                "SHOP SLIDES", "shop?category=Slides", "cat-medium",
+                "/images/cat-slides.png", now, "Clark Montoya"));
+
+        featuredCategories.put("watches", new FeaturedCategory("watches", "WATCHES", "TIMEPIECES",
+                "Sports, digital, and classic timepieces.",
+                "SHOP WATCHES", "shop?category=Watches", "cat-medium",
+                "/images/category-watches.jpg", now, "Clark Montoya"));
+
+        // Brands (Official Foot Locker verified brand roster)
         Brand bNike = new Brand(1, "Nike", "nike", "/images/brand-nike.png", "World-renowned athletic sportswear, signature sneakers, and performance apparel.", "ACTIVE");
-        Brand bAdidas = new Brand(2, "Adidas", "adidas", "/images/brand-adidas.png", "Iconic 3-stripes sportswear, Originals lifestyle kicks, and boost comfort.", "ACTIVE");
+        Brand bJordan = new Brand(2, "Jordan", "jordan", "/images/brand-jordan.png", "Signature basketball legacy, retro high-tops, and iconic Jumpman apparel.", "ACTIVE");
+        Brand bAdidas = new Brand(3, "Adidas", "adidas", "/images/brand-adidas.png", "Iconic 3-stripes sportswear, Originals lifestyle kicks, and boost comfort.", "ACTIVE");
+        Brand bNB = new Brand(4, "New Balance", "new-balance", "/images/brand-nb.png", "Heritage running lifestyle, dad shoes, and superior arch support footwear.", "ACTIVE");
+        Brand bHoka = new Brand(5, "HOKA", "hoka", "/images/brand-hoka.png", "Maximalist cushioned road running shoes, trail runners, and recovery slides.", "ACTIVE");
+        Brand bOn = new Brand(6, "On", "on", "/images/brand-on.png", "Swiss-engineered CloudTec running shoes, ultralight performance footwear, and apparel.", "ACTIVE");
+        Brand bPuma = new Brand(7, "Puma", "puma", "/images/brand-puma.png", "Forever faster athletic footwear, football gear, and casual street trainers.", "ACTIVE");
+        Brand bAsics = new Brand(8, "Asics", "asics", "/images/brand-asics.png", "Japanese performance running shoes, GEL cushioning, and ergonomic trainers.", "ACTIVE");
+        Brand bBirkenstock = new Brand(9, "Birkenstock", "birkenstock", "/images/brand-birkenstock.png", "Iconic German anatomical cork footbed sandals, Boston clogs, and slides.", "ACTIVE");
+        Brand bCrocs = new Brand(10, "Crocs", "crocs", "/images/brand-crocs.png", "Croslite comfort clogs, all-terrain sandals, and custom Jibbitz accessories.", "ACTIVE");
+        Brand bConverse = new Brand(11, "Converse", "converse", "/images/brand-converse.png", "Timeless Chuck Taylor All Stars, canvas skate shoes, and street culture.", "ACTIVE");
 
         brands.put(1, bNike);
-        brands.put(2, bAdidas);
+        brands.put(2, bJordan);
+        brands.put(3, bAdidas);
+        brands.put(4, bNB);
+        brands.put(5, bHoka);
+        brands.put(6, bOn);
+        brands.put(7, bPuma);
+        brands.put(8, bAsics);
+        brands.put(9, bBirkenstock);
+        brands.put(10, bCrocs);
+        brands.put(11, bConverse);
 
         // Product 1: LAZAROPH Runner X1 (Men's Running Shoes)
         Product p1 = new Product();
@@ -418,9 +517,18 @@ public class DataStore {
         o1.setPaymentMethod("GCash (E-Wallet)");
         o1.setPaymentReference("GCASH-9823419082");
         o1.setSubtotal(new BigDecimal("4998.00"));
-        o1.setShippingFee(new BigDecimal("150.00"));
-        o1.setTotal(new BigDecimal("5148.00"));
+        o1.setShippingFee(new BigDecimal("180.00"));
+        o1.setTotal(new BigDecimal("5178.00"));
         o1.setStatus("SHIPPED");
+        o1.setCourier("LALAMOVE");
+        o1.setCourierTrackingNumber("LLM-PH-260815-0001");
+        o1.setCourierTrackingUrl("https://web.lalamove.com/tracking?orderId=LLM-PH-260815-0001&market=PH");
+        o1.setCourierStatus("IN_TRANSIT");
+        o1.setPickupBranch("Concepcion Uno, Marikina");
+        o1.setDriverName("Mark Anthony Ramos (Lalamove Partner)");
+        o1.setDriverPhone("0917-882-9381");
+        o1.setDriverPlate("NC 88219 (Honda Click)");
+        o1.setEstimatedDelivery("Same-Day (Within 2 Hours)");
         o1.setCreatedAt(new Timestamp(System.currentTimeMillis() - 172800000L));
 
         OrderItem oi1 = new OrderItem(1, 1, 1, 107, "LAZAROPH Runner X1", "US 10", "Triple Black", new BigDecimal("2499.00"), 2, new BigDecimal("4998.00"), null);
@@ -441,9 +549,15 @@ public class DataStore {
         o2.setPaymentMethod("Maya (PayMaya)");
         o2.setPaymentReference("MAYA-8812049123");
         o2.setSubtotal(new BigDecimal("2499.00"));
-        o2.setShippingFee(new BigDecimal("150.00"));
-        o2.setTotal(new BigDecimal("2649.00"));
+        o2.setShippingFee(new BigDecimal("160.00"));
+        o2.setTotal(new BigDecimal("2659.00"));
         o2.setStatus("CONFIRMED");
+        o2.setCourier("LBC");
+        o2.setCourierTrackingNumber("180599201948");
+        o2.setCourierTrackingUrl("https://www.lbcexpress.com/track/?tracking_no=180599201948");
+        o2.setCourierStatus("PENDING_DISPATCH");
+        o2.setPickupBranch("Concepcion Uno, Marikina");
+        o2.setEstimatedDelivery("2-3 Business Days (LBC Express)");
         o2.setCreatedAt(new Timestamp(System.currentTimeMillis() - 86400000L));
 
         OrderItem oi2 = new OrderItem(2, 2, 1, 105, "LAZAROPH Runner X1", "US 9", "Triple Black", new BigDecimal("2499.00"), 1, new BigDecimal("2499.00"), null);
@@ -464,9 +578,13 @@ public class DataStore {
         o3.setPaymentMethod("Online Bank Transfer (BDO)");
         o3.setPaymentReference("BDO-REF-44910283");
         o3.setSubtotal(new BigDecimal("1199.00"));
-        o3.setShippingFee(new BigDecimal("150.00"));
-        o3.setTotal(new BigDecimal("1349.00"));
+        o3.setShippingFee(BigDecimal.ZERO);
+        o3.setTotal(new BigDecimal("1199.00"));
         o3.setStatus("PENDING");
+        o3.setCourier("STORE_PICKUP");
+        o3.setPickupBranch("Concepcion Uno, Marikina (911 J.P. Rizal St)");
+        o3.setCourierStatus("PENDING_DISPATCH");
+        o3.setEstimatedDelivery("Ready for Pickup at Branch");
         o3.setCreatedAt(new Timestamp(System.currentTimeMillis() - 14400000L));
 
         OrderItem oi3 = new OrderItem(3, 3, 9, 36, "LAZAROPH Pro Elite Custom Jersey", "L", "Custom Sublimation", new BigDecimal("1199.00"), 1, new BigDecimal("1199.00"), "{\"name\":\"DELA CRUZ\",\"number\":\"24\",\"team\":\"MANILA KINGS\"}");
@@ -490,6 +608,16 @@ public class DataStore {
         co.setStatus("PENDING_DESIGN");
         co.setCreatedAt(new Timestamp(System.currentTimeMillis() - 14400000L));
         customOrders.put(co.getId(), co);
+
+        // Seed Sample Chat Conversations
+        Conversation conv1 = createConversation(2, "Juan Dela Cruz", "customer@example.com", "09171234567", 1, o1.getOrderNumber(), "Order #" + o1.getOrderNumber());
+        addChatMessage(conv1.getId(), null, "LAZAROPH System", "SYSTEM", "Hello Juan Dela Cruz! We received your order #" + o1.getOrderNumber() + ". Our team will review your order shortly.");
+        addChatMessage(conv1.getId(), 2, "Juan Dela Cruz", "CUSTOMER", "Hi admin, can I know how much is the Lalamove delivery fee to Marikina?");
+        addChatMessage(conv1.getId(), 1, "LAZAROPH Administrator", "ADMIN", "Hello Juan! We are checking the delivery fee for your location in Malanday, Marikina.");
+
+        Conversation conv2 = createConversation(2, "Juan Dela Cruz", "customer@example.com", "09171234567", 2, o2.getOrderNumber(), "Order #" + o2.getOrderNumber());
+        addChatMessage(conv2.getId(), null, "LAZAROPH System", "SYSTEM", "Hello Juan! We received your order #" + o2.getOrderNumber() + ". Our team will review your order shortly.");
+        addChatMessage(conv2.getId(), null, "LAZAROPH System", "SYSTEM", "Your Order #" + o2.getOrderNumber() + " has been shipped through LBC Express.\n\nTracking Number: 180599201948");
     }
 
     private void addImage(Product p, String url, boolean isMain, int order) {
@@ -532,9 +660,130 @@ public class DataStore {
         return new ArrayList<>(users.values());
     }
 
+    // ================= CUSTOMER OPERATIONS =================
+    public CustomerUser findCustomerByEmail(String email) {
+        if (email == null) return null;
+        for (CustomerUser c : customers.values()) {
+            if (email.trim().equalsIgnoreCase(c.getEmail())) return c;
+        }
+        return null;
+    }
+
+    public CustomerUser findCustomerById(int id) {
+        return customers.get(id);
+    }
+
+    public CustomerUser findCustomerByVerificationToken(String token) {
+        if (token == null || token.trim().isEmpty()) return null;
+        for (CustomerUser c : customers.values()) {
+            if (token.equals(c.getVerificationToken())) return c;
+        }
+        return null;
+    }
+
+    public CustomerUser findCustomerByResetToken(String token) {
+        if (token == null || token.trim().isEmpty()) return null;
+        for (CustomerUser c : customers.values()) {
+            if (token.equals(c.getResetToken())) return c;
+        }
+        return null;
+    }
+
+    public CustomerUser saveCustomer(CustomerUser c) {
+        if (c.getId() <= 0) {
+            c.setId(customerIdSeq.incrementAndGet());
+            c.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+        }
+        c.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
+        customers.put(c.getId(), c);
+
+        // Also sync to legacy users map for order/chat references
+        User u = new User(c.getId(), c.getName(), c.getEmail(), c.getPasswordHash(), "CUSTOMER", c.getPhone(), c.getAddress(), c.getCity(), c.getProvince(), c.getZipCode());
+        users.put(u.getId(), u);
+
+        return c;
+    }
+
+    public List<CustomerUser> getAllCustomers() {
+        List<CustomerUser> list = new ArrayList<>(customers.values());
+        list.sort((a, b) -> b.getId() - a.getId());
+        return list;
+    }
+
+    public boolean deleteCustomer(int id) {
+        return customers.remove(id) != null;
+    }
+
+    // ================= ADMIN OPERATIONS =================
+    public AdminUser findAdminByEmail(String email) {
+        if (email == null) return null;
+        for (AdminUser a : admins.values()) {
+            if (email.trim().equalsIgnoreCase(a.getEmail())) return a;
+        }
+        return null;
+    }
+
+    public AdminUser findAdminById(int id) {
+        return admins.get(id);
+    }
+
+    public AdminUser saveAdmin(AdminUser a) {
+        if (a.getId() <= 0) {
+            a.setId(adminIdSeq.incrementAndGet());
+            a.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+        }
+        a.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
+        admins.put(a.getId(), a);
+
+        // Also sync to legacy users map
+        User u = new User(a.getId(), a.getName(), a.getEmail(), a.getPasswordHash(), "ADMIN", "282948572", "911 J.P. Rizal Street", "Marikina", "Metro Manila", "1805");
+        users.put(u.getId(), u);
+
+        return a;
+    }
+
+    public List<AdminUser> getAllAdmins() {
+        List<AdminUser> list = new ArrayList<>(admins.values());
+        list.sort(Comparator.comparingInt(AdminUser::getId));
+        return list;
+    }
+
+    public boolean deleteAdmin(int id) {
+        if (admins.size() <= 1) return false; // Prevent removing last admin
+        return admins.remove(id) != null;
+    }
+
     // CATEGORY OPERATIONS
     public List<Category> getAllCategories() {
         return new ArrayList<>(categories.values());
+    }
+
+    public List<FeaturedCategory> getAllFeaturedCategories() {
+        // Return 5 categories in specific order: men, women, kids, slides, watches
+        List<FeaturedCategory> list = new ArrayList<>();
+        String[] order = { "men", "women", "kids", "slides", "watches" };
+        for (String k : order) {
+            FeaturedCategory fc = featuredCategories.get(k);
+            if (fc != null) list.add(fc);
+        }
+        return list;
+    }
+
+    public FeaturedCategory getFeaturedCategory(String key) {
+        if (key == null) return null;
+        return featuredCategories.get(key.toLowerCase().trim());
+    }
+
+    public FeaturedCategory updateFeaturedCategoryImage(String key, String imageUrl, String adminName) {
+        if (key == null) return null;
+        FeaturedCategory fc = featuredCategories.get(key.toLowerCase().trim());
+        if (fc == null) return null;
+        fc.setImageUrl(imageUrl);
+        fc.setUpdatedAt(System.currentTimeMillis());
+        if (adminName != null && !adminName.trim().isEmpty()) {
+            fc.setUpdatedBy(adminName);
+        }
+        return fc;
     }
 
     // PRODUCT OPERATIONS
@@ -808,10 +1057,281 @@ public class DataStore {
     public synchronized boolean updateOrderStatus(int orderId, String newStatus) {
         Order o = orders.get(orderId);
         if (o != null) {
-            o.setStatus(newStatus.toUpperCase());
+            o.setStatus(newStatus);
+            o.setCourierStatus(newStatus);
             return true;
         }
         return false;
+    }
+
+    public synchronized Order updateOrderDelivery(int orderId, Map<String, Object> req) {
+        Order order = orders.get(orderId);
+        if (order == null) return null;
+
+        String oldStatus = order.getStatus();
+        boolean wasFeeConfirmed = order.isDeliveryFeeConfirmed();
+        BigDecimal oldFee = order.getShippingFee();
+
+        if (req.containsKey("courier") && req.get("courier") != null) {
+            order.setCourier(req.get("courier").toString().trim().toUpperCase());
+        }
+
+        if (req.containsKey("shippingFee") && req.get("shippingFee") != null) {
+            try {
+                String feeStr = req.get("shippingFee").toString().trim();
+                BigDecimal fee = feeStr.isEmpty() ? BigDecimal.ZERO : new BigDecimal(feeStr);
+                order.setShippingFee(fee);
+                order.setDeliveryFeeConfirmed(true);
+                order.setTotal(order.getSubtotal().add(fee));
+
+                // Send automated chat notification if fee is updated
+                if (!wasFeeConfirmed || (oldFee != null && !oldFee.equals(fee))) {
+                    sendAutomatedOrderMessage(orderId, "Your delivery fee for Order #" + order.getOrderNumber() + " is ₱" + fee.toPlainString() + ". Please confirm if you would like to continue.");
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (req.containsKey("deliveryFeeConfirmed") && req.get("deliveryFeeConfirmed") != null) {
+            boolean conf = Boolean.parseBoolean(req.get("deliveryFeeConfirmed").toString());
+            order.setDeliveryFeeConfirmed(conf);
+        }
+
+        if (req.containsKey("riderName") && req.get("riderName") != null) {
+            String rName = req.get("riderName").toString().trim();
+            order.setRiderName(rName);
+        }
+
+        if (req.containsKey("riderPhone") && req.get("riderPhone") != null) {
+            String rPhone = req.get("riderPhone").toString().trim();
+            order.setRiderPhone(rPhone);
+        }
+
+        if (req.containsKey("estimatedDeliveryTime") && req.get("estimatedDeliveryTime") != null) {
+            order.setEstimatedDeliveryTime(req.get("estimatedDeliveryTime").toString().trim());
+        }
+
+        if (req.containsKey("lbcTrackingNumber") && req.get("lbcTrackingNumber") != null) {
+            String tracking = req.get("lbcTrackingNumber").toString().trim();
+            order.setLbcTrackingNumber(tracking);
+            if (!tracking.isEmpty() && (order.getCourierTrackingNumber() == null || !order.getCourierTrackingNumber().equals(tracking))) {
+                sendAutomatedOrderMessage(orderId, "Your Order #" + order.getOrderNumber() + " has been shipped through LBC Express.\n\nTracking Number: " + tracking);
+            }
+        }
+
+        if (req.containsKey("shippingDate") && req.get("shippingDate") != null) {
+            order.setShippingDate(req.get("shippingDate").toString().trim());
+        }
+
+        if (req.containsKey("estimatedDeliveryDate") && req.get("estimatedDeliveryDate") != null) {
+            order.setEstimatedDeliveryDate(req.get("estimatedDeliveryDate").toString().trim());
+        }
+
+        if (req.containsKey("deliveryNotes") && req.get("deliveryNotes") != null) {
+            order.setDeliveryNotes(req.get("deliveryNotes").toString().trim());
+        }
+
+        if (req.containsKey("status") && req.get("status") != null) {
+            String newStatus = req.get("status").toString().trim();
+            order.setStatus(newStatus);
+            order.setCourierStatus(newStatus);
+
+            // Send automated status notifications
+            if (!newStatus.equalsIgnoreCase(oldStatus)) {
+                if ("Preparing Order".equalsIgnoreCase(newStatus)) {
+                    sendAutomatedOrderMessage(orderId, "Your Order #" + order.getOrderNumber() + " is now being prepared.");
+                } else if ("Ready for Pickup".equalsIgnoreCase(newStatus)) {
+                    sendAutomatedOrderMessage(orderId, "Your Order #" + order.getOrderNumber() + " is now ready for pickup at our " + order.getPickupBranch() + " branch.");
+                } else if ("For Delivery".equalsIgnoreCase(newStatus) || "Out for Delivery".equalsIgnoreCase(newStatus)) {
+                    if ("LALAMOVE".equalsIgnoreCase(order.getCourier()) && order.getRiderName() != null && !order.getRiderName().isEmpty()) {
+                        sendAutomatedOrderMessage(orderId, "Your Order #" + order.getOrderNumber() + " is now assigned for delivery.\n\nRider: " + order.getRiderName() + "\nContact: " + (order.getRiderPhone() != null ? order.getRiderPhone() : "N/A"));
+                    } else {
+                        sendAutomatedOrderMessage(orderId, "Your Order #" + order.getOrderNumber() + " is out for delivery.");
+                    }
+                } else if ("Delivered".equalsIgnoreCase(newStatus)) {
+                    sendAutomatedOrderMessage(orderId, "Your Order #" + order.getOrderNumber() + " has been marked as DELIVERED. Thank you for shopping with LAZAROPH!");
+                }
+            }
+        }
+
+        return order;
+    }
+
+    // ==========================================================
+    // CHAT & MESSAGING SYSTEM
+    // ==========================================================
+    public Conversation createConversation(int customerId, String customerName, String customerEmail, String customerPhone, Integer orderId, String orderNumber, String title) {
+        int id = conversationIdSeq.incrementAndGet();
+        Conversation conv = new Conversation(id, customerId, customerName, customerEmail, customerPhone, orderId, orderNumber, title);
+        conversations.put(id, conv);
+        return conv;
+    }
+
+    public Conversation findConversationById(int id) {
+        return conversations.get(id);
+    }
+
+    public Conversation getConversationById(int id) {
+        return conversations.get(id);
+    }
+
+    public Conversation findConversationByOrderId(int orderId) {
+        for (Conversation c : conversations.values()) {
+            if (c.getOrderId() != null && c.getOrderId() == orderId) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    public synchronized Conversation getOrCreateConversationForOrder(Order order, User customer) {
+        if (order == null) return null;
+        Conversation existing = findConversationByOrderId(order.getId());
+        if (existing != null) return existing;
+
+        int customerId = order.getUserId() != null ? order.getUserId() : (customer != null ? customer.getId() : 2);
+        String name = order.getCustomerName() != null ? order.getCustomerName() : (customer != null ? customer.getName() : "Customer");
+        String email = order.getCustomerEmail() != null ? order.getCustomerEmail() : (customer != null ? customer.getEmail() : "");
+        String phone = order.getCustomerPhone() != null ? order.getCustomerPhone() : (customer != null ? customer.getPhone() : "");
+        String title = "Order #" + order.getOrderNumber();
+
+        Conversation conv = createConversation(customerId, name, email, phone, order.getId(), order.getOrderNumber(), title);
+        return conv;
+    }
+
+    public synchronized Conversation getOrCreateGeneralConversation(User customer) {
+        int customerId = customer != null ? customer.getId() : 2;
+        for (Conversation c : conversations.values()) {
+            if (c.getCustomerId() == customerId && c.getOrderId() == null) {
+                return c;
+            }
+        }
+        String name = customer != null ? customer.getName() : "Customer";
+        String email = customer != null ? customer.getEmail() : "";
+        String phone = customer != null ? customer.getPhone() : "";
+        return createConversation(customerId, name, email, phone, null, null, "Customer Support Inquiry");
+    }
+
+    public List<Conversation> getAllConversations() {
+        List<Conversation> list = new ArrayList<>(conversations.values());
+        list.sort((a, b) -> {
+            Timestamp ta = a.getUpdatedAt() != null ? a.getUpdatedAt() : a.getCreatedAt();
+            Timestamp tb = b.getUpdatedAt() != null ? b.getUpdatedAt() : b.getCreatedAt();
+            if (ta == null && tb == null) return 0;
+            if (ta == null) return 1;
+            if (tb == null) return -1;
+            return tb.compareTo(ta);
+        });
+        return list;
+    }
+
+    public List<Conversation> getConversationsByCustomerId(int customerId) {
+        List<Conversation> list = new ArrayList<>();
+        for (Conversation c : conversations.values()) {
+            if (c.getCustomerId() == customerId) {
+                list.add(c);
+            }
+        }
+        list.sort((a, b) -> {
+            Timestamp ta = a.getUpdatedAt() != null ? a.getUpdatedAt() : a.getCreatedAt();
+            Timestamp tb = b.getUpdatedAt() != null ? b.getUpdatedAt() : b.getCreatedAt();
+            if (ta == null && tb == null) return 0;
+            if (ta == null) return 1;
+            if (tb == null) return -1;
+            return tb.compareTo(ta);
+        });
+        return list;
+    }
+
+    public synchronized ChatMessage addChatMessage(int conversationId, Integer senderId, String senderName, String senderRole, String message) {
+        return addChatMessage(conversationId, senderId, senderName, senderRole, message, null, "TEXT");
+    }
+
+    public synchronized ChatMessage addChatMessage(int conversationId, Integer senderId, String senderName, String senderRole, String message, String imageUrl, String messageType) {
+        Conversation conv = conversations.get(conversationId);
+        if (conv == null) return null;
+
+        int msgId = messageIdSeq.incrementAndGet();
+        ChatMessage msg = new ChatMessage(msgId, conversationId, senderId, senderName, senderRole, message, imageUrl, messageType);
+        chatMessages.add(msg);
+
+        // Update conversation meta
+        String summary = message != null && !message.trim().isEmpty() ? message : (imageUrl != null ? "[Attachment / Payment Proof]" : "");
+        conv.setLastMessage(summary);
+        conv.setLastMessageTime(msg.getCreatedAt());
+        conv.setUpdatedAt(msg.getCreatedAt());
+
+        if ("CUSTOMER".equalsIgnoreCase(senderRole)) {
+            conv.setUnreadAdminCount(conv.getUnreadAdminCount() + 1);
+        } else if ("ADMIN".equalsIgnoreCase(senderRole) || "SYSTEM".equalsIgnoreCase(senderRole)) {
+            conv.setUnreadCustomerCount(conv.getUnreadCustomerCount() + 1);
+        }
+
+        return msg;
+    }
+
+    public List<ChatMessage> getMessagesByConversationId(int conversationId) {
+        List<ChatMessage> list = new ArrayList<>();
+        synchronized (chatMessages) {
+            for (ChatMessage m : chatMessages) {
+                if (m.getConversationId() == conversationId) {
+                    list.add(m);
+                }
+            }
+        }
+        list.sort(Comparator.comparing(ChatMessage::getCreatedAt));
+        return list;
+    }
+
+    public synchronized void markConversationMessagesAsRead(int conversationId, String readerRole) {
+        Conversation conv = conversations.get(conversationId);
+        if (conv != null) {
+            if ("ADMIN".equalsIgnoreCase(readerRole)) {
+                conv.setUnreadAdminCount(0);
+                synchronized (chatMessages) {
+                    for (ChatMessage m : chatMessages) {
+                        if (m.getConversationId() == conversationId && !"ADMIN".equalsIgnoreCase(m.getSenderRole())) {
+                            m.setRead(true);
+                        }
+                    }
+                }
+            } else {
+                conv.setUnreadCustomerCount(0);
+                synchronized (chatMessages) {
+                    for (ChatMessage m : chatMessages) {
+                        if (m.getConversationId() == conversationId && "ADMIN".equalsIgnoreCase(m.getSenderRole())) {
+                            m.setRead(true);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public int getUnreadChatCountForAdmin() {
+        int total = 0;
+        for (Conversation c : conversations.values()) {
+            total += c.getUnreadAdminCount();
+        }
+        return total;
+    }
+
+    public int getUnreadChatCountForCustomer(int customerId) {
+        int total = 0;
+        for (Conversation c : conversations.values()) {
+            if (c.getCustomerId() == customerId) {
+                total += c.getUnreadCustomerCount();
+            }
+        }
+        return total;
+    }
+
+    public void sendAutomatedOrderMessage(int orderId, String messageText) {
+        Order order = orders.get(orderId);
+        if (order == null) return;
+        Conversation conv = getOrCreateConversationForOrder(order, null);
+        if (conv != null) {
+            addChatMessage(conv.getId(), null, "LAZAROPH System", "SYSTEM", messageText);
+        }
     }
 
     // CUSTOM ORDER OPERATIONS
