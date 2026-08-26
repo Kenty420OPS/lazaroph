@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400">
+  <rect width="600" height="400" fill="#111827"/>
+  <defs>
+    <radialGradient id="catGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.8"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="400" fill="url(#catGlow)"/>
+  
+  <!-- Stylized Slide Silhouette -->
+  <g transform="translate(140, 60) scale(0.65)">
+    <path d="M 120 400 C 130 425, 200 440, 310 440 C 420 440, 480 420, 490 395 C 500 370, 470 340, 410 330 C 320 315, 190 330, 130 365 Z" fill="#ffffff" opacity="0.9"/>
+    <path d="M 230 330 C 230 260, 260 210, 340 210 C 410 210, 450 250, 450 330 Z" fill="#000000" stroke="#ffffff" stroke-width="6"/>
+    <text x="340" y="290" font-family="'Outfit', sans-serif" font-size="22" font-weight="900" text-anchor="middle" fill="#ffffff" letter-spacing="3">LAZAROPH</text>
+  </g>
+  
+  <rect x="0" y="280" width="600" height="120" fill="linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.85) 100%)"/>
+  <text x="300" y="340" font-family="'Outfit', sans-serif" font-size="28" font-weight="900" text-anchor="middle" fill="#ffffff" letter-spacing="4">SLIDES &amp; COMFORT FOOTWEAR</text>
+  <text x="300" y="370" font-family="'Inter', sans-serif" font-size="13" font-weight="700" text-anchor="middle" fill="#9ca3af" letter-spacing="2">AUTHENTIC PHILIPPINE DISPATCH</text>
+</svg>

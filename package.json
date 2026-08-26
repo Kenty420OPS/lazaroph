@@ -4,8 +4,8 @@
   "private": true,
   "description": "LAZAROPH — Authentic Sportswear & Lifestyle Retail Platform",
   "scripts": {
-    "build": "echo 'LAZAROPH ready for Vercel deployment'",
-    "start": "echo 'LAZAROPH static build'"
+    "build": "node build.js",
+    "start": "node build.js"
   },
   "keywords": [
     "lazaroph",

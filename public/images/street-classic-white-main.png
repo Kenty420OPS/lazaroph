@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+  <defs>
+    <radialGradient id="bgG2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0b0f19"/>
+    </radialGradient>
+    <linearGradient id="whiteLeather" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+  </defs>
+  <rect width="500" height="500" fill="url(#bgG2)" rx="24"/>
+  <g transform="translate(40, 110)">
+    <ellipse cx="210" cy="270" rx="170" ry="18" fill="rgba(0,0,0,0.5)" filter="blur(6px)"/>
+    <!-- Sole -->
+    <path d="M 50 220 C 100 240, 260 245, 380 215 L 380 245 C 260 265, 100 260, 50 240 Z" fill="#cbd5e1"/>
+    <!-- Body -->
+    <path d="M 55 210 C 80 160, 130 130, 180 115 C 230 100, 270 140, 310 170 C 345 195, 365 205, 380 215 C 260 245, 100 240, 50 220 Z" fill="url(#whiteLeather)" stroke="#94a3b8" stroke-width="1.5"/>
+    <path d="M 160 120 C 180 95, 210 90, 230 120 Z" fill="#1e293b"/>
+    <!-- Gold Foil Logo -->
+    <text x="210" y="170" font-family="sans-serif" font-size="12" font-weight="900" fill="#d97706" letter-spacing="2">LAZAROPH</text>
+    <text x="210" y="305" font-family="sans-serif" font-size="15" font-weight="800" text-anchor="middle" fill="#ffffff" letter-spacing="3">STREET CLASSIC WOMEN</text>
+  </g>
+</svg>

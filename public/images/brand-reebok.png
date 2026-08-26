@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
+  <rect width="300" height="200" fill="#ffffff" rx="8"/>
+  <!-- Reebok Vector Logo Motif -->
+  <g transform="translate(150, 75)">
+    <polygon points="-70,-15 50,-40 30,-20 -50,0" fill="#000000"/>
+    <polygon points="-70,15 50,40 30,20 -50,0" fill="#000000"/>
+    <polygon points="-20,-30 65,0 -20,30 -5,0" fill="#000000"/>
+  </g>
+  <text x="150" y="165" font-family="'Outfit', sans-serif" font-size="24" font-weight="900" text-anchor="middle" fill="#000000" letter-spacing="4">REEBOK</text>
+</svg>

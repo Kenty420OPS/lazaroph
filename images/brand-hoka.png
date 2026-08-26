@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 110" width="200" height="110">
+  <rect width="200" height="110" fill="#ffffff"/>
+  <!-- Foot Locker HOKA Logo with Soaring Bird Wings inside O -->
+  <g fill="#000000" transform="translate(18, 30)">
+    <!-- H -->
+    <path d="M0 0 L14 0 L14 18 L28 18 L28 0 L42 0 L42 46 L28 46 L28 29 L14 29 L14 46 L0 46 Z"/>
+    <!-- O with Bird -->
+    <path d="M48 23 C48 10 59 0 73 0 C87 0 98 10 98 23 C98 36 87 46 73 46 C59 46 48 36 48 23 Z M85 23 C85 16 80 12 73 12 C66 12 61 16 61 23 C61 30 66 34 73 34 C80 34 85 30 85 23 Z"/>
+    <!-- Bird inside O -->
+    <path d="M57 23 C64 20 69 19 73 25 C77 19 82 20 89 23 C82 25 77 28 73 33 C69 28 64 25 57 23 Z"/>
+    <!-- K -->
+    <path d="M104 0 L118 0 L118 19 L132 0 L148 0 L128 24 L150 46 L133 46 L118 28 L118 46 L104 46 Z"/>
+    <!-- A -->
+    <path d="M154 46 L170 0 L184 0 L200 46 L185 46 L181 33 L172 33 L168 46 Z M174 23 L179 23 L176.5 12 Z"/>
+  </g>
+</svg>

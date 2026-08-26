@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 160" width="300" height="160">
+  <rect width="300" height="160" fill="#ffffff"/>
+  <!-- Official VANS Overbar Logo -->
+  <g fill="#000000">
+    <path d="M 65 52 L 105 106 L 122 106 L 146 52 L 130 52 L 114 90 L 98 52 L 235 52 L 235 64 L 140 64 L 140 106 L 156 106 L 156 74 L 176 74 L 176 106 L 192 106 L 192 74 L 212 74 L 212 106 L 228 106 L 228 52 Z"/>
+  </g>
+  <text x="150" y="138" font-family="'Inter', sans-serif" font-size="11" font-weight="900" text-anchor="middle" fill="#000000" letter-spacing="4">"OFF THE WALL"</text>
+</svg>

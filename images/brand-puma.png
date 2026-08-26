@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 110" width="200" height="110">
+  <rect width="200" height="110" fill="#ffffff"/>
+  <!-- Foot Locker PUMA Block Logo with Leaping Cat -->
+  <g fill="#000000" transform="translate(18, 14)">
+    <!-- Leaping Cat -->
+    <path d="M148 2 C145 4 136 9 130 14 C124 19 116 22 108 23 C102 24 96 22 91 19 C85 14 79 13 71 14 C65 16 59 20 54 26 C49 32 48 40 51 46 C54 52 60 55 68 54 C74 53 82 47 88 41 C93 36 99 33 105 33 C113 33 121 37 127 43 C133 49 141 52 149 51 C155 50 161 45 166 39 C171 33 172 25 169 19 C166 13 158 7 148 2 Z" transform="translate(10, 0) scale(0.65)"/>
+    <!-- PUMA Text -->
+    <text x="76" y="68" font-family="'Impact', 'Arial Black', sans-serif" font-size="46" font-weight="900" text-anchor="middle" fill="#000000" letter-spacing="1">PUMA</text>
+  </g>
+</svg>

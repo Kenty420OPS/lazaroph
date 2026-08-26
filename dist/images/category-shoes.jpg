@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400">
+  <defs>
+    <radialGradient id="catG" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="400" fill="url(#catG)"/>
+  <circle cx="300" cy="200" r="120" fill="none" stroke="#ff3b30" stroke-width="4" stroke-dasharray="10 10"/>
+  <text x="300" y="210" font-family="sans-serif" font-size="72" text-anchor="middle">👟</text>
+  <text x="300" y="320" font-family="sans-serif" font-size="22" font-weight="900" text-anchor="middle" fill="#ffffff" letter-spacing="4">AUTHENTIC SHOES</text>
+</svg>

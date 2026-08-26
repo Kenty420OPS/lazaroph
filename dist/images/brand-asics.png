@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 110" width="200" height="110">
+  <rect width="200" height="110" fill="#ffffff"/>
+  <!-- Foot Locker Asics Spiral + asics wordmark -->
+  <g fill="#000000" transform="translate(18, 30)">
+    <!-- Spiral Symbol -->
+    <path d="M22 0 C10 0 0 10 0 22 C0 34 10 44 22 44 C27 44 32 42 36 38 L30 32 C28 34 25 35 22 35 C15 35 9 29 9 22 C9 15 15 9 22 9 C27 9 32 12 34 17 L44 14 C40 5 32 0 22 0 Z" transform="translate(0, 2) scale(0.9)"/>
+    <path d="M18 16 C16 16 14 18 14 20 C14 24 22 28 28 32 L34 26 C28 22 24 16 18 16 Z" transform="translate(0, 2) scale(0.9)"/>
+    <!-- asics text -->
+    <text x="108" y="38" font-family="'Helvetica Neue', 'Arial Black', sans-serif" font-size="34" font-weight="900" font-style="italic" text-anchor="middle" fill="#000000" letter-spacing="-1">asics</text>
+  </g>
+</svg>

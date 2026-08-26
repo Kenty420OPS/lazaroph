@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <rect width="600" height="600" fill="#f8f9fa"/>
+  <defs>
+    <radialGradient id="slideGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Shadow -->
+  <ellipse cx="300" cy="460" rx="220" ry="30" fill="url(#slideGlow)"/>
+  
+  <!-- Slide Footbed / Sole -->
+  <!-- Outsole Bottom Layer -->
+  <path d="M 120 400 C 130 425, 200 440, 310 440 C 420 440, 480 420, 490 395 C 500 370, 470 340, 410 330 C 320 315, 190 330, 130 365 Z" fill="#111827" stroke="#000000" stroke-width="4"/>
+  <!-- Contoured Cushioned Footbed Top -->
+  <path d="M 125 390 C 135 410, 200 425, 305 425 C 410 425, 475 405, 480 385 C 490 360, 460 335, 405 325 C 315 310, 185 325, 130 355 Z" fill="#1f2937"/>
+  
+  <!-- Ergonomic Arch & Toe Crest Texture -->
+  <ellipse cx="440" cy="365" rx="30" ry="14" fill="#111827" opacity="0.6"/>
+  <path d="M 220 375 Q 300 385 380 370" stroke="#374151" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+  <!-- Wide Padded Forefoot Strap -->
+  <path d="M 230 330 C 230 260, 260 210, 340 210 C 410 210, 450 250, 450 330 C 420 345, 360 360, 300 355 C 260 350, 235 340, 230 330 Z" fill="#000000" stroke="#1f2937" stroke-width="3"/>
+  <!-- Strap Foam Thickness Layer -->
+  <path d="M 235 325 C 235 265, 265 218, 340 218 C 405 218, 442 255, 445 325 C 420 338, 365 350, 305 348 C 265 345, 240 335, 235 325 Z" fill="#111827"/>
+  
+  <!-- Embossed Brand Logo on Strap -->
+  <g transform="translate(340, 280) rotate(-5)">
+    <rect x="-70" y="-18" width="140" height="36" rx="6" fill="#000000" stroke="#374151" stroke-width="1.5"/>
+    <text x="0" y="7" font-family="'Outfit', sans-serif" font-size="18" font-weight="900" text-anchor="middle" fill="#ffffff" letter-spacing="3">LAZAROPH</text>
+  </g>
+  
+  <!-- Authentic Legit Badge -->
+  <rect x="30" y="30" width="140" height="32" rx="4" fill="#000000"/>
+  <text x="100" y="51" font-family="sans-serif" font-size="11" font-weight="800" text-anchor="middle" fill="#ffffff" letter-spacing="1">AUTHENTIC SLIDE</text>
+</svg>

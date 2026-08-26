@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+  <rect width="500" height="500" fill="#0b0f19" rx="24"/>
+  <g transform="translate(100, 60)">
+    <!-- T-Shirt Silhouette -->
+    <path d="M 100 40 L 50 100 L 90 120 L 90 320 C 90 330, 100 340, 110 340 L 190 340 C 200 340, 210 330, 210 320 L 210 120 L 250 100 L 200 40 C 180 55, 120 55, 100 40 Z" fill="#182030" stroke="#334155" stroke-width="3"/>
+    <!-- Brand Chest Logo -->
+    <text x="150" y="140" font-family="sans-serif" font-size="14" font-weight="900" text-anchor="middle" fill="#ff3b30" letter-spacing="2">LAZAROPH</text>
+    <text x="150" y="158" font-family="sans-serif" font-size="8" font-weight="700" text-anchor="middle" fill="#94a3b8" letter-spacing="1">PERFORMANCE DRI-FIT</text>
+    <!-- Label -->
+    <text x="150" y="380" font-family="sans-serif" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff" letter-spacing="3">PERFORMANCE TEE</text>
+  </g>
+</svg>

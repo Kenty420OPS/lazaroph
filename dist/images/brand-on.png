@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 110" width="200" height="110">
+  <rect width="200" height="110" fill="#ffffff"/>
+  <!-- Foot Locker On Running Logo -->
+  <g fill="#000000" transform="translate(82, 16)">
+    <!-- Upper 'o' -->
+    <path d="M18 0 C8 0 0 8 0 18 C0 28 8 36 18 36 C28 36 36 28 36 18 C36 8 28 0 18 0 Z M18 25 C14 25 11 22 11 18 C11 14 14 11 18 11 C22 11 25 14 25 18 C25 22 22 25 18 25 Z"/>
+    <!-- Lower 'n' -->
+    <path d="M0 44 L11 44 L11 52 C11 58 14 62 18 62 C22 62 25 58 25 52 L25 44 L36 44 L36 53 C36 65 28 73 18 73 C8 73 0 65 0 53 Z" transform="rotate(180 18 58.5)"/>
+  </g>
+</svg>

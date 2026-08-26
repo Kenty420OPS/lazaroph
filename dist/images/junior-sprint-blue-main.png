@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+  <defs>
+    <radialGradient id="bgG3" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0b0f19"/>
+    </radialGradient>
+  </defs>
+  <rect width="500" height="500" fill="url(#bgG3)" rx="24"/>
+  <g transform="translate(50, 110)">
+    <ellipse cx="200" cy="260" rx="150" ry="16" fill="rgba(0,0,0,0.5)" filter="blur(6px)"/>
+    <path d="M 60 210 C 100 230, 240 235, 350 210 L 350 235 C 240 255, 100 250, 60 230 Z" fill="#00e5ff"/>
+    <path d="M 65 200 C 85 160, 130 135, 170 120 C 210 110, 240 145, 280 170 C 310 190, 335 198, 350 210 C 240 235, 100 230, 60 210 Z" fill="#1d4ed8" stroke="#3b82f6" stroke-width="2"/>
+    <rect x="190" y="145" width="80" height="20" rx="4" fill="#ffb800"/>
+    <text x="230" y="160" font-family="sans-serif" font-size="10" font-weight="900" text-anchor="middle" fill="#000000">VELCRO STRAP</text>
+    <text x="200" y="295" font-family="sans-serif" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff" letter-spacing="3">JUNIOR SPRINT KIDS</text>
+  </g>
+</svg>
