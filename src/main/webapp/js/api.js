@@ -883,7 +883,10 @@ const API = {
                 headers,
                 signal: controller.signal
             });
-            clearTimeout(timeoutId);
+            const contentType = res.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                throw new Error('API returned non-JSON response');
+            }
 
             const data = await res.json();
             if (!res.ok || data.success === false) {
@@ -943,6 +946,17 @@ const API = {
     },
 
     updateConnectionBanner(isOnline) {
+        const isLocalDev = typeof window !== 'undefined' && (
+            window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1' ||
+            window.location.protocol === 'file:'
+        );
+        if (!isLocalDev) {
+            const existing = document.getElementById('connection-status-banner');
+            if (existing) existing.style.display = 'none';
+            return;
+        }
+
         let banner = document.getElementById('connection-status-banner');
         if (!banner) {
             banner = document.createElement('div');
