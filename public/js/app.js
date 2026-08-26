@@ -148,6 +148,10 @@ const App = {
 
             // Admin Step 1: Login
             if (view === 'admin/login') {
+                if (AdminAuth.isVerified()) {
+                    this.navigate('admin/dashboard');
+                    return;
+                }
                 const el = document.getElementById('view-admin-login');
                 if (el) el.classList.remove('hidden');
                 return;

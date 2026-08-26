@@ -546,8 +546,15 @@ const AdminAuth = {
 
         try {
             const data = await API.adminVerifyStep2(preToken, securityPassword);
-            this.setToken(data.adminToken);
-            this.setAdmin(data.admin);
+            const token = (data && (data.adminToken || data.token)) || '';
+            const admin = (data && (data.admin || data.user)) || null;
+
+            if (!token || !admin) {
+                throw new Error('Authentication failed: Missing admin token.');
+            }
+
+            this.setToken(token);
+            this.setAdmin(admin);
             this.setPreToken(null);
             sessionStorage.removeItem('lazaroph_admin_pre_name');
             sessionStorage.removeItem('lazaroph_admin_pre_email');
@@ -557,8 +564,8 @@ const AdminAuth = {
                 btn.innerHTML = 'VERIFY SECURITY ACCESS';
             }
 
-            showToast(`Welcome, ${data.admin.name}! Two-step security verified.`, 'success');
-            App.navigate('admin');
+            showToast(`Welcome, ${admin.name}! Two-step security verified.`, 'success');
+            App.navigate('admin/dashboard');
         } catch (err) {
             if (btn) {
                 btn.disabled = false;

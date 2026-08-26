@@ -44,6 +44,7 @@ console.log('-> Copied css, js, images to root/');
 // Generate physical directory index.html files for all SPA routes
 // This guarantees Vercel will NEVER return 404 for any direct URL
 const routes = [
+    'admin',
     'admin/login',
     'admin/dashboard',
     'admin/security-verification',

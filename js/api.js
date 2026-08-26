@@ -530,6 +530,7 @@ const FallbackStore = {
             return {
                 success: true,
                 token,
+                adminToken: token,
                 admin: adminUser,
                 message: 'Two-step authentication verified.'
             };
