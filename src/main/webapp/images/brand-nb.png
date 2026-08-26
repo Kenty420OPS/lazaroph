@@ -1,11 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
-  <rect width="300" height="200" fill="#ffffff" rx="8"/>
-  <!-- New Balance NB Logo Motif -->
-  <g transform="translate(110, 40)">
-    <path d="M 0 70 L 25 15 L 42 15 L 20 70 Z" fill="#000000"/>
-    <path d="M 15 50 L 55 50 L 50 62 L 10 62 Z" fill="#000000"/>
-    <path d="M 28 25 L 68 25 L 63 37 L 23 37 Z" fill="#000000"/>
-    <path d="M 50 15 C 65 15, 80 25, 80 40 C 80 50, 72 56, 62 58 C 75 60, 85 70, 85 85 C 85 100, 68 100, 45 100 L 25 100 L 32 82 L 52 82 C 60 82, 65 78, 65 72 C 65 65, 58 62, 50 62 L 36 62 L 40 48 L 52 48 C 58 48, 62 44, 62 38 C 62 32, 58 28, 50 28 L 44 28 L 48 15 Z" fill="#000000"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 110" width="200" height="110">
+  <rect width="200" height="110" fill="#ffffff"/>
+  <!-- Foot Locker New Balance Logo -->
+  <g fill="#000000" transform="translate(42, 10)">
+    <!-- NB symbol -->
+    <path d="M38 0 L16 0 L0 46 L14 46 L19 32 L32 32 L27 46 L43 46 L54 16 C57 5 48 0 38 0 Z M34 12 C37 12 39 16 37 21 L34 30 L23 30 L28 16 C30 13 32 12 34 12 Z"/>
+    <path d="M52 0 L73 0 C86 0 93 5 91 16 C89 21 86 26 79 28 C86 30 88 35 86 41 C84 44 79 46 68 46 L45 46 L52 0 Z M61 11 L57 20 L68 20 C71 20 75 18 75 14 C75 11 73 11 70 11 L61 11 Z M56 28 L52 37 L65 37 C70 37 73 35 73 32 C73 29 71 28 66 28 L56 28 Z"/>
+    <!-- 4 Speed Cut Stripes -->
+    <polygon points="-6,8 36,8 33,12 -9,12" fill="#ffffff"/>
+    <polygon points="-4,18 38,18 35,22 -7,22" fill="#ffffff"/>
+    <polygon points="-2,28 40,28 37,32 -5,32" fill="#ffffff"/>
+    <polygon points="0,38 42,38 39,42 -3,42" fill="#ffffff"/>
+    <!-- new balance text -->
+    <text x="58" y="68" font-family="'Helvetica Neue', 'Arial', sans-serif" font-size="14" font-weight="700" text-anchor="middle" fill="#000000" letter-spacing="0.5">new balance</text>
   </g>
-  <text x="150" y="170" font-family="'Outfit', sans-serif" font-size="18" font-weight="900" text-anchor="middle" fill="#000000" letter-spacing="3">NEW BALANCE</text>
 </svg>

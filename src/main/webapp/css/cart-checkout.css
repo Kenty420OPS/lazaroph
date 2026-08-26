@@ -332,3 +332,111 @@
 .status-shipped { background: #000000; color: #ffffff; }
 .status-delivered { background: #059669; color: #ffffff; }
 .status-cancelled { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+/* ==========================================================================
+   COURIER & LOGISTICS INTEGRATION STYLES (LALAMOVE & LBC)
+   ========================================================================== */
+.step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    background: #000000;
+    color: #ffffff;
+    border-radius: 50%;
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+
+.courier-option-card {
+    background: #ffffff;
+    border: 2px solid #e5e7eb;
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.courier-option-card:hover {
+    border-color: #000000;
+    background: #fafafa;
+}
+
+.courier-option-card.active {
+    border-color: #000000;
+    background: #f9fafb;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.courier-option-card.disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    background: #f3f4f6;
+    border-color: #e5e7eb;
+}
+
+.courier-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.courier-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.badge-lalamove {
+    background: rgba(255, 111, 0, 0.12);
+    color: #ff6f00;
+    border: 1px solid rgba(255, 111, 0, 0.35);
+}
+
+.badge-lbc {
+    background: rgba(220, 38, 38, 0.12);
+    color: #dc2626;
+    border: 1px solid rgba(220, 38, 38, 0.35);
+}
+
+.badge-pickup {
+    background: rgba(0, 0, 0, 0.06);
+    color: #000000;
+    border: 1px solid #d1d5db;
+}
+
+.courier-live-card {
+    background: #ffffff;
+    border: 1.5px solid #e5e7eb;
+    border-left: 6px solid #000000;
+    border-radius: var(--radius-sm);
+    padding: 22px;
+    margin: 20px 0 25px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+#lbc-sub-options,
+#lbc-sub-options label,
+#lbc-sub-options div {
+    color: #000000 !important;
+}
+
+.checkout-section-card h3,
+.checkout-section-card h4,
+.checkout-section-card label.form-label {
+    color: #000000 !important;
+}
+
+

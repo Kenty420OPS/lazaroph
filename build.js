@@ -41,4 +41,36 @@ copyDir(path.join(webappDir, 'js'), path.join(__dirname, 'js'));
 copyDir(path.join(webappDir, 'images'), path.join(__dirname, 'images'));
 console.log('-> Copied css, js, images to root/');
 
+// Generate physical directory index.html files for all SPA routes
+// This guarantees Vercel will NEVER return 404 for any direct URL
+const routes = [
+    'admin/login',
+    'admin/dashboard',
+    'admin/security-verification',
+    'login',
+    'register',
+    'order-track',
+    'shop'
+];
+
+const indexContent = fs.readFileSync(path.join(webappDir, 'index.html'), 'utf8');
+
+const targetRoots = [
+    __dirname,
+    distDir,
+    publicDir,
+    webappDir
+];
+
+routes.forEach(route => {
+    targetRoots.forEach(baseDir => {
+        const routeDir = path.join(baseDir, route);
+        if (!fs.existsSync(routeDir)) {
+            fs.mkdirSync(routeDir, { recursive: true });
+        }
+        fs.writeFileSync(path.join(routeDir, 'index.html'), indexContent, 'utf8');
+    });
+    console.log(`-> Created physical route: /${route}/index.html`);
+});
+
 console.log('Build complete! All routes and directories synchronized for Vercel.');

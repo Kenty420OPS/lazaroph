@@ -1,9 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
-  <rect width="300" height="200" fill="#ffffff" rx="8"/>
-  <!-- Under Armour Interlocking UA Logo -->
-  <g transform="translate(150, 75)">
-    <path d="M 0 -35 C 22 -35, 38 -20, 38 0 C 38 12, 30 22, 18 28 C 32 34, 40 44, 40 55 L 25 55 C 25 45, 15 36, 0 36 C -15 36, -25 45, -25 55 L -40 55 C -40 44, -32 34, -18 28 C -30 22, -38 12, -38 0 C -38 -20, -22 -35, 0 -35 Z" fill="#000000"/>
-    <path d="M 0 -22 C -12 -22, -22 -12, -22 0 C -22 8, -16 16, 0 20 C 16 16, 22 8, 22 0 C 22 -12, 12 -22, 0 -22 Z" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 160" width="300" height="160">
+  <rect width="300" height="160" fill="#ffffff"/>
+  <!-- Under Armour Interlocking Arches -->
+  <g fill="#000000">
+    <path d="M150,22 C134,22 120,34 116,50 C124,54 134,56 150,56 C166,56 176,54 184,50 C180,34 166,22 150,22 Z"/>
+    <path d="M150,86 C134,86 124,88 116,92 C120,108 134,120 150,120 C166,120 180,108 184,92 C176,88 166,86 150,86 Z"/>
+    <path d="M112,56 C106,62 102,70 102,80 C102,90 106,98 112,104 L122,96 C118,92 116,86 116,80 C116,74 118,68 122,64 Z"/>
+    <path d="M188,56 L178,64 C182,68 184,74 184,80 C184,86 182,92 178,96 L188,104 C194,98 198,90 198,80 C198,70 194,62 188,56 Z"/>
   </g>
-  <text x="150" y="165" font-family="'Outfit', sans-serif" font-size="18" font-weight="900" text-anchor="middle" fill="#000000" letter-spacing="2">UNDER ARMOUR</text>
+  <text x="150" y="146" font-family="'Outfit', sans-serif" font-size="12" font-weight="900" text-anchor="middle" fill="#000000" letter-spacing="3">UNDER ARMOUR</text>
 </svg>

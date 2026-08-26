@@ -5,13 +5,13 @@ import com.lazaroph.repository.DataStore;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 
 public class OrderService {
     private static final OrderService INSTANCE = new OrderService();
     public static OrderService getInstance() { return INSTANCE; }
 
     private final DataStore store = DataStore.getInstance();
+    private final CourierService courierService = CourierService.getInstance();
 
     private OrderService() {}
 
@@ -27,7 +27,9 @@ public class OrderService {
             String shippingZip,
             String paymentMethod,
             String paymentReference,
-            String notes
+            String notes,
+            String courier,
+            String pickupBranch
     ) {
         List<CartItem> cartItems = store.getCartItems(sessionKey);
         if (cartItems.isEmpty()) {
@@ -56,7 +58,27 @@ public class OrderService {
         order.setPaymentMethod(paymentMethod != null ? paymentMethod : "GCash");
         order.setPaymentReference(paymentReference != null ? paymentReference.trim() : "");
         order.setNotes(notes);
-        order.setStatus("PENDING");
+        order.setStatus("Pending Order");
+
+        // Set Manual Logistics & Delivery
+        String selectedCourier = (courier != null && !courier.trim().isEmpty()) ? courier.trim().toUpperCase() : "LALAMOVE";
+        order.setCourier(selectedCourier);
+        order.setPickupBranch(pickupBranch != null && !pickupBranch.trim().isEmpty() ? pickupBranch.trim() : "Concepcion Uno, Marikina");
+        order.setCourierStatus("Pending Order");
+
+        if ("STORE_PICKUP".equals(selectedCourier)) {
+            order.setEstimatedDelivery("Ready for pickup upon store confirmation");
+            order.setShippingFee(BigDecimal.ZERO);
+            order.setDeliveryFeeConfirmed(true);
+        } else if ("LALAMOVE".equals(selectedCourier)) {
+            order.setEstimatedDelivery("Same-Day Delivery (Lalamove)");
+            order.setShippingFee(BigDecimal.ZERO); // Displayed as "To be Confirmed"
+            order.setDeliveryFeeConfirmed(false);
+        } else {
+            order.setEstimatedDelivery("2-4 Business Days (LBC Express)");
+            order.setShippingFee(BigDecimal.ZERO); // Displayed as "To be Confirmed"
+            order.setDeliveryFeeConfirmed(false);
+        }
 
         BigDecimal subtotal = BigDecimal.ZERO;
         for (CartItem ci : cartItems) {
@@ -75,13 +97,23 @@ public class OrderService {
             subtotal = subtotal.add(ci.getSubtotal());
         }
 
-        BigDecimal shippingFee = new BigDecimal("150.00");
         order.setSubtotal(subtotal);
-        order.setShippingFee(shippingFee);
-        order.setTotal(subtotal.add(shippingFee));
+        order.setTotal(subtotal);
 
         // Create order and decrement specific variant inventory
         Order createdOrder = store.createOrder(order);
+
+        // Automatically initialize Order Chat Conversation & send Welcome Notification
+        Conversation conv = store.getOrCreateConversationForOrder(createdOrder, currentUser);
+        if (conv != null) {
+            store.addChatMessage(
+                conv.getId(),
+                null,
+                "LAZAROPH System",
+                "SYSTEM",
+                "Hello " + createdOrder.getCustomerName() + "! We received your order #" + createdOrder.getOrderNumber() + ". Our team will review your order shortly."
+            );
+        }
 
         // Clear user cart
         store.clearCart(sessionKey);

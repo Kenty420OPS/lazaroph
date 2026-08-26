@@ -24,6 +24,30 @@ public class Order {
     private String status; // PENDING, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED
     private String notes;
     private Timestamp createdAt;
+
+    // Manual Delivery & Logistics Fields
+    private String courier = "LALAMOVE"; // LALAMOVE, LBC, STORE_PICKUP
+    private boolean deliveryFeeConfirmed = false; // true when admin confirms fee; false = "To be Confirmed"
+    private String courierTrackingNumber; // e.g. LBC-180599201948 or LLM-9928103
+    private String courierTrackingUrl;
+    private String courierStatus = "Pending Order"; // Pending Order, Payment Verification, Delivery Confirmation, Preparing Order, Ready for Pickup, For Delivery, Shipped, Out for Delivery, Delivered, Cancelled
+    private String pickupBranch = "Concepcion Uno, Marikina";
+    
+    // Lalamove Rider Info
+    private String riderName;
+    private String riderPhone;
+    private String driverPlate;
+    private String estimatedDeliveryTime;
+    
+    // LBC Info
+    private String lbcTrackingNumber;
+    private String shippingDate;
+    private String estimatedDeliveryDate;
+    
+    // Delivery Notes & Waybill
+    private String deliveryNotes;
+    private String estimatedDelivery;
+    private String waybillUrl;
     
     private List<OrderItem> items = new ArrayList<>();
 
@@ -82,6 +106,60 @@ public class Order {
 
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+
+    public String getCourier() { return courier; }
+    public void setCourier(String courier) { this.courier = courier; }
+
+    public boolean isDeliveryFeeConfirmed() { return deliveryFeeConfirmed; }
+    public void setDeliveryFeeConfirmed(boolean deliveryFeeConfirmed) { this.deliveryFeeConfirmed = deliveryFeeConfirmed; }
+
+    public String getCourierTrackingNumber() { return courierTrackingNumber; }
+    public void setCourierTrackingNumber(String courierTrackingNumber) { this.courierTrackingNumber = courierTrackingNumber; }
+
+    public String getCourierTrackingUrl() { return courierTrackingUrl; }
+    public void setCourierTrackingUrl(String courierTrackingUrl) { this.courierTrackingUrl = courierTrackingUrl; }
+
+    public String getCourierStatus() { return courierStatus; }
+    public void setCourierStatus(String courierStatus) { this.courierStatus = courierStatus; }
+
+    public String getPickupBranch() { return pickupBranch; }
+    public void setPickupBranch(String pickupBranch) { this.pickupBranch = pickupBranch; }
+
+    public String getRiderName() { return riderName; }
+    public void setRiderName(String riderName) { this.riderName = riderName; }
+
+    public String getDriverName() { return getRiderName(); }
+    public void setDriverName(String driverName) { setRiderName(driverName); }
+
+    public String getRiderPhone() { return riderPhone; }
+    public void setRiderPhone(String riderPhone) { this.riderPhone = riderPhone; }
+
+    public String getDriverPhone() { return getRiderPhone(); }
+    public void setDriverPhone(String driverPhone) { setRiderPhone(driverPhone); }
+
+    public String getDriverPlate() { return driverPlate; }
+    public void setDriverPlate(String driverPlate) { this.driverPlate = driverPlate; }
+
+    public String getEstimatedDeliveryTime() { return estimatedDeliveryTime; }
+    public void setEstimatedDeliveryTime(String estimatedDeliveryTime) { this.estimatedDeliveryTime = estimatedDeliveryTime; }
+
+    public String getLbcTrackingNumber() { return lbcTrackingNumber != null ? lbcTrackingNumber : courierTrackingNumber; }
+    public void setLbcTrackingNumber(String lbcTrackingNumber) { this.lbcTrackingNumber = lbcTrackingNumber; this.courierTrackingNumber = lbcTrackingNumber; }
+
+    public String getShippingDate() { return shippingDate; }
+    public void setShippingDate(String shippingDate) { this.shippingDate = shippingDate; }
+
+    public String getEstimatedDeliveryDate() { return estimatedDeliveryDate; }
+    public void setEstimatedDeliveryDate(String estimatedDeliveryDate) { this.estimatedDeliveryDate = estimatedDeliveryDate; }
+
+    public String getDeliveryNotes() { return deliveryNotes; }
+    public void setDeliveryNotes(String deliveryNotes) { this.deliveryNotes = deliveryNotes; }
+
+    public String getEstimatedDelivery() { return estimatedDelivery; }
+    public void setEstimatedDelivery(String estimatedDelivery) { this.estimatedDelivery = estimatedDelivery; }
+
+    public String getWaybillUrl() { return waybillUrl; }
+    public void setWaybillUrl(String waybillUrl) { this.waybillUrl = waybillUrl; }
 
     public List<OrderItem> getItems() { return items; }
     public void setItems(List<OrderItem> items) { this.items = items; }

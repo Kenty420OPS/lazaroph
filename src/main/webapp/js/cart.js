@@ -81,7 +81,7 @@ const Cart = {
             return `
                 <div class="cart-item-card">
                     <div class="cart-item-thumb">
-                        <img src="${item.imageUrl}" alt="${item.productName}" onerror="this.src='/images/placeholder-product.png'">
+                        <img src="${item.imageUrl}" alt="${item.productName}" onerror="this.src='images/placeholder-product.png'">
                     </div>
                     <div class="cart-item-details">
                         <h4 class="cart-item-name">${item.productName}</h4>

@@ -17,15 +17,19 @@ const Brands = {
             const brands = await API.getBrands();
             this.allBrands = brands;
 
-            container.innerHTML = brands.slice(0, 12).map(b => `
-                <div class="brand-showcase-card" onclick="App.navigate('shop', { brand: '${b.name}' })" title="Shop ${b.name}">
-                    <div class="brand-logo-wrap">
-                        <img src="${b.logoUrl || '/images/logo.png'}" alt="${b.name}" class="brand-logo-img" onerror="this.src='/images/logo.png'">
-                    </div>
-                    <div class="brand-name">${b.name}</div>
-                    <span class="brand-count-badge">${b.productCount || 0} Products</span>
+            const brandCardsHtml = brands.slice(0, 11).map(b => `
+                <div class="footlocker-brand-card" onclick="App.navigate('shop', { brand: '${b.name}' })" title="Shop ${b.name}">
+                    <img src="${b.logoUrl || 'images/logo.png'}" alt="${b.name}" class="footlocker-brand-img" onerror="this.src='images/logo.png'">
                 </div>
             `).join('');
+
+            const shopAllCardHtml = `
+                <div class="footlocker-brand-card footlocker-shop-all-card" onclick="App.navigate('brands')" title="Explore All Brands">
+                    <span class="footlocker-shop-all-text">Shop All Brands</span>
+                </div>
+            `;
+
+            container.innerHTML = brandCardsHtml + shopAllCardHtml;
         } catch (err) {
             console.error('Failed to load home brands showcase:', err);
         }
@@ -53,7 +57,13 @@ const Brands = {
 
             this.renderBrandCards(brands);
         } catch (err) {
-            container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #dc2626; padding: 40px;">Failed to load brands: ${err.message}</div>`;
+            container.innerHTML = `
+                <div style="grid-column: 1/-1; text-align: center; color: #dc2626; padding: 40px; background: #ffffff; border-radius: 12px; border: 1px solid #fee2e2;">
+                    <div style="font-size: 2rem; margin-bottom: 8px;">⚠️</div>
+                    <div style="font-weight: 700; margin-bottom: 6px;">Failed to load brands: ${err.message}</div>
+                    <button class="btn btn-secondary btn-sm" onclick="Brands.loadBrandsDirectory()">🔄 Retry</button>
+                </div>
+            `;
         }
     },
 
@@ -76,7 +86,7 @@ const Brands = {
             <div class="brand-directory-card" onclick="App.navigate('shop', { brand: '${b.name}' })">
                 <div class="brand-card-top">
                     <div class="brand-card-img-wrap">
-                        <img src="${b.logoUrl || '/images/logo.png'}" alt="${b.name}" class="brand-card-img" onerror="this.src='/images/logo.png'">
+                        <img src="${b.logoUrl || 'images/logo.png'}" alt="${b.name}" class="brand-card-img" onerror="this.src='images/logo.png'">
                     </div>
                     <span class="badge badge-brand">${b.productCount || 0} Available</span>
                 </div>

@@ -1,354 +1,565 @@
 /* ==========================================================================
-   LAZAROPH PRODUCT DETAIL PAGE STYLES — WHITE & BLACK THEME
-   US Shoe Size Matrix, Variant Selectors, Stock Feedback & Gallery
+   LAZAROPH PRODUCT DETAIL PAGE STYLES — CLEAN MODERN LUXURY (NIKE INSPIRED)
+   Vertical Thumbnails, Hero Showcase with Carousel Controls, 3-Column Size Matrix
    ========================================================================== */
 
 .product-detail-layout {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 50px;
+    grid-template-columns: 1.25fr 1fr;
+    gap: 60px;
     align-items: start;
-    padding: 40px 0 80px;
+    padding: 30px 0 80px;
 }
 
-/* Gallery Section */
-.product-gallery {
+/* ==========================================================================
+   GALLERY SHOWCASE (Vertical Thumbnails + Main View)
+   ========================================================================== */
+.product-gallery-wrapper {
     display: flex;
-    flex-direction: column;
     gap: 16px;
     position: sticky;
     top: calc(var(--header-height) + 20px);
 }
 
-.gallery-main-view {
-    position: relative;
-    width: 100%;
-    padding-top: 90%;
-    background: #f9fafb;
-    border: 1.5px solid #e5e7eb;
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
-}
-
-.gallery-main-img {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 85%;
-    height: 85%;
-    object-fit: contain;
-    transition: transform var(--transition-smooth);
-}
-
-.gallery-main-view:hover .gallery-main-img {
-    transform: translate(-50%, -50%) scale(1.08);
-}
-
-.gallery-thumbnails {
+.gallery-vertical-thumbs {
     display: flex;
-    gap: 12px;
-    overflow-x: auto;
-    padding-bottom: 6px;
+    flex-direction: column;
+    gap: 10px;
+    width: 64px;
+    max-height: 580px;
+    overflow-y: auto;
+    scrollbar-width: none; /* Firefox */
 }
 
-.gallery-thumb-btn {
-    width: 80px;
-    height: 80px;
-    flex-shrink: 0;
-    border-radius: var(--radius-sm);
-    background: #f9fafb;
-    border: 1.5px solid #e5e7eb;
-    padding: 6px;
+.gallery-vertical-thumbs::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+.gallery-vertical-thumb-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 4px;
+    background: #f6f6f6;
+    border: 1.5px solid transparent;
+    padding: 4px;
     cursor: pointer;
-    transition: border-color var(--transition-fast), transform var(--transition-fast);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
 }
 
-.gallery-thumb-btn.active, .gallery-thumb-btn:hover {
+.gallery-vertical-thumb-btn:hover {
+    border-color: #d1d5db;
+    background: #f0f0f0;
+}
+
+.gallery-vertical-thumb-btn.active {
     border-color: #000000;
-    transform: translateY(-2px);
+    background: #ffffff;
 }
 
-.gallery-thumb-btn img {
+.gallery-vertical-thumb-btn img {
     width: 100%;
     height: 100%;
     object-fit: contain;
 }
 
-/* Product Info Section */
+.gallery-hero-container {
+    flex: 1;
+    position: relative;
+    background: #f6f6f6;
+    border-radius: 8px;
+    aspect-ratio: 1 / 1;
+    min-height: 480px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.gallery-hero-img {
+    width: 86%;
+    height: 86%;
+    object-fit: contain;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+}
+
+.gallery-hero-container:hover .gallery-hero-img {
+    transform: scale(1.05);
+}
+
+/* Floating Navigation Arrows (Bottom-Right) */
+.gallery-nav-arrows {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 8px;
+    z-index: 5;
+}
+
+.gallery-nav-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
+    color: #000000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.15s ease;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.gallery-nav-btn:hover {
+    background: #000000;
+    color: #ffffff;
+    border-color: #000000;
+    transform: scale(1.05);
+}
+
+/* Badges on Hero View */
+.gallery-floating-badges {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 5;
+}
+
+/* ==========================================================================
+   PRODUCT DETAILS & INFORMATION PANEL
+   ========================================================================== */
 .product-info-panel {
     display: flex;
     flex-direction: column;
 }
 
-.product-meta-header {
-    margin-bottom: 20px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.product-brand-tag {
-    font-size: 0.8rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: #6b7280;
-    margin-bottom: 6px;
+.product-detail-header {
+    margin-bottom: 24px;
 }
 
 .product-detail-title {
-    font-size: 2.25rem;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: -0.03em;
+    font-size: 1.85rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
     color: #000000;
-    margin-bottom: 12px;
-    line-height: 1.15;
+    margin-bottom: 4px;
+    line-height: 1.2;
 }
 
-.product-sku-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 0.85rem;
-    color: #6b7280;
+.product-detail-category {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #707072;
+    margin-bottom: 16px;
 }
 
-.product-sku-row code {
-    background: #f3f4f6;
-    padding: 2px 8px;
-    border-radius: 4px;
-    color: #000000;
-    font-family: monospace;
-    font-size: 0.85rem;
-    border: 1px solid #e5e7eb;
-}
-
-.product-price-section {
+.product-detail-price-row {
     display: flex;
     align-items: baseline;
-    gap: 16px;
-    margin-bottom: 24px;
+    gap: 12px;
 }
 
-.price-current {
-    font-family: var(--font-heading);
-    font-size: 2rem;
-    font-weight: 900;
+.detail-price-current {
+    font-size: 1.35rem;
+    font-weight: 700;
     color: #000000;
 }
 
-.price-original {
-    font-size: 1.15rem;
-    color: #9ca3af;
+.detail-price-original {
+    font-size: 1rem;
+    color: #707072;
     text-decoration: line-through;
 }
 
-/* Variant & US Shoe Sizing Section */
-.variant-section {
+.detail-price-discount {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #059669;
+}
+
+/* ==========================================================================
+   COLORWAY THUMBNAILS SELECTOR
+   ========================================================================== */
+.colorways-section {
     margin-bottom: 28px;
 }
 
-.variant-header {
+.colorways-grid {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.colorway-thumb-btn {
+    width: 76px;
+    height: 76px;
+    border-radius: 6px;
+    background: #f6f6f6;
+    border: 1.5px solid transparent;
+    padding: 4px;
+    cursor: pointer;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s ease;
+}
+
+.colorway-thumb-btn:hover {
+    border-color: #d1d5db;
+}
+
+.colorway-thumb-btn.active {
+    border-color: #000000;
+    background: #ffffff;
+    box-shadow: 0 0 0 1px #000000;
+}
+
+.colorway-thumb-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* ==========================================================================
+   3-COLUMN US SHOE SIZES MATRIX (NIKE STYLE)
+   ========================================================================== */
+.size-selection-section {
+    margin-bottom: 30px;
+}
+
+.size-header-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
 }
 
-.variant-title {
-    font-size: 0.85rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+.size-header-title {
+    font-size: 1rem;
+    font-weight: 600;
     color: #000000;
 }
 
-.size-chart-link {
-    font-size: 0.8rem;
-    color: #4b5563;
-    text-decoration: underline;
+.size-guide-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #707072;
+    background: none;
+    border: none;
     cursor: pointer;
+    padding: 0;
 }
 
-.size-chart-link:hover {
+.size-guide-btn:hover {
     color: #000000;
+    text-decoration: underline;
 }
 
-/* US Shoe Size Buttons Matrix */
-.us-sizes-grid {
+/* 3-Column Nike Size Grid */
+.nike-size-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
-    gap: 10px;
-    margin-bottom: 14px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
 }
 
-.size-pill-btn {
+.nike-size-btn {
     background: #ffffff;
-    border: 1.5px solid #d1d5db;
-    border-radius: var(--radius-sm);
-    padding: 12px 6px;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 14px 4px;
     text-align: center;
     cursor: pointer;
-    transition: all var(--transition-fast);
-    position: relative;
-}
-
-.size-pill-btn:hover:not(:disabled) {
-    border-color: #000000;
-    background: #f9fafb;
-}
-
-.size-pill-btn.active {
-    background: #000000;
-    border-color: #000000;
-}
-
-.size-pill-btn.active .size-text,
-.size-pill-btn.active .size-stock-feedback {
-    color: #ffffff !important;
-}
-
-.size-pill-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-    border-color: #e5e7eb;
-    background: #f3f4f6;
-}
-
-.size-pill-btn.out-of-stock::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 10%;
-    width: 80%;
-    height: 1.5px;
-    background-color: #9ca3af;
-    transform: rotate(-25deg);
-}
-
-.size-text {
-    font-family: var(--font-heading);
-    font-size: 0.92rem;
-    font-weight: 800;
+    font-size: 0.95rem;
+    font-weight: 500;
     color: #000000;
-    display: block;
-}
-
-.size-stock-feedback {
-    font-size: 0.65rem;
-    font-weight: 600;
-    color: #6b7280;
-    display: block;
-    margin-top: 2px;
-}
-
-.stock-indicator-banner {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    padding: 10px 14px;
-    border-radius: var(--radius-sm);
-    background: #f3f4f6;
-    border: 1px solid #e5e7eb;
-    margin-bottom: 24px;
-}
-
-.stock-indicator-banner.in-stock {
-    color: #059669;
-    border-color: #a7f3d0;
-    background: #ecfdf5;
-}
-
-.stock-indicator-banner.low-stock {
-    color: #d97706;
-    border-color: #fde68a;
-    background: #fffbeb;
-}
-
-.stock-indicator-banner.out-stock {
-    color: #dc2626;
-    border-color: #fecaca;
-    background: #fef2f2;
-}
-
-/* Quantity & Action Buttons */
-.action-row {
-    display: flex;
-    gap: 14px;
-    margin-bottom: 30px;
-}
-
-.quantity-stepper {
-    display: flex;
-    align-items: center;
-    background: #ffffff;
-    border: 1.5px solid #d1d5db;
-    border-radius: var(--radius-sm);
-    height: 52px;
-    padding: 0 4px;
-}
-
-.qty-btn {
-    background: transparent;
-    color: #000000;
-    font-size: 1.2rem;
-    width: 38px;
-    height: 100%;
+    transition: all 0.15s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: color var(--transition-fast);
 }
 
-.qty-btn:hover {
-    color: #6b7280;
+.nike-size-btn:hover:not(:disabled) {
+    border-color: #000000;
 }
 
-.qty-input {
-    width: 44px;
-    text-align: center;
-    font-family: var(--font-heading);
-    font-size: 1rem;
-    font-weight: 800;
+.nike-size-btn.active {
+    border: 1.5px solid #000000;
+    font-weight: 700;
+    box-shadow: 0 0 0 0.5px #000000;
+}
+
+.nike-size-btn:disabled,
+.nike-size-btn.out-of-stock {
+    background: #f7f7f7;
+    color: #cacacb;
+    border-color: #f0f0f0;
+    cursor: not-allowed;
+}
+
+.size-stock-feedback-msg {
+    font-size: 0.85rem;
+    font-weight: 600;
     color: #000000;
-    background: transparent;
+    min-height: 20px;
 }
 
-/* Accordion Details */
-.product-accordions {
-    border-top: 1px solid #e5e7eb;
+/* ==========================================================================
+   CALL-TO-ACTION BUTTONS (Add to Bag & Favourite)
+   ========================================================================== */
+.action-buttons-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 35px;
 }
 
-.accordion-item {
-    border-bottom: 1px solid #e5e7eb;
+.btn-add-to-bag {
+    width: 100%;
+    padding: 18px 24px;
+    border-radius: 30px;
+    background: #000000;
+    color: #ffffff;
+    border: none;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
-.accordion-header {
-    padding: 18px 0;
+.btn-add-to-bag:hover {
+    opacity: 0.88;
+}
+
+.btn-add-to-bag:active {
+    transform: scale(0.99);
+}
+
+.btn-favourite {
+    width: 100%;
+    padding: 18px 24px;
+    border-radius: 30px;
+    background: #ffffff;
+    color: #000000;
+    border: 1.5px solid #cacacb;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-favourite:hover {
+    border-color: #000000;
+}
+
+/* ==========================================================================
+   PRODUCT ACCORDIONS (NIKE MINIMAL LUXURY STYLE)
+   ========================================================================== */
+.product-accordion-list {
+    border-top: 1px solid #e5e5e5;
+    margin-top: 10px;
+}
+
+.product-accordion-item {
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.product-accordion-header {
+    width: 100%;
+    padding: 22px 0;
+    background: none;
+    border: none;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    cursor: pointer;
-    font-family: var(--font-heading);
-    font-size: 0.95rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    font-size: 1.1rem;
+    font-weight: 700;
     color: #000000;
-    user-select: none;
+    cursor: pointer;
+    text-align: left;
+    transition: color 0.15s ease;
 }
 
-.accordion-header:hover {
+.product-accordion-header:hover {
+    color: #707072;
+}
+
+.accordion-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #000000;
+}
+
+.accordion-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #000000;
+}
+
+.product-accordion-item.active .accordion-icon {
+    transform: rotate(180deg);
+}
+
+.product-accordion-body {
+    padding-bottom: 24px;
+    font-size: 0.95rem;
+    color: #374151;
+    line-height: 1.75;
+    display: none;
+}
+
+.product-accordion-item.active .product-accordion-body {
+    display: block;
+}
+
+.accordion-bullets {
+    padding-left: 20px;
+    margin: 12px 0 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
     color: #4b5563;
 }
 
-.accordion-body {
-    padding-bottom: 18px;
+.accordion-bullets li {
+    line-height: 1.6;
+}
+
+.store-availability-box {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 16px;
+    margin-top: 8px;
+}
+
+.store-branch-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.store-branch-name {
+    font-weight: 700;
+    color: #000000;
+    font-size: 0.95rem;
+}
+
+.store-branch-addr {
+    font-size: 0.82rem;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+.store-branch-badge {
+    background: #ecfdf5;
+    color: #059669;
+    font-weight: 800;
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid #a7f3d0;
+}
+
+/* Modal for Size Guide */
+.size-guide-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+}
+
+.size-guide-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.size-guide-modal {
+    background: #ffffff;
+    border-radius: 8px;
+    max-width: 600px;
+    width: 100%;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+.size-guide-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
     font-size: 0.9rem;
-    color: #4b5563;
-    line-height: 1.7;
+}
+
+.size-guide-table th,
+.size-guide-table td {
+    padding: 10px;
+    border: 1px solid #e5e5e5;
+    text-align: center;
+}
+
+.size-guide-table th {
+    background: #f6f6f6;
+    font-weight: 700;
+    color: #000000;
+}
+
+@media (max-width: 900px) {
+    .product-detail-layout {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+    .product-gallery-wrapper {
+        flex-direction: column-reverse;
+        position: static;
+    }
+    .gallery-vertical-thumbs {
+        flex-direction: row;
+        width: 100%;
+        max-height: none;
+        overflow-x: auto;
+    }
 }
