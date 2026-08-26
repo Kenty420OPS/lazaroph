@@ -642,15 +642,7 @@ const FallbackStore = {
         }
 
         if (cleanPath === '/api/auth/email-simulator/latest') {
-            return [
-                {
-                    id: 1,
-                    to: 'customer@example.com',
-                    subject: 'Verify Your Email Address — LAZAROPH',
-                    token: 'sim_tok_' + Date.now(),
-                    date: new Date().toISOString()
-                }
-            ];
+            return [];
         }
 
         // 2. Categories & Brands

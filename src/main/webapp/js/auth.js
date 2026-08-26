@@ -599,12 +599,19 @@ const EmailSimulator = {
     lastCheckedId: null,
 
     async checkNewEmail() {
+        const isLocal = typeof window !== 'undefined' && (
+            window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1' ||
+            window.location.protocol === 'file:'
+        );
+        if (!isLocal) return;
+
         try {
             const emails = await API.getSimulatedEmails();
             if (emails && emails.length > 0) {
                 this.emails = emails;
                 const latest = emails[0];
-                if (latest.token !== this.lastCheckedId) {
+                if (latest && latest.token && latest.token !== this.lastCheckedId) {
                     this.lastCheckedId = latest.token;
                     this.showNotification(latest);
                 }
@@ -613,6 +620,12 @@ const EmailSimulator = {
     },
 
     showNotification(email) {
+        const isLocal = typeof window !== 'undefined' && (
+            window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1' ||
+            window.location.protocol === 'file:'
+        );
+        if (!isLocal || !email || !email.token) return;
         const isVerify = email.type === 'VERIFICATION';
         const actionLabel = isVerify ? 'VERIFY MY EMAIL' : 'RESET MY PASSWORD';
         const actionHash = isVerify ? `#verify-email?token=${email.token}` : `#reset-password?token=${email.token}`;
@@ -767,9 +780,6 @@ const Auth = {
             AdminAuth.init()
         ]);
         this.updateUI();
-
-        // Check for incoming simulated emails periodically during local testing
-        setInterval(() => EmailSimulator.checkNewEmail(), 4000);
     },
 
     updateUI() {
