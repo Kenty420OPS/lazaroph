@@ -2521,7 +2521,7 @@ const Admin = {
                     </span>
                 </td>
                 <td style="text-align: right; white-space: nowrap;">
-                    <button class="btn btn-secondary btn-sm" onclick='Admin.openBrandModal(${JSON.stringify(b).replace(/'/g, "&apos;")})' title="Edit Brand">
+                    <button class="btn btn-secondary btn-sm" onclick="Admin.openBrandModalById(${b.id})" title="Edit Brand">
                         ✏️ Edit
                     </button>
                     <button class="btn btn-secondary btn-sm" style="color: ${b.status === 'ACTIVE' ? '#eab308' : '#22c55e'};" onclick="Admin.toggleBrandStatus(${b.id}, '${b.status}')" title="Toggle Active / Inactive">
@@ -2610,6 +2610,11 @@ const Admin = {
                 brandSelect.value = this._lastSelectedBrandId || '1';
             }
         }
+    },
+
+    openBrandModalById(id, fromProductForm = false) {
+        const brand = (this.brands || []).find(b => b.id === id);
+        this.openBrandModal(brand, fromProductForm);
     },
 
     openBrandModal(brand, fromProductForm = false) {

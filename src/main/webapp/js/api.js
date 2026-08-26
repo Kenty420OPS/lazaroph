@@ -378,6 +378,51 @@ const FallbackStore = {
         localStorage.setItem('lazaroph_offline_products', JSON.stringify(products));
     },
 
+    getInitialBrands() {
+        return [
+            { id: 1, name: 'Nike', slug: 'nike', logoUrl: 'images/brand-nike.png', description: 'World-renowned athletic sportswear, signature sneakers, and performance apparel.', status: 'ACTIVE', productCount: 4 },
+            { id: 2, name: 'Jordan', slug: 'jordan', logoUrl: 'images/brand-jordan.png', description: 'Signature basketball legacy, retro high-tops, and iconic Jumpman apparel.', status: 'ACTIVE', productCount: 2 },
+            { id: 3, name: 'Adidas', slug: 'adidas', logoUrl: 'images/brand-adidas.png', description: 'Iconic 3-stripes sportswear, Originals lifestyle kicks, and boost comfort.', status: 'ACTIVE', productCount: 3 },
+            { id: 4, name: 'New Balance', slug: 'new-balance', logoUrl: 'images/brand-nb.png', description: 'Heritage running lifestyle, dad shoes, and superior arch support footwear.', status: 'ACTIVE', productCount: 1 },
+            { id: 5, name: 'HOKA', slug: 'hoka', logoUrl: 'images/brand-hoka.png', description: 'Maximalist cushioned road running shoes, trail runners, and recovery slides.', status: 'ACTIVE', productCount: 1 },
+            { id: 6, name: 'On', slug: 'on', logoUrl: 'images/brand-on.png', description: 'Swiss-engineered CloudTec running shoes, ultralight performance footwear, and apparel.', status: 'ACTIVE', productCount: 1 },
+            { id: 7, name: 'Puma', slug: 'puma', logoUrl: 'images/brand-puma.png', description: 'Forever faster athletic footwear, football gear, and casual street trainers.', status: 'ACTIVE', productCount: 1 },
+            { id: 8, name: 'Asics', slug: 'asics', logoUrl: 'images/brand-asics.png', description: 'Japanese performance running shoes, GEL cushioning, and ergonomic trainers.', status: 'ACTIVE', productCount: 1 },
+            { id: 9, name: 'Birkenstock', slug: 'birkenstock', logoUrl: 'images/brand-birkenstock.png', description: 'Iconic German anatomical cork footbed sandals, Boston clogs, and slides.', status: 'ACTIVE', productCount: 1 },
+            { id: 10, name: 'Crocs', slug: 'crocs', logoUrl: 'images/brand-crocs.png', description: 'Croslite comfort clogs, all-terrain sandals, and custom Jibbitz accessories.', status: 'ACTIVE', productCount: 1 },
+            { id: 11, name: 'Converse', slug: 'converse', logoUrl: 'images/brand-converse.png', description: 'Timeless Chuck Taylor All Stars, canvas skate shoes, and street culture.', status: 'ACTIVE', productCount: 1 }
+        ];
+    },
+
+    getBrands() {
+        const saved = localStorage.getItem('lazaroph_offline_brands');
+        let brands = [];
+        if (saved) {
+            try { brands = JSON.parse(saved); } catch (e) {}
+        }
+        if (!brands || !Array.isArray(brands) || brands.length === 0) {
+            brands = this.getInitialBrands();
+            localStorage.setItem('lazaroph_offline_brands', JSON.stringify(brands));
+        }
+
+        // Dynamically compute real-time product count for each brand
+        const products = this.getProducts();
+        brands.forEach(b => {
+            b.productCount = products.filter(p => {
+                return (p.brandId && p.brandId === b.id) ||
+                       (p.brandName && p.brandName.toLowerCase() === b.name.toLowerCase());
+            }).length;
+        });
+
+        return brands;
+    },
+
+    saveBrands(brands) {
+        localStorage.setItem('lazaroph_offline_brands', JSON.stringify(brands));
+        this.brands = brands;
+        return brands;
+    },
+
     getAdmins() {
         const saved = localStorage.getItem('lazaroph_fallback_admins');
         if (saved) {
@@ -651,8 +696,74 @@ const FallbackStore = {
             return this.categories;
         }
 
-        if (cleanPath === '/api/brands' || cleanPath === '/api/admin/brands') {
-            return this.brands;
+        // Brands: GET & POST (Save / Update Brand)
+        if (cleanPath === '/api/brands' || cleanPath === '/api/admin/brands' || cleanPath === '/api/admin/brands/save') {
+            if (method === 'POST') {
+                const req = typeof body === 'string' ? JSON.parse(body || '{}') : (body || {});
+                let brands = this.getBrands();
+                let savedBrand;
+                const reqId = parseInt(req.id) || 0;
+
+                if (reqId > 0) {
+                    const idx = brands.findIndex(b => b.id === reqId);
+                    if (idx !== -1) {
+                        savedBrand = {
+                            ...brands[idx],
+                            ...req,
+                            id: reqId,
+                            status: req.status || brands[idx].status || 'ACTIVE'
+                        };
+                        brands[idx] = savedBrand;
+                    } else {
+                        savedBrand = { ...req, id: reqId };
+                        brands.push(savedBrand);
+                    }
+                } else {
+                    const newId = brands.length > 0 ? Math.max(...brands.map(b => b.id)) + 1 : 1;
+                    const slug = (req.name || 'brand').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                    savedBrand = {
+                        id: newId,
+                        name: req.name || 'New Brand',
+                        slug: slug,
+                        logoUrl: req.logoUrl || 'images/brand-nike.png',
+                        description: req.description || '',
+                        status: req.status || 'ACTIVE',
+                        productCount: 0
+                    };
+                    brands.push(savedBrand);
+                }
+                this.saveBrands(brands);
+                return { success: true, brand: savedBrand, message: 'Brand saved successfully.' };
+            }
+            return this.getBrands();
+        }
+
+        // Brand Status Toggle / Update
+        if (cleanPath.startsWith('/api/admin/brands/status/') || cleanPath === '/api/admin/brands/status') {
+            const req = typeof body === 'string' ? JSON.parse(body || '{}') : (body || {});
+            let id = 0;
+            if (cleanPath.startsWith('/api/admin/brands/status/')) {
+                id = parseInt(cleanPath.replace('/api/admin/brands/status/', ''));
+            } else {
+                id = parseInt(req.id);
+            }
+            const status = req.status || 'ACTIVE';
+            let brands = this.getBrands();
+            const brand = brands.find(b => b.id === id);
+            if (brand) {
+                brand.status = status;
+                this.saveBrands(brands);
+            }
+            return { success: true, brand, message: `Brand status updated to ${status}` };
+        }
+
+        // Brand Delete
+        if (cleanPath.startsWith('/api/admin/brands/delete/') || (cleanPath.startsWith('/api/brands/') && method === 'DELETE')) {
+            const id = parseInt(cleanPath.split('/').pop());
+            let brands = this.getBrands();
+            brands = brands.filter(b => b.id !== id);
+            this.saveBrands(brands);
+            return { success: true, message: 'Brand deleted successfully.' };
         }
 
         // 3. Products
@@ -727,45 +838,6 @@ const FallbackStore = {
             }
             this.saveProducts(products);
             return { success: true, product: savedProduct, message: 'Product saved successfully.' };
-        }
-
-        if (cleanPath.startsWith('/api/admin/brands/delete/') || (cleanPath.startsWith('/api/brands/') && method === 'DELETE')) {
-            const id = parseInt(cleanPath.split('/').pop());
-            this.brands = this.brands.filter(b => b.id !== id);
-            return { success: true, message: 'Brand deleted successfully.' };
-        }
-
-        if (cleanPath === '/api/admin/brands/save') {
-            const req = typeof body === 'string' ? JSON.parse(body || '{}') : (body || {});
-            let savedBrand;
-            if (req.id) {
-                const idx = this.brands.findIndex(b => b.id === req.id);
-                if (idx !== -1) {
-                    savedBrand = { ...this.brands[idx], ...req };
-                    this.brands[idx] = savedBrand;
-                } else {
-                    savedBrand = { ...req };
-                    this.brands.push(savedBrand);
-                }
-            } else {
-                const newId = this.brands.length > 0 ? Math.max(...this.brands.map(b => b.id)) + 1 : 1;
-                savedBrand = {
-                    ...req,
-                    id: newId,
-                    status: req.status || 'ACTIVE'
-                };
-                this.brands.push(savedBrand);
-            }
-            return { success: true, brand: savedBrand, message: 'Brand saved successfully.' };
-        }
-
-        if (cleanPath === '/api/admin/brands/status') {
-            const req = typeof body === 'string' ? JSON.parse(body || '{}') : (body || {});
-            const brand = this.brands.find(b => b.id === req.id);
-            if (brand) {
-                brand.status = req.status;
-            }
-            return { success: true, brand };
         }
 
         if (cleanPath.startsWith('/api/admin/orders/delete/') || (cleanPath.startsWith('/api/orders/delete/')) || (cleanPath.startsWith('/api/admin/orders/') && method === 'DELETE')) {
