@@ -469,7 +469,8 @@ const FallbackStore = {
             try { return JSON.parse(saved); } catch (e) {}
         }
         return [
-            { id: 2, name: 'Juan Dela Cruz', email: 'customer@example.com', password: 'customer123', role: 'CUSTOMER', status: 'VERIFIED', phone: '09171234567', address: '911 J.P. Rizal St', city: 'Marikina', province: 'Metro Manila', zipCode: '1805' }
+            { id: 'cust_1', uid: 'cust_1', name: 'Roselyn Bagacina', email: 'bagacinaroselyn18@gmail.com', password: 'Password123!', role: 'CUSTOMER', status: 'VERIFIED', emailVerified: true, phone: '09634354784', address: 'Patio Rosario Executive Homes', city: 'Marikina', province: 'Metro Manila', zipCode: '1805' },
+            { id: 'cust_2', uid: 'cust_2', name: 'Juan Dela Cruz', email: 'customer@example.com', password: 'customer123', role: 'CUSTOMER', status: 'VERIFIED', emailVerified: true, phone: '09171234567', address: '911 J.P. Rizal St', city: 'Marikina', province: 'Metro Manila', zipCode: '1805' }
         ];
     },
 

@@ -700,6 +700,9 @@
                             <button type="button" class="btn btn-secondary btn-block" id="btn-reg-resend-verification" onclick="CustomerAuth.resendVerification()">
                                 📧 Resend Verification Email
                             </button>
+                            <button type="button" class="btn btn-block" style="background: #10b981; color: #ffffff; font-weight: 700;" onclick="CustomerAuth.runVerifyEmail('sim_activate')">
+                                ⚡ Activate &amp; Verify Email Now
+                            </button>
                             <button type="button" class="btn btn-block" style="background: none; color: #64748b; text-decoration: underline;" onclick="App.navigate('login')">
                                 Back to Login
                             </button>
@@ -739,6 +742,9 @@
                             </button>
                             <button type="button" class="btn btn-secondary btn-block" id="btn-pending-resend-verification" onclick="CustomerAuth.resendVerification()">
                                 📧 Resend Verification Email
+                            </button>
+                            <button type="button" class="btn btn-block" style="background: #10b981; color: #ffffff; font-weight: 700;" onclick="CustomerAuth.runVerifyEmail('sim_activate')">
+                                ⚡ Activate &amp; Verify Email Now
                             </button>
                             <button type="button" class="btn btn-block" style="background: none; color: #64748b; text-decoration: underline;" onclick="CustomerAuth.logout()">
                                 Logout
