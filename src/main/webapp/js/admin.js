@@ -51,6 +51,22 @@ const Admin = {
         } catch (ignored) {}
     },
 
+    toggleMobileSidebar(forceState) {
+        const sidebar = document.getElementById('admin-sidebar');
+        const overlay = document.getElementById('admin-mobile-overlay');
+        if (!sidebar) return;
+        const willOpen = typeof forceState === 'boolean' ? forceState : !sidebar.classList.contains('mobile-open');
+        if (willOpen) {
+            sidebar.classList.add('mobile-open');
+            if (overlay) overlay.classList.add('active');
+            document.body.classList.add('no-scroll');
+        } else {
+            sidebar.classList.remove('mobile-open');
+            if (overlay) overlay.classList.remove('active');
+            document.body.classList.remove('no-scroll');
+        }
+    },
+
     switchTab(tab) {
         this.currentTab = tab;
 
@@ -59,9 +75,22 @@ const Admin = {
             this.renderedChatConvId = null;
         }
 
+        // Auto-close mobile sidebar drawer when a tab is chosen
+        this.toggleMobileSidebar(false);
+
         document.querySelectorAll('.admin-nav-btn').forEach(b => b.classList.remove('active'));
         const activeBtn = document.querySelector(`.admin-nav-btn[data-tab="${tab}"]`);
         if (activeBtn) activeBtn.classList.add('active');
+
+        // Sync mobile horizontal navigation pills
+        document.querySelectorAll('.admin-pill-btn').forEach(p => p.classList.remove('active'));
+        const activePill = document.querySelector(`.admin-pill-btn[data-pill="${tab}"]`);
+        if (activePill) {
+            activePill.classList.add('active');
+            try {
+                activePill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            } catch (ignored) {}
+        }
 
         const content = document.getElementById('admin-content-area');
         if (!content) return;

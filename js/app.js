@@ -19,20 +19,39 @@ const App = {
     },
 
     bindEvents() {
-        // Mobile Hamburger Menu Toggle
+        // Mobile Hamburger Menu Toggle & Backdrop
         const menuToggle = document.getElementById('mobile-menu-toggle');
         const navMenu = document.getElementById('main-nav-menu');
+        const navBackdrop = document.getElementById('nav-mobile-backdrop');
+
+        const closeMobileMenu = () => {
+            if (navMenu) navMenu.classList.remove('mobile-open');
+            if (navBackdrop) navBackdrop.classList.remove('active');
+            document.body.classList.remove('no-scroll');
+        };
+
         if (menuToggle && navMenu) {
             menuToggle.addEventListener('click', () => {
-                navMenu.classList.toggle('mobile-open');
+                const isOpen = navMenu.classList.toggle('mobile-open');
+                if (navBackdrop) navBackdrop.classList.toggle('active', isOpen);
+                document.body.classList.toggle('no-scroll', isOpen);
             });
+        }
+
+        if (navBackdrop) {
+            navBackdrop.addEventListener('click', closeMobileMenu);
         }
 
         // Close mobile menu when a nav link is clicked
         document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', () => {
-                if (navMenu) navMenu.classList.remove('mobile-open');
-            });
+            link.addEventListener('click', closeMobileMenu);
+        });
+
+        // Close mobile menu on desktop resize
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 992) {
+                closeMobileMenu();
+            }
         });
 
         // Account Header Button

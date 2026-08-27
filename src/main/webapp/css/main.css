@@ -452,3 +452,36 @@ textarea.form-control {
         transform: translateX(0);
     }
 }
+
+/* Mobile Utilities & iOS Safari Zoom Prevention */
+body.no-scroll {
+    overflow: hidden !important;
+    touch-action: none;
+}
+
+@media (max-width: 768px) {
+    /* Prevent iOS Safari auto-zoom by ensuring minimum 16px font-size on inputs */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="tel"],
+    input[type="search"],
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+
+    #toast-container {
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+    }
+
+    .toast {
+        min-width: unset;
+        max-width: 100%;
+        width: 100%;
+    }
+}
+
