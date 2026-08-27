@@ -23,15 +23,16 @@ const LazarophFirebase = {
     COOLDOWN_SECONDS: 60,
     COOLDOWN_STORAGE_KEY: 'lazaroph_verify_resend_cooldown',
 
-    // Default Firebase Configuration for LAZAROPH
-    // Can be overridden via window.LAZAROPH_FIREBASE_CONFIG or localStorage
+    // Default Firebase Configuration for LAZAROPH (Live Production)
+    // Project: lazaroph-62bef
     defaultConfig: {
-        apiKey: "AIzaSyDemoKeyLazarophAuthentic2026",
-        authDomain: "lazaroph-store.firebaseapp.com",
-        projectId: "lazaroph-store",
-        storageBucket: "lazaroph-store.appspot.com",
-        messagingSenderId: "109823471092",
-        appId: "1:109823471092:web:a1b2c3d4e5f6g7h8i9j0"
+        apiKey: "AIzaSyDAZvwN4p895WWcNj1wEp7bY5X8qHuo5eg",
+        authDomain: "lazaroph-62bef.firebaseapp.com",
+        projectId: "lazaroph-62bef",
+        storageBucket: "lazaroph-62bef.firebasestorage.app",
+        messagingSenderId: "304095448298",
+        appId: "1:304095448298:web:0062dc3f17606ea4f01b93",
+        measurementId: "G-0G7K10R473"
     },
 
     getConfig() {
@@ -41,7 +42,12 @@ const LazarophFirebase = {
         try {
             const stored = localStorage.getItem('lazaroph_firebase_config');
             if (stored) {
-                return JSON.parse(stored);
+                const parsed = JSON.parse(stored);
+                if (parsed && parsed.apiKey && !parsed.apiKey.includes('DemoKey')) {
+                    return parsed;
+                } else {
+                    localStorage.removeItem('lazaroph_firebase_config');
+                }
             }
         } catch (e) {}
         return this.defaultConfig;
@@ -115,11 +121,12 @@ const LazarophFirebase = {
                 }
                 const newCfg = {
                     apiKey: key,
-                    projectId: proj || 'lazaroph-store',
-                    authDomain: dom || (proj ? proj + '.firebaseapp.com' : 'lazaroph-store.firebaseapp.com'),
-                    storageBucket: (proj || 'lazaroph-store') + '.appspot.com',
-                    messagingSenderId: '109823471092',
-                    appId: app || '1:109823471092:web:active'
+                    projectId: proj || 'lazaroph-62bef',
+                    authDomain: dom || (proj ? proj + '.firebaseapp.com' : 'lazaroph-62bef.firebaseapp.com'),
+                    storageBucket: (proj || 'lazaroph-62bef') + '.firebasestorage.app',
+                    messagingSenderId: '304095448298',
+                    appId: app || '1:304095448298:web:0062dc3f17606ea4f01b93',
+                    measurementId: 'G-0G7K10R473'
                 };
                 LazarophFirebase.setConfig(newCfg);
             });
