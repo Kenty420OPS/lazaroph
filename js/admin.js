@@ -640,29 +640,44 @@ const Admin = {
         this.handleDropFiles(files);
     },
 
-    handleDropFiles(files) {
+    async handleDropFiles(files) {
         if (!files || files.length === 0) return;
 
-        let loadedCount = 0;
-        const total = files.length;
+        const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+        if (imageFiles.length === 0) return;
 
-        Array.from(files).forEach((file) => {
-            if (!file.type.startsWith('image/')) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const dataUrl = e.target.result;
-                this.productImages.push({ 
-                    imageUrl: dataUrl, 
-                    isMain: this.productImages.length === 0 
+        showToast(`Uploading ${imageFiles.length} photo(s) to Firebase Storage...`, 'info');
+
+        let loadedCount = 0;
+        for (const file of imageFiles) {
+            try {
+                let downloadUrl;
+                if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.uploadProductImage) {
+                    downloadUrl = await LazarophFirebase.uploadProductImage(file);
+                } else {
+                    downloadUrl = await new Promise((res, rej) => {
+                        const reader = new FileReader();
+                        reader.onload = e => res(e.target.result);
+                        reader.onerror = rej;
+                        reader.readAsDataURL(file);
+                    });
+                }
+
+                this.productImages.push({
+                    imageUrl: downloadUrl,
+                    isMain: this.productImages.length === 0
                 });
                 loadedCount++;
-                if (loadedCount === total) {
-                    this.renderImageCardsGrid();
-                    showToast(`Successfully attached ${loadedCount} product photo(s)!`, 'success');
-                }
-            };
-            reader.readAsDataURL(file);
-        });
+            } catch (err) {
+                console.error('[Admin] Image upload error:', err);
+                showToast(`Failed to upload ${file.name}: ${err.message}`, 'error');
+            }
+        }
+
+        if (loadedCount > 0) {
+            this.renderImageCardsGrid();
+            showToast(`Successfully uploaded ${loadedCount} photo(s) to product!`, 'success');
+        }
     },
 
     addImageUrlPrompt() {

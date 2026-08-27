@@ -56,7 +56,9 @@ const routes = [
     'reset-password',
     'account',
     'order-track',
-    'shop'
+    'shop',
+    'checkout',
+    'product-detail'
 ];
 
 const indexContent = fs.readFileSync(path.join(webappDir, 'index.html'), 'utf8');

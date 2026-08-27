@@ -270,7 +270,7 @@ const ProductDetail = {
                                     <div class="store-availability-box">
                                         <div class="store-branch-item">
                                             <div>
-                                                <div class="store-branch-name">Flagship Store — Concepcion Uno</div>
+                                                <div class="store-branch-name">LAZAROPH Store — Concepcion Uno</div>
                                                 <div class="store-branch-addr">911 J.P. Rizal St., Marikina City • Mon–Sun 11am–8pm</div>
                                             </div>
                                             <span class="store-branch-badge">IN STOCK</span>

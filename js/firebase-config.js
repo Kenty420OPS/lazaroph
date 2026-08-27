@@ -71,8 +71,9 @@ const LazarophFirebase = {
                 this.app = firebase.app();
             }
 
-            this.auth = firebase.auth();
+            this.auth = typeof firebase.auth === 'function' ? firebase.auth() : null;
             this.db = typeof firebase.firestore === 'function' ? firebase.firestore() : null;
+            this.storage = typeof firebase.storage === 'function' ? firebase.storage() : null;
 
             // Set session persistence to LOCAL so customers stay signed in across browser reloads
             if (this.auth && firebase.auth.Auth && firebase.auth.Auth.Persistence) {
@@ -82,7 +83,7 @@ const LazarophFirebase = {
             }
 
             this.isReady = true;
-            console.log('[LazarophFirebase] Initialized successfully. Project:', config.projectId);
+            console.log('[LazarophFirebase] Initialized successfully. Project:', config.projectId, '| Storage ready:', Boolean(this.storage));
             return true;
         } catch (err) {
             console.error('[LazarophFirebase] Initialization error:', err);
@@ -522,6 +523,371 @@ const LazarophFirebase = {
             default:
                 return msg || 'Authentication failed. Please try again.';
         }
+    },
+
+    // =========================================================================
+    // 9. CRYPTOGRAPHIC PASSWORD HASHING (SALTED SHA-256)
+    // Zero plaintext passwords stored across the entire platform
+    // =========================================================================
+    SALT: "LAZAROPH_AUTHENTIC_2026",
+
+    sha256(ascii) {
+        function rightRotate(value, amount) {
+            return (value >>> amount) | (value << (32 - amount));
+        }
+        var mathPow = Math.pow;
+        var maxWord = mathPow(2, 32);
+        var lengthProperty = 'length';
+        var i, j;
+        var result = '';
+        var words = [];
+        var asciiBitLength = ascii[lengthProperty] * 8;
+        var hash = [];
+        var k = [];
+        var primeCounter = 0;
+        var isComposite = {};
+        for (var candidate = 2; primeCounter < 64; candidate++) {
+            if (!isComposite[candidate]) {
+                for (i = 0; i < 313; i += candidate) {
+                    isComposite[i] = candidate;
+                }
+                hash[primeCounter] = (mathPow(candidate, .5) * maxWord) | 0;
+                k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+            }
+        }
+        ascii += '\x80';
+        while (ascii[lengthProperty] % 64 - 56) ascii += '\x00';
+        for (i = 0; i < ascii[lengthProperty]; i++) {
+            j = ascii.charCodeAt(i);
+            if (j >> 8) return;
+            words[i >> 2] |= j << ((3 - i) % 4) * 8;
+        }
+        words[words[lengthProperty]] = ((asciiBitLength / maxWord) | 0);
+        words[words[lengthProperty]] = (asciiBitLength);
+        for (j = 0; j < words[lengthProperty];) {
+            var w = words.slice(j, j += 16);
+            var oldHash = hash;
+            hash = hash.slice(0, 8);
+            for (i = 0; i < 64; i++) {
+                var w15 = w[i - 15], w2 = w[i - 2];
+                var a = hash[0], e = hash[4];
+                var temp1 = hash[7]
+                    + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25))
+                    + ((e & hash[5]) ^ ((~e) & hash[6]))
+                    + k[i]
+                    + (w[i] = (i < 16) ? w[i] : (
+                        w[i - 16]
+                        + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3))
+                        + w[i - 7]
+                        + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))
+                    ) | 0
+                    );
+                var temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22))
+                    + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+                hash = [(temp1 + temp2) | 0].concat(hash);
+                hash[4] = (hash[4] + temp1) | 0;
+            }
+            for (i = 0; i < 8; i++) {
+                hash[i] = (hash[i] + oldHash[i]) | 0;
+            }
+        }
+        for (i = 0; i < 8; i++) {
+            for (j = 3; j + 1; j--) {
+                var b = (hash[i] >> (j * 8)) & 255;
+                result += ((b < 16) ? 0 : '') + b.toString(16);
+            }
+        }
+        return result;
+    },
+
+    hashPassword(plainText) {
+        if (!plainText) return '';
+        return this.sha256(plainText + this.SALT);
+    },
+
+    verifyPassword(plainText, storedHash) {
+        if (!plainText || !storedHash) return false;
+        return this.hashPassword(plainText).toLowerCase() === storedHash.toLowerCase();
+    },
+
+    // =========================================================================
+    // 10. FIREBASE STORAGE — PRODUCT IMAGE UPLOADS
+    // =========================================================================
+    async uploadProductImage(file) {
+        this.init();
+        if (!file) throw new Error('No image file selected.');
+
+        const cleanName = (file.name || 'image.png').replace(/[^a-zA-Z0-9._-]/g, '_');
+        const storagePath = `products/${Date.now()}_${cleanName}`;
+
+        if (this.storage) {
+            try {
+                const storageRef = this.storage.ref(storagePath);
+                const metadata = { contentType: file.type || 'image/jpeg' };
+                const snapshot = await storageRef.put(file, metadata);
+                const downloadURL = await snapshot.ref.getDownloadURL();
+                console.log('[LazarophFirebase] Image uploaded to Firebase Storage:', downloadURL);
+                return downloadURL;
+            } catch (storageErr) {
+                console.warn('[LazarophFirebase] Firebase Storage upload error, falling back to persistent Data URL:', storageErr.message);
+            }
+        }
+
+        // Reliable persistent Data URL fallback
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error('Failed to read image file.'));
+            reader.readAsDataURL(file);
+        });
+    },
+
+    // =========================================================================
+    // 11. CLOUD FIRESTORE — PERSISTENT PRODUCTS DATABASE
+    // Source of truth: once deleted in Firestore, products NEVER return on refresh!
+    // =========================================================================
+    async getProducts(filters = {}) {
+        this.init();
+        if (!this.db) {
+            if (typeof FallbackStore !== 'undefined') {
+                return FallbackStore.getProducts();
+            }
+            return [];
+        }
+
+        try {
+            // Check initialization metadata
+            const metaDoc = await this.db.collection('_metadata').doc('store_init').get().catch(() => null);
+            const isInitialized = metaDoc && metaDoc.exists && metaDoc.data().initialized;
+
+            const snapshot = await this.db.collection('products').get();
+            let products = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if (!data.isDeleted && data.status !== 'DELETED') {
+                    products.push({ ...data, id: data.id || parseInt(doc.id, 10) || doc.id });
+                }
+            });
+
+            // Seed initial products ONCE if and only if Firestore was never initialized before
+            if (products.length === 0 && !isInitialized && typeof FallbackStore !== 'undefined') {
+                console.log('[LazarophFirebase] First-time Firestore setup: seeding baseline catalog...');
+                const initial = FallbackStore.getInitialProducts();
+                const batch = this.db.batch();
+                initial.forEach(p => {
+                    const ref = this.db.collection('products').doc(String(p.id));
+                    batch.set(ref, { ...p, isDeleted: false, updatedAt: new Date().toISOString() });
+                });
+                await batch.commit();
+                await this.db.collection('_metadata').doc('store_init').set({
+                    initialized: true,
+                    seededAt: new Date().toISOString()
+                });
+                products = initial;
+            }
+
+            // In-memory filter processing
+            let list = [...products];
+            if (filters.category && filters.category !== 'all') {
+                const catLower = filters.category.toLowerCase();
+                list = list.filter(p => (p.categoryName || '').toLowerCase() === catLower);
+            }
+            if (filters.gender && filters.gender !== 'all') {
+                list = list.filter(p => (p.gender || '').toUpperCase() === filters.gender.toUpperCase() || p.gender === 'UNISEX');
+            }
+            if (filters.brand && filters.brand !== 'all') {
+                const brandLower = filters.brand.toLowerCase();
+                list = list.filter(p => (p.brandName || '').toLowerCase() === brandLower);
+            }
+            if (filters.q && filters.q.trim()) {
+                const query = filters.q.toLowerCase().trim();
+                list = list.filter(p =>
+                    (p.name || '').toLowerCase().includes(query) ||
+                    (p.brandName || '').toLowerCase().includes(query) ||
+                    (p.sku || '').toLowerCase().includes(query) ||
+                    (p.categoryName || '').toLowerCase().includes(query)
+                );
+            }
+            if (filters.sort === 'newest') {
+                list.sort((a, b) => (b.id || 0) - (a.id || 0));
+            } else if (filters.sort === 'price_asc') {
+                list.sort((a, b) => (a.discountPrice || a.price) - (b.discountPrice || b.price));
+            } else if (filters.sort === 'price_desc') {
+                list.sort((a, b) => (b.discountPrice || b.price) - (a.discountPrice || a.price));
+            }
+
+            // Sync with local memory cache so offline operations stay accurate
+            if (typeof FallbackStore !== 'undefined') {
+                FallbackStore.saveProducts(products);
+            }
+
+            return list;
+        } catch (err) {
+            console.warn('[LazarophFirebase] Firestore getProducts error, using cached fallback:', err.message);
+            if (typeof FallbackStore !== 'undefined') {
+                return FallbackStore.getProducts();
+            }
+            return [];
+        }
+    },
+
+    async saveProduct(product) {
+        this.init();
+        if (!this.db) {
+            if (typeof FallbackStore !== 'undefined') {
+                return FallbackStore.saveProduct(product);
+            }
+            return { success: true, product };
+        }
+
+        try {
+            let id = product.id;
+            if (!id) {
+                const snapshot = await this.db.collection('products').get();
+                let maxId = 0;
+                snapshot.forEach(d => {
+                    const num = parseInt(d.id, 10);
+                    if (!isNaN(num) && num > maxId) maxId = num;
+                });
+                id = maxId + 1;
+            }
+
+            const cleanProduct = {
+                ...product,
+                id: id,
+                sku: product.sku || ('LZPH-PRD-' + id),
+                status: product.status || 'ACTIVE',
+                isDeleted: false,
+                updatedAt: new Date().toISOString()
+            };
+
+            await this.db.collection('products').doc(String(id)).set(cleanProduct, { merge: true });
+            console.log('[LazarophFirebase] Product saved to Firestore:', id, cleanProduct.name);
+
+            // Update FallbackStore cache
+            if (typeof FallbackStore !== 'undefined') {
+                FallbackStore.updateCachedProduct(cleanProduct);
+            }
+
+            return { success: true, product: cleanProduct, message: 'Product saved successfully to Firestore.' };
+        } catch (err) {
+            console.error('[LazarophFirebase] Error saving product to Firestore:', err);
+            throw err;
+        }
+    },
+
+    async deleteProduct(id) {
+        this.init();
+        const strId = String(id);
+
+        if (!this.db) {
+            if (typeof FallbackStore !== 'undefined') {
+                return FallbackStore.deleteProduct(id);
+            }
+            return { success: true };
+        }
+
+        try {
+            // Delete document permanently from Firestore
+            await this.db.collection('products').doc(strId).delete();
+            console.log('[LazarophFirebase] Product permanently deleted from Firestore:', strId);
+
+            // Ensure FallbackStore removes it permanently so refresh never restores it
+            if (typeof FallbackStore !== 'undefined') {
+                FallbackStore.removeCachedProduct(id);
+            }
+
+            return { success: true, message: 'Product deleted permanently from Firestore.' };
+        } catch (err) {
+            console.error('[LazarophFirebase] Error deleting product from Firestore:', err);
+            throw err;
+        }
+    },
+
+    // =========================================================================
+    // 12. CLOUD FIRESTORE — BRANDS PERSISTENCE
+    // =========================================================================
+    async getBrands() {
+        this.init();
+        if (!this.db) {
+            return typeof FallbackStore !== 'undefined' ? FallbackStore.brands : [];
+        }
+        try {
+            const snapshot = await this.db.collection('brands').get();
+            if (snapshot.empty && typeof FallbackStore !== 'undefined') {
+                // Seed initial brands once
+                const batch = this.db.batch();
+                FallbackStore.brands.forEach(b => {
+                    batch.set(this.db.collection('brands').doc(String(b.id)), b);
+                });
+                await batch.commit();
+                return FallbackStore.brands;
+            }
+            const list = [];
+            snapshot.forEach(d => list.push({ ...d.data(), id: d.data().id || d.id }));
+            return list;
+        } catch (e) {
+            return typeof FallbackStore !== 'undefined' ? FallbackStore.brands : [];
+        }
+    },
+
+    async saveBrand(brand) {
+        this.init();
+        if (!this.db) return brand;
+        const id = brand.id || Date.now();
+        const clean = { ...brand, id };
+        await this.db.collection('brands').doc(String(id)).set(clean, { merge: true });
+        return clean;
+    },
+
+    async deleteBrand(id) {
+        this.init();
+        if (!this.db) return { success: true };
+        await this.db.collection('brands').doc(String(id)).delete();
+        return { success: true };
+    },
+
+    // =========================================================================
+    // 13. CLOUD FIRESTORE — ORDERS PERSISTENCE
+    // =========================================================================
+    async getOrders() {
+        this.init();
+        if (!this.db) {
+            return typeof FallbackStore !== 'undefined' ? FallbackStore.getOrders() : [];
+        }
+        try {
+            const snapshot = await this.db.collection('orders').orderBy('createdAt', 'desc').get();
+            const list = [];
+            snapshot.forEach(d => list.push({ ...d.data(), id: d.data().id || d.id }));
+            return list;
+        } catch (e) {
+            return typeof FallbackStore !== 'undefined' ? FallbackStore.getOrders() : [];
+        }
+    },
+
+    async saveOrder(order) {
+        this.init();
+        if (!this.db) {
+            return order;
+        }
+        const id = order.id || Date.now();
+        const cleanOrder = {
+            ...order,
+            id,
+            createdAt: order.createdAt || new Date().toISOString()
+        };
+        await this.db.collection('orders').doc(String(id)).set(cleanOrder, { merge: true });
+        return cleanOrder;
+    },
+
+    async updateOrderStatus(id, status) {
+        this.init();
+        if (!this.db) return { success: true };
+        await this.db.collection('orders').doc(String(id)).update({
+            status,
+            updatedAt: new Date().toISOString()
+        });
+        return { success: true, status };
     }
 };
 

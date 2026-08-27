@@ -369,13 +369,36 @@ const FallbackStore = {
         if (saved) {
             try { return JSON.parse(saved); } catch (e) {}
         }
+        const isInit = localStorage.getItem('lazaroph_store_initialized');
+        if (isInit === 'true') {
+            return []; // Never restore deleted products if store was already initialized!
+        }
         const initial = this.getInitialProducts();
         localStorage.setItem('lazaroph_offline_products', JSON.stringify(initial));
+        localStorage.setItem('lazaroph_store_initialized', 'true');
         return initial;
     },
 
     saveProducts(products) {
         localStorage.setItem('lazaroph_offline_products', JSON.stringify(products));
+        localStorage.setItem('lazaroph_store_initialized', 'true');
+    },
+
+    updateCachedProduct(product) {
+        let products = this.getProducts();
+        const idx = products.findIndex(p => p.id === product.id);
+        if (idx !== -1) {
+            products[idx] = { ...products[idx], ...product };
+        } else {
+            products.unshift(product);
+        }
+        this.saveProducts(products);
+    },
+
+    removeCachedProduct(id) {
+        let products = this.getProducts();
+        products = products.filter(p => p.id !== id && String(p.id) !== String(id));
+        this.saveProducts(products);
     },
 
     getInitialBrands() {
@@ -429,10 +452,10 @@ const FallbackStore = {
             try { return JSON.parse(saved); } catch (e) {}
         }
         return [
-            { id: 1, name: 'Clark Montoya (Super Admin 1)', email: 'admin1@lazaroph.com', password: 'AdminPassword2026!', securityPin: '992104', role: 'SUPER_ADMIN', status: 'ACTIVE' },
-            { id: 2, name: 'Mark Lazaro (Super Admin 2)', email: 'admin2@lazaroph.com', password: 'AdminPassword2026!', securityPin: '882910', role: 'SUPER_ADMIN', status: 'ACTIVE' },
-            { id: 3, name: 'Elena Santos (Super Admin 3)', email: 'admin3@lazaroph.com', password: 'AdminPassword2026!', securityPin: '773821', role: 'SUPER_ADMIN', status: 'ACTIVE' },
-            { id: 4, name: 'LAZAROPH Master Administrator', email: 'admin@lazaroph.com', password: 'admin123Password!', securityPin: '992104', role: 'SUPER_ADMIN', status: 'ACTIVE' }
+            { id: 1, name: 'Clark Montoya (Super Admin 1)', email: 'admin1@lazaroph.com', passwordHash: 'd77dead9c27dd23ba226158d9fd13bc22f07650e1e1cb41c588c54458b5d2c71', pinHash: '3c262f3bcb473461cc7f976eed4262c4de30f7fcbebc6b3146b3532f26c181b2', role: 'SUPER_ADMIN', status: 'ACTIVE' },
+            { id: 2, name: 'Mark Lazaro (Super Admin 2)', email: 'admin2@lazaroph.com', passwordHash: 'd77dead9c27dd23ba226158d9fd13bc22f07650e1e1cb41c588c54458b5d2c71', pinHash: '70680dc89d0c2e075ccdb0e885b6d3d119c80a34b6fd09547d9074a6074548b0', role: 'SUPER_ADMIN', status: 'ACTIVE' },
+            { id: 3, name: 'Elena Santos (Super Admin 3)', email: 'admin3@lazaroph.com', passwordHash: 'd77dead9c27dd23ba226158d9fd13bc22f07650e1e1cb41c588c54458b5d2c71', pinHash: 'ebe811e8c1856b78e270b91650c20c392e5f20af711065cadac59ea75c608ca0', role: 'SUPER_ADMIN', status: 'ACTIVE' },
+            { id: 4, name: 'LAZAROPH Master Administrator', email: 'admin@lazaroph.com', passwordHash: '5bbd15879f9967ce477db75b76259aa655cefc69acb57fa932a78242bbef745a', pinHash: '3c262f3bcb473461cc7f976eed4262c4de30f7fcbebc6b3146b3532f26c181b2', role: 'SUPER_ADMIN', status: 'ACTIVE' }
         ];
     },
 
@@ -525,7 +548,11 @@ const FallbackStore = {
             if (admin.status === 'DISABLED') {
                 throw new Error('This administrator account has been disabled.');
             }
-            if (admin.password !== password) {
+            if (admin.passwordHash) {
+                if (typeof LazarophFirebase !== 'undefined' && !LazarophFirebase.verifyPassword(password, admin.passwordHash)) {
+                    throw new Error('Invalid login password. Please check your credentials.');
+                }
+            } else if (admin.password !== password) {
                 throw new Error('Invalid login password. Please check your credentials.');
             }
 
@@ -556,7 +583,11 @@ const FallbackStore = {
             if (!admin) {
                 throw new Error('Session expired. Please restart login from Step 1.');
             }
-            if (admin.securityPin && admin.securityPin !== pin) {
+            if (admin.pinHash) {
+                if (typeof LazarophFirebase !== 'undefined' && !LazarophFirebase.verifyPassword(pin, admin.pinHash)) {
+                    throw new Error('Invalid Security Password. Please enter your correct 6-digit PIN.');
+                }
+            } else if (admin.securityPin && admin.securityPin !== pin) {
                 throw new Error('Invalid Security Password. Please enter your correct 6-digit PIN.');
             }
 
@@ -1542,7 +1573,10 @@ const API = {
     },
 
     // Catalog & Products
-    getProducts(params = {}) {
+    async getProducts(params = {}) {
+        if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
+            return LazarophFirebase.getProducts(params);
+        }
         const query = new URLSearchParams();
         for (const [k, v] of Object.entries(params)) {
             if (v !== undefined && v !== null && v !== '') {
@@ -1560,7 +1594,10 @@ const API = {
         return this.request('/api/categories');
     },
 
-    getBrands() {
+    async getBrands() {
+        if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
+            return LazarophFirebase.getBrands();
+        }
         return this.request('/api/brands');
     },
 
@@ -1635,14 +1672,20 @@ const API = {
         return this.request('/api/admin/products');
     },
 
-    saveProduct(productData) {
+    async saveProduct(productData) {
+        if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
+            return LazarophFirebase.saveProduct(productData);
+        }
         return this.request('/api/admin/products/save', {
             method: 'POST',
             body: JSON.stringify(productData)
         });
     },
 
-    deleteProduct(id) {
+    async deleteProduct(id) {
+        if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
+            return LazarophFirebase.deleteProduct(id);
+        }
         return this.request(`/api/admin/products/delete/${id}`, { method: 'POST' });
     },
 
@@ -1657,11 +1700,17 @@ const API = {
         });
     },
 
-    getAdminOrders() {
+    async getAdminOrders() {
+        if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
+            return LazarophFirebase.getOrders();
+        }
         return this.request('/api/admin/orders');
     },
 
-    updateOrderStatus(orderId, status) {
+    async updateOrderStatus(orderId, status) {
+        if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
+            return LazarophFirebase.updateOrderStatus(orderId, status);
+        }
         return this.request(`/api/admin/orders/${orderId}/status`, {
             method: 'POST',
             body: JSON.stringify({ orderId, status })
@@ -1707,18 +1756,24 @@ const API = {
     },
 
     // Admin Brand Management
-    getAdminBrands() {
-        return this.request('/api/admin/brands');
+    async getAdminBrands() {
+        return this.getBrands();
     },
 
-    saveAdminBrand(brandData) {
+    async saveAdminBrand(brandData) {
+        if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
+            return LazarophFirebase.saveBrand(brandData);
+        }
         return this.request('/api/admin/brands', {
             method: 'POST',
             body: JSON.stringify(brandData)
         });
     },
 
-    deleteAdminBrand(id) {
+    async deleteAdminBrand(id) {
+        if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
+            return LazarophFirebase.deleteBrand(id);
+        }
         return this.request(`/api/admin/brands/delete/${id}`, { method: 'POST' });
     },
 

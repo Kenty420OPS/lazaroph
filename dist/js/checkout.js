@@ -273,7 +273,7 @@ const Checkout = {
                                     <div class="form-group" style="margin-bottom: 8px;">
                                         <label class="form-label" style="color: #000000; font-weight: 700;">Pickup Hub Location *</label>
                                         <select class="form-control" id="checkout-pickup-branch" onchange="Checkout.selectedPickupBranch = this.value">
-                                            <option value="Concepcion Uno, Marikina (911 J.P. Rizal St)">Flagship Store — Concepcion Uno (911 J.P. Rizal St, Marikina)</option>
+                                            <option value="Concepcion Uno, Marikina (911 J.P. Rizal St)">LAZAROPH Store — Concepcion Uno (911 J.P. Rizal St, Marikina)</option>
                                         </select>
                                     </div>
                                     <div style="font-size: 0.82rem; color: #4b5563; line-height: 1.5;">
@@ -480,7 +480,7 @@ const Checkout = {
             title.textContent = '🏪 Store Pickup & Pay at Branch';
             text.innerHTML = `
                 <div style="color: #374151;">
-                    Pickup at our Flagship Store in <strong style="color: #000000;">Concepcion Uno</strong> (911 J.P. Rizal St., Marikina).<br>
+                    Pickup at LAZAROPH Store in <strong style="color: #000000;">Concepcion Uno</strong> (911 J.P. Rizal St., Marikina).<br>
                     You may pay cash upon claiming your order at the store cashier.
                 </div>
             `;
