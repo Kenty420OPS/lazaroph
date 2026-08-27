@@ -459,3 +459,69 @@ body:has(#view-admin:not(.hidden)) #chat-widget-box {
     from { opacity: 0; transform: translateY(-4px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* Unverified Customer Banner & Badges */
+.status-badge.warning,
+.status-badge.unverified {
+    background: rgba(245, 158, 11, 0.15);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.unverified-customer-banner {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    padding: 12px 18px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: #92400e;
+    font-size: 0.88rem;
+    line-height: 1.4;
+}
+
+.unverified-customer-banner strong {
+    color: #78350f;
+}
+
+.unverified-customer-banner .banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* Verification Pending Restriction Card */
+.verify-pending-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 36px 28px;
+    text-align: center;
+    max-width: 520px;
+    margin: 0 auto;
+    box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.08);
+}
+
+.verify-pending-icon {
+    width: 68px;
+    height: 68px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+    border: 2px solid rgba(245, 158, 11, 0.3);
+}
+
+.btn-cooldown {
+    opacity: 0.75;
+    cursor: not-allowed !important;
+}
+

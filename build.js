@@ -50,6 +50,11 @@ const routes = [
     'admin/security-verification',
     'login',
     'register',
+    'verify-email',
+    'verify-pending',
+    'forgot-password',
+    'reset-password',
+    'account',
     'order-track',
     'shop'
 ];

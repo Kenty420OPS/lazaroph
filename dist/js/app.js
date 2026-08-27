@@ -107,6 +107,21 @@ const App = {
             });
         }
 
+        // Check for Firebase Auth Action URL parameters (e.g. ?mode=verifyEmail&oobCode=... or ?mode=resetPassword&oobCode=...)
+        const searchParams = new URLSearchParams(window.location.search);
+        const fbMode = searchParams.get('mode') || params.mode;
+        const fbOobCode = searchParams.get('oobCode') || params.oobCode;
+
+        if (fbMode === 'verifyEmail' && fbOobCode) {
+            view = 'verify-email';
+            params.token = fbOobCode;
+            params.oobCode = fbOobCode;
+        } else if (fbMode === 'resetPassword' && fbOobCode) {
+            view = 'reset-password';
+            params.token = fbOobCode;
+            params.oobCode = fbOobCode;
+        }
+
         this.currentRouteParams = params;
         this.showView(view, params);
     },
@@ -261,6 +276,14 @@ const App = {
             const el = document.getElementById('view-account');
             if (el) el.classList.remove('hidden');
             this.loadAccountView();
+        } else if (view === 'verify-pending') {
+            const el = document.getElementById('view-customer-verify-pending');
+            if (el) {
+                el.classList.remove('hidden');
+                const emailEl = document.getElementById('cust-pending-user-email');
+                const u = CustomerAuth.getCustomer();
+                if (emailEl) emailEl.textContent = (u && u.email) || 'your registered email';
+            }
         } else if (view === 'login') {
             const el = document.getElementById('view-customer-login');
             if (el) el.classList.remove('hidden');
@@ -276,8 +299,9 @@ const App = {
         } else if (view === 'verify-email') {
             const el = document.getElementById('view-customer-verify-email');
             if (el) el.classList.remove('hidden');
-            if (params.token) {
-                CustomerAuth.runVerifyEmail(params.token);
+            const token = params.oobCode || params.token;
+            if (token) {
+                CustomerAuth.runVerifyEmail(token);
             }
         } else if (view === 'forgot-password') {
             const el = document.getElementById('view-customer-forgot-password');
@@ -304,6 +328,39 @@ const App = {
         }
 
         const u = CustomerAuth.getCustomer() || Auth.currentUser;
+
+        // UNVERIFIED CUSTOMER RESTRICTION: Do not grant full access until verified with Firebase Auth
+        if (!CustomerAuth.isEmailVerified()) {
+            container.innerHTML = `
+                <div class="container" style="padding: 50px 20px 80px; max-width: 580px; margin: 0 auto;">
+                    <div class="verify-pending-card">
+                        <div class="verify-pending-icon">⚠️</div>
+                        <h2 style="font-size: 1.45rem; font-weight: 800; color: #0f172a; margin-bottom: 10px;">
+                            Please verify your email address to activate your account.
+                        </h2>
+                        <p style="color: #64748b; font-size: 0.95rem; line-height: 1.6; margin-bottom: 18px;">
+                            A verification link was sent to <strong style="color: #0f172a;">${escapeHtml(u.email)}</strong>. You must verify ownership of this email address before you can access your customer profile, order history, and checkout.
+                        </p>
+                        <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 0.88rem; color: #92400e;">
+                            Status: <strong>Verification Required</strong> — Click the link sent to your inbox.
+                        </div>
+                        <div id="cust-account-alert" class="auth-alert"></div>
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <button type="button" class="btn btn-primary btn-block btn-lg" id="btn-account-check-status" onclick="CustomerAuth.checkStatus()">
+                                🔄 Check Verification Status
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-block" id="btn-account-resend-verification" onclick="CustomerAuth.resendVerification()">
+                                📧 Resend Verification Email
+                            </button>
+                            <button type="button" class="btn btn-block" style="background: none; color: #64748b; text-decoration: underline;" onclick="CustomerAuth.logout()">
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
 
         container.innerHTML = `
             <div class="container" style="padding: 40px 0 80px;">

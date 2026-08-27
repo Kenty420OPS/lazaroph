@@ -5,12 +5,13 @@
  */
 
 // =========================================================================
-// 1. CUSTOMER AUTHENTICATION
+// 1. CUSTOMER AUTHENTICATION (POWERED BY FIREBASE AUTH & FIRESTORE)
 // =========================================================================
 const CustomerAuth = {
     TOKEN_KEY: 'lazaroph_customer_token',
     USER_KEY: 'lazaroph_customer_user',
     currentCustomer: null,
+    cooldownInterval: null,
 
     getToken() {
         return localStorage.getItem(this.TOKEN_KEY) || '';
@@ -19,7 +20,6 @@ const CustomerAuth = {
     setToken(token) {
         if (token) {
             localStorage.setItem(this.TOKEN_KEY, token);
-            // Also sync to active API token if not in admin context
             if (!AdminAuth.getToken()) {
                 localStorage.setItem('lazaroph_token', token);
             }
@@ -51,26 +51,80 @@ const CustomerAuth = {
     },
 
     isLoggedIn() {
-        return !!this.getToken() && !!this.getCustomer();
+        return !!this.getCustomer();
+    },
+
+    isEmailVerified() {
+        if (typeof LazarophFirebase !== 'undefined' && typeof LazarophFirebase.isEmailVerified === 'function') {
+            return LazarophFirebase.isEmailVerified();
+        }
+        const cust = this.getCustomer();
+        return Boolean(cust && cust.emailVerified);
     },
 
     async init() {
-        const token = this.getToken();
-        if (token) {
-            try {
-                // Temporarily set active API token to customer token for verification
-                const prev = API.getToken();
-                API.setToken(token);
-                const user = await API.customerGetMe();
-                this.setCustomer(user);
-            } catch (err) {
-                console.warn('[CustomerAuth] Session expired:', err.message);
-                this.setToken(null);
-                this.setCustomer(null);
+        // Initialize Firebase SDK
+        if (typeof LazarophFirebase !== 'undefined') {
+            LazarophFirebase.init();
+            if (LazarophFirebase.auth) {
+                LazarophFirebase.auth.onAuthStateChanged(async (fbUser) => {
+                    if (fbUser) {
+                        const token = await fbUser.getIdToken().catch(() => 'fb_' + fbUser.uid);
+                        this.setToken(token);
+                        const isVerified = Boolean(fbUser.emailVerified);
+                        const existing = this.getCustomer() || {};
+                        const customer = {
+                            id: fbUser.uid,
+                            uid: fbUser.uid,
+                            name: fbUser.displayName || existing.name || fbUser.email.split('@')[0],
+                            email: fbUser.email,
+                            phone: existing.phone || '',
+                            address: existing.address || '',
+                            city: existing.city || 'Marikina',
+                            province: existing.province || 'Metro Manila',
+                            zipCode: existing.zipCode || '1805',
+                            role: 'CUSTOMER',
+                            emailVerified: isVerified
+                        };
+                        this.setCustomer(customer);
+                    } else {
+                        // Only clear customer if not admin session
+                        if (!AdminAuth.isVerified()) {
+                            this.setCustomer(null);
+                            this.setToken(null);
+                        }
+                    }
+                });
             }
-        } else {
-            this.setCustomer(null);
         }
+
+        // Start real-time cooldown button monitor
+        this.startCooldownWatcher();
+    },
+
+    startCooldownWatcher() {
+        if (this.cooldownInterval) clearInterval(this.cooldownInterval);
+        this.cooldownInterval = setInterval(() => {
+            const remaining = typeof LazarophFirebase !== 'undefined' ? LazarophFirebase.getRemainingCooldown() : 0;
+            const buttons = [
+                document.getElementById('btn-pending-resend-verification'),
+                document.getElementById('btn-reg-resend-verification'),
+                document.getElementById('btn-account-resend-verification')
+            ];
+
+            buttons.forEach(btn => {
+                if (!btn) return;
+                if (remaining > 0) {
+                    btn.disabled = true;
+                    btn.classList.add('btn-cooldown');
+                    btn.innerHTML = `⏳ Resend Verification (${remaining}s)`;
+                } else {
+                    btn.disabled = false;
+                    btn.classList.remove('btn-cooldown');
+                    btn.innerHTML = `📧 Resend Verification Email`;
+                }
+            });
+        }, 1000);
     },
 
     // Customer Login Handler
@@ -95,49 +149,33 @@ const CustomerAuth = {
         }
 
         try {
-            const data = await API.customerLogin(email, password);
-            this.setToken(data.token);
-            this.setCustomer(data.customer);
-            showToast(`Welcome back, ${data.customer.name}!`, 'success');
+            const res = await LazarophFirebase.loginCustomer(email, password);
+            const token = await res.user.getIdToken().catch(() => 'fb_' + res.user.uid);
+            this.setToken(token);
+            this.setCustomer(res.customer);
 
-            // Redirect to customer account or previous destination
-            if (window.location.hash === '#login' || window.location.hash.startsWith('#login')) {
-                App.navigate('account');
+            if (res.emailVerified) {
+                showToast(`Welcome back, ${res.customer.name}!`, 'success');
+                if (window.location.hash === '#login' || window.location.hash.startsWith('#login')) {
+                    App.navigate('account');
+                } else {
+                    App.navigate('home');
+                }
             } else {
-                App.navigate('home');
+                // Email is NOT verified: restrict full customer access and route to verification pending
+                showToast('Please verify your email address to activate your account.', 'warning');
+                App.navigate('verify-pending');
             }
         } catch (err) {
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = 'LOGIN';
-            }
-
-            const isPending = (err.data && err.data.status === 'PENDING') || (err.message && err.message.includes('verify your email'));
-
             if (alertEl) {
                 alertEl.style.display = 'block';
-                if (isPending) {
-                    alertEl.className = 'auth-alert auth-alert-warning';
-                    alertEl.innerHTML = `
-                        <div style="font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
-                            <span>⚠️ Email Verification Required</span>
-                        </div>
-                        <div style="font-size: 0.88rem; line-height: 1.4; margin-bottom: 10px;">
-                            Please verify your email address before logging in. We previously sent an activation link to <strong>${escapeHtml(email)}</strong>.
-                        </div>
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="CustomerAuth.resendVerification('${escapeHtml(email)}')">
-                            📧 Resend Verification Email
-                        </button>
-                    `;
-                } else {
-                    alertEl.className = 'auth-alert auth-alert-error';
-                    alertEl.innerHTML = `<span>❌ ${escapeHtml(err.message || 'Invalid email or password.')}</span>`;
-                }
+                alertEl.className = 'auth-alert auth-alert-error';
+                alertEl.innerHTML = `<span>❌ ${escapeHtml(err.message || 'Invalid email or password.')}</span>`;
             } else {
                 showToast(err.message, 'error');
             }
         } finally {
-            if (btn && !this.isLoggedIn()) {
+            if (btn) {
                 btn.disabled = false;
                 btn.innerHTML = 'LOGIN';
             }
@@ -151,6 +189,8 @@ const CustomerAuth = {
         const emailEl = document.getElementById('cust-reg-email');
         const passEl = document.getElementById('cust-reg-password');
         const confirmEl = document.getElementById('cust-reg-confirm');
+        const phoneEl = document.getElementById('cust-reg-phone');
+        const addressEl = document.getElementById('cust-reg-address');
         const alertEl = document.getElementById('cust-reg-alert');
         const btn = document.getElementById('cust-reg-btn');
 
@@ -159,32 +199,12 @@ const CustomerAuth = {
         const email = emailEl.value.trim();
         const password = passEl.value;
         const confirmPassword = confirmEl.value;
+        const phone = phoneEl ? phoneEl.value.trim() : '';
+        const address = addressEl ? addressEl.value.trim() : '';
 
         if (alertEl) {
             alertEl.style.display = 'none';
             alertEl.innerHTML = '';
-        }
-
-        if (password !== confirmPassword) {
-            if (alertEl) {
-                alertEl.style.display = 'block';
-                alertEl.className = 'auth-alert auth-alert-error';
-                alertEl.innerHTML = '<span>❌ Passwords do not match. Please re-enter your password.</span>';
-            } else {
-                showToast('Passwords do not match.', 'error');
-            }
-            return;
-        }
-
-        if (password.length < 6) {
-            if (alertEl) {
-                alertEl.style.display = 'block';
-                alertEl.className = 'auth-alert auth-alert-error';
-                alertEl.innerHTML = '<span>❌ Password must be at least 6 characters long.</span>';
-            } else {
-                showToast('Password must be at least 6 characters.', 'error');
-            }
-            return;
         }
 
         if (btn) {
@@ -193,32 +213,41 @@ const CustomerAuth = {
         }
 
         try {
-            const data = await API.customerRegister({ name, email, password, confirmPassword });
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = 'CREATE ACCOUNT';
-            }
+            const res = await LazarophFirebase.registerCustomer({
+                name,
+                email,
+                password,
+                confirmPassword,
+                phone,
+                address
+            });
 
-            // Show success state on register card
+            // Store customer profile as unverified
+            const token = await res.user.getIdToken().catch(() => 'fb_' + res.user.uid);
+            this.setToken(token);
+            this.setCustomer({
+                id: res.user.uid,
+                uid: res.user.uid,
+                name: name,
+                email: res.email,
+                phone: phone,
+                address: address,
+                role: 'CUSTOMER',
+                emailVerified: false
+            });
+
+            // Show post-registration pending verification message
             const formContainer = document.getElementById('cust-reg-form-container');
             const successContainer = document.getElementById('cust-reg-success-container');
             if (formContainer && successContainer) {
                 formContainer.style.display = 'none';
                 successContainer.style.display = 'block';
                 const emailSpan = document.getElementById('cust-reg-success-email');
-                if (emailSpan) emailSpan.textContent = email;
-            } else {
-                showToast('Account created! Please verify your email.', 'success');
-                App.navigate('login');
+                if (emailSpan) emailSpan.textContent = res.email;
             }
 
-            // Trigger preview check of simulated email
-            EmailSimulator.checkNewEmail();
+            showToast('Account created! Please check your email and verify your address.', 'success');
         } catch (err) {
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = 'CREATE ACCOUNT';
-            }
             if (alertEl) {
                 alertEl.style.display = 'block';
                 alertEl.className = 'auth-alert auth-alert-error';
@@ -226,23 +255,62 @@ const CustomerAuth = {
             } else {
                 showToast(err.message, 'error');
             }
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = 'CREATE ACCOUNT';
+            }
         }
     },
 
-    // Resend Verification Link
-    async resendVerification(email) {
+    // Check Verification Status Button
+    async checkStatus() {
+        const alertPending = document.getElementById('cust-pending-alert');
+        const alertReg = document.getElementById('cust-reg-alert');
         try {
-            showToast('Sending new verification email...', 'info');
-            await API.customerResendVerification(email);
-            showToast('Verification email resent! Please check your inbox.', 'success');
-            EmailSimulator.checkNewEmail();
+            showToast('Checking verification status with Firebase...', 'info');
+            const res = await LazarophFirebase.checkVerificationStatus();
+
+            if (res.emailVerified) {
+                const cust = this.getCustomer() || {};
+                cust.emailVerified = true;
+                this.setCustomer(cust);
+                showToast('Email verified successfully! Full customer access unlocked.', 'success');
+                App.navigate('account');
+            } else {
+                showToast('Email not verified yet. Please check your inbox and click the verification link.', 'warning');
+                if (alertPending) {
+                    alertPending.style.display = 'block';
+                    alertPending.className = 'auth-alert auth-alert-warning';
+                    alertPending.innerHTML = `<span>⚠️ Your email <strong>${escapeHtml(res.email)}</strong> is not verified yet. Please open your inbox (or spam folder) and click the verification link, then click "Check Verification Status" again.</span>`;
+                }
+            }
         } catch (err) {
             showToast(err.message, 'error');
         }
     },
 
-    // Verify Email Execution (when visiting /verify-email?token=...)
-    async runVerifyEmail(token) {
+    // Resend Verification Email (with anti-abuse rate limit)
+    async resendVerification() {
+        try {
+            showToast('Sending new verification email...', 'info');
+            const res = await LazarophFirebase.resendVerificationEmail();
+            if (res.alreadyVerified) {
+                showToast(res.message, 'success');
+                const cust = this.getCustomer() || {};
+                cust.emailVerified = true;
+                this.setCustomer(cust);
+                App.navigate('account');
+                return;
+            }
+            showToast('Verification email sent. Please check your inbox and spam folder.', 'success');
+        } catch (err) {
+            showToast(err.message, 'error');
+        }
+    },
+
+    // Verify Email Execution (when customer clicks official verification link)
+    async runVerifyEmail(actionCode) {
         const loadingCard = document.getElementById('verify-loading-card');
         const successCard = document.getElementById('verify-success-card');
         const errorCard = document.getElementById('verify-error-card');
@@ -253,10 +321,16 @@ const CustomerAuth = {
         if (errorCard) errorCard.style.display = 'none';
 
         try {
-            const res = await API.customerVerifyEmail(token);
+            await LazarophFirebase.applyEmailActionCode(actionCode);
             if (loadingCard) loadingCard.style.display = 'none';
             if (successCard) successCard.style.display = 'block';
-            showToast('Email verified successfully! You can now log in.', 'success');
+
+            const cust = this.getCustomer();
+            if (cust) {
+                cust.emailVerified = true;
+                this.setCustomer(cust);
+            }
+            showToast('Email verified successfully! Full customer access unlocked.', 'success');
         } catch (err) {
             if (loadingCard) loadingCard.style.display = 'none';
             if (errorCard) {
@@ -264,6 +338,14 @@ const CustomerAuth = {
                 if (errorMsg) errorMsg.textContent = err.message || 'Invalid or expired verification link.';
             }
             showToast(err.message, 'error');
+        }
+    },
+
+    handlePostVerifyAction() {
+        if (this.isLoggedIn() && this.isEmailVerified()) {
+            App.navigate('account');
+        } else {
+            App.navigate('login');
         }
     },
 
@@ -284,35 +366,34 @@ const CustomerAuth = {
         }
 
         try {
-            await API.customerForgotPassword(email);
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = 'SEND PASSWORD RESET LINK';
-            }
+            const res = await LazarophFirebase.sendPasswordReset(email);
             if (alertEl) {
                 alertEl.style.display = 'block';
                 alertEl.className = 'auth-alert auth-alert-success';
                 alertEl.innerHTML = `
                     <div style="font-weight: 700; margin-bottom: 4px;">✅ Check Your Email</div>
-                    <div>If an account exists for <strong>${escapeHtml(email)}</strong>, we have sent a password reset link. Please check your inbox or local email preview.</div>
+                    <div>${escapeHtml(res.message)}</div>
                 `;
             }
-            EmailSimulator.checkNewEmail();
+            showToast('Password reset email sent. Please check your inbox.', 'success');
         } catch (err) {
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = 'SEND PASSWORD RESET LINK';
-            }
             if (alertEl) {
                 alertEl.style.display = 'block';
                 alertEl.className = 'auth-alert auth-alert-error';
                 alertEl.innerHTML = `<span>❌ ${escapeHtml(err.message)}</span>`;
+            } else {
+                showToast(err.message, 'error');
+            }
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = 'SEND PASSWORD RESET LINK';
             }
         }
     },
 
     // Customer Reset Password
-    async handleResetPassword(event, token) {
+    async handleResetPassword(event, actionCode) {
         if (event) event.preventDefault();
         const passEl = document.getElementById('cust-reset-pass');
         const confirmEl = document.getElementById('cust-reset-confirm');
@@ -332,22 +413,13 @@ const CustomerAuth = {
             return;
         }
 
-        if (newPassword.length < 6) {
-            if (alertEl) {
-                alertEl.style.display = 'block';
-                alertEl.className = 'auth-alert auth-alert-error';
-                alertEl.innerHTML = '<span>❌ Password must be at least 6 characters long.</span>';
-            }
-            return;
-        }
-
         if (btn) {
             btn.disabled = true;
             btn.innerHTML = '<span class="btn-spinner"></span> RESETTING PASSWORD...';
         }
 
         try {
-            await API.customerResetPassword(token, newPassword, confirmPassword);
+            await LazarophFirebase.confirmPasswordReset(actionCode, newPassword);
             const formCard = document.getElementById('cust-reset-form-card');
             const successCard = document.getElementById('cust-reset-success-card');
             if (formCard && successCard) {
@@ -358,10 +430,6 @@ const CustomerAuth = {
                 App.navigate('login');
             }
         } catch (err) {
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = 'RESET PASSWORD';
-            }
             if (alertEl) {
                 alertEl.style.display = 'block';
                 alertEl.className = 'auth-alert auth-alert-error';
@@ -369,13 +437,18 @@ const CustomerAuth = {
             } else {
                 showToast(err.message, 'error');
             }
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = 'RESET PASSWORD';
+            }
         }
     },
 
     // Customer Logout
     async logout() {
         try {
-            await API.customerLogout();
+            await LazarophFirebase.logoutCustomer();
         } catch (ignored) {}
         this.setToken(null);
         this.setCustomer(null);
@@ -775,7 +848,8 @@ const Auth = {
                 name: cust.name,
                 email: cust.email,
                 role: 'CUSTOMER',
-                isAdmin: false
+                isAdmin: false,
+                emailVerified: CustomerAuth.isEmailVerified()
             };
         }
         return null;
@@ -804,9 +878,15 @@ const Auth = {
             }
         } else if (CustomerAuth.isLoggedIn()) {
             const customer = CustomerAuth.getCustomer();
+            const verified = CustomerAuth.isEmailVerified();
             if (userBtn) {
-                userBtn.title = `Account: ${customer.name}`;
-                userBtn.innerHTML = `<svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
+                userBtn.title = verified ? `Account: ${customer.name}` : `Account (Email Verification Required): ${customer.name}`;
+                userBtn.innerHTML = verified
+                    ? `<svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`
+                    : `<span style="position: relative; display: inline-block;">
+                         <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                         <span style="position: absolute; top: -3px; right: -3px; width: 9px; height: 9px; background: #d97706; border: 2px solid #ffffff; border-radius: 50%;" title="Verification Required"></span>
+                       </span>`;
             }
             if (adminNavLink) {
                 adminNavLink.classList.add('hidden');

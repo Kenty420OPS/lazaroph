@@ -493,6 +493,18 @@ const Checkout = {
         e.preventDefault();
 
         const btn = document.getElementById('btn-place-order');
+
+        // Customer Email Verification Security Check: Must be verified to place orders
+        if (typeof CustomerAuth !== 'undefined' && CustomerAuth.isLoggedIn() && !CustomerAuth.isEmailVerified()) {
+            showToast('Email verification required: Please verify your email address before placing an order.', 'error');
+            if (btn) {
+                btn.disabled = false;
+                this.updateOrderSummary();
+            }
+            App.navigate('verify-pending');
+            return;
+        }
+
         if (btn) {
             btn.disabled = true;
             btn.textContent = 'Submitting Order...';
