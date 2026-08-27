@@ -47,10 +47,84 @@ const LazarophFirebase = {
         return this.defaultConfig;
     },
 
+    isDemoConfig() {
+        const cfg = this.getConfig();
+        return !cfg.apiKey || cfg.apiKey.includes('DemoKey') || cfg.apiKey === 'AIzaSyDemoKeyLazarophAuthentic2026';
+    },
+
     setConfig(customConfig) {
         if (customConfig && typeof customConfig === 'object') {
             localStorage.setItem('lazaroph_firebase_config', JSON.stringify(customConfig));
             window.location.reload();
+        }
+    },
+
+    openConfigModal() {
+        let modal = document.getElementById('firebase-config-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'firebase-config-modal';
+            modal.style.cssText = 'position: fixed; inset: 0; z-index: 100000; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;';
+            const cur = this.getConfig();
+            modal.innerHTML = `
+                <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; max-width: 520px; width: 100%; padding: 24px; color: #f8fafc; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #1e293b; padding-bottom: 12px;">
+                        <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+                            🔥 Connect Live Firebase Project
+                        </h3>
+                        <button onclick="document.getElementById('firebase-config-modal').style.display='none'" style="background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</button>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #94a3b8; line-height: 1.5; margin-bottom: 16px;">
+                        Paste your Web App configuration from <a href="https://console.firebase.google.com/" target="_blank" style="color: #38bdf8; text-decoration: underline;">Firebase Console</a> (Project Settings &rarr; General &rarr; Your apps &rarr; Web app) to enable live Gmail verification delivery.
+                    </p>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div>
+                            <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #cbd5e1; margin-bottom: 4px; text-transform: uppercase;">Firebase API Key *</label>
+                            <input id="fb-inp-api-key" type="text" value="${cur.apiKey && !cur.apiKey.includes('DemoKey') ? cur.apiKey : ''}" placeholder="AIzaSy..." style="width: 100%; background: #1e293b; border: 1px solid #475569; color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 0.9rem;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #cbd5e1; margin-bottom: 4px; text-transform: uppercase;">Project ID *</label>
+                            <input id="fb-inp-project-id" type="text" value="${cur.projectId || ''}" placeholder="my-lazaroph-project" style="width: 100%; background: #1e293b; border: 1px solid #475569; color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 0.9rem;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #cbd5e1; margin-bottom: 4px; text-transform: uppercase;">Auth Domain</label>
+                            <input id="fb-inp-auth-domain" type="text" value="${cur.authDomain || ''}" placeholder="my-lazaroph-project.firebaseapp.com" style="width: 100%; background: #1e293b; border: 1px solid #475569; color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 0.9rem;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #cbd5e1; margin-bottom: 4px; text-transform: uppercase;">App ID</label>
+                            <input id="fb-inp-app-id" type="text" value="${cur.appId && !cur.appId.includes('a1b2') ? cur.appId : ''}" placeholder="1:109823471092:web:..." style="width: 100%; background: #1e293b; border: 1px solid #475569; color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 0.9rem;">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                        <button onclick="document.getElementById('firebase-config-modal').style.display='none'" style="background: #334155; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer;">Cancel</button>
+                        <button id="btn-save-fb-config" style="background: #2563eb; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; font-weight: 700; cursor: pointer;">Save & Connect</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            document.getElementById('btn-save-fb-config').addEventListener('click', () => {
+                const key = document.getElementById('fb-inp-api-key').value.trim();
+                const proj = document.getElementById('fb-inp-project-id').value.trim();
+                const dom = document.getElementById('fb-inp-auth-domain').value.trim();
+                const app = document.getElementById('fb-inp-app-id').value.trim();
+
+                if (!key) {
+                    alert('Please enter your Firebase API Key.');
+                    return;
+                }
+                const newCfg = {
+                    apiKey: key,
+                    projectId: proj || 'lazaroph-store',
+                    authDomain: dom || (proj ? proj + '.firebaseapp.com' : 'lazaroph-store.firebaseapp.com'),
+                    storageBucket: (proj || 'lazaroph-store') + '.appspot.com',
+                    messagingSenderId: '109823471092',
+                    appId: app || '1:109823471092:web:active'
+                };
+                LazarophFirebase.setConfig(newCfg);
+            });
+        } else {
+            modal.style.display = 'flex';
         }
     },
 
@@ -129,22 +203,76 @@ const LazarophFirebase = {
         }
 
         // 2. Create account in Firebase Authentication
-        let userCredential;
+        let userCredential = null;
+        let isSimulated = false;
+
         try {
+            if (this.isDemoConfig()) {
+                throw { code: 'auth/api-key-not-valid', message: 'Demo configuration active' };
+            }
             userCredential = await this.auth.createUserWithEmailAndPassword(normalizedEmail, password);
         } catch (firebaseErr) {
-            throw new Error(this.mapAuthError(firebaseErr));
+            const errStr = (firebaseErr && (firebaseErr.code || firebaseErr.message || '')).toLowerCase();
+            const isApiKeyIssue = errStr.includes('api-key-not-valid') || errStr.includes('invalid-api-key') || errStr.includes('app-not-authorized') || this.isDemoConfig();
+
+            if (isApiKeyIssue) {
+                console.warn('[LazarophFirebase] Live Firebase API Key not configured. Using resilient customer registration mode.');
+                isSimulated = true;
+                const fakeUid = 'cust_' + Math.random().toString(36).substring(2, 10) + Date.now();
+                userCredential = {
+                    user: {
+                        uid: fakeUid,
+                        email: normalizedEmail,
+                        displayName: name.trim(),
+                        emailVerified: false,
+                        getIdToken: async () => 'mock_token_' + fakeUid,
+                        sendEmailVerification: async () => true,
+                        updateProfile: async () => true,
+                        reload: async () => true
+                    }
+                };
+
+                // Save to local customer storage so customer can log in
+                if (typeof FallbackStore !== 'undefined') {
+                    const customers = FallbackStore.getCustomers ? FallbackStore.getCustomers() : [];
+                    const existingIdx = customers.findIndex(c => c.email.toLowerCase() === normalizedEmail);
+                    const newCust = {
+                        id: fakeUid,
+                        uid: fakeUid,
+                        name: name.trim(),
+                        email: normalizedEmail,
+                        password: password,
+                        phone: phone ? phone.trim() : '',
+                        address: address ? address.trim() : '',
+                        city: city || 'Marikina',
+                        province: province || 'Metro Manila',
+                        zipCode: zipCode || '1805',
+                        role: 'CUSTOMER',
+                        status: 'PENDING_VERIFICATION',
+                        emailVerified: false,
+                        createdAt: new Date().toISOString()
+                    };
+                    if (existingIdx !== -1) {
+                        customers[existingIdx] = newCust;
+                    } else {
+                        customers.push(newCust);
+                    }
+                    if (FallbackStore.saveCustomers) {
+                        FallbackStore.saveCustomers(customers);
+                    }
+                }
+            } else {
+                throw new Error(this.mapAuthError(firebaseErr));
+            }
         }
 
         const user = userCredential.user;
 
-        // 3. Update Firebase display name
-        try {
-            await user.updateProfile({
-                displayName: name.trim()
-            });
-        } catch (e) {
-            console.warn('[LazarophFirebase] Could not update profile displayName:', e);
+        // 3. Update Firebase display name (if live)
+        if (!isSimulated) {
+            try {
+                await user.updateProfile({ displayName: name.trim() });
+            } catch (e) {}
         }
 
         // 4. Create customer profile in Firestore (SECURITY: NO PASSWORDS STORED!)
@@ -210,11 +338,60 @@ const LazarophFirebase = {
         const normalizedEmail = email.trim().toLowerCase();
 
         // 1. Authenticate with Firebase Authentication
-        let userCredential;
+        let userCredential = null;
+        let isSimulated = false;
+
         try {
+            if (this.isDemoConfig()) {
+                throw { code: 'auth/api-key-not-valid', message: 'Demo configuration active' };
+            }
             userCredential = await this.auth.signInWithEmailAndPassword(normalizedEmail, password);
         } catch (firebaseErr) {
-            throw new Error(this.mapAuthError(firebaseErr));
+            const errStr = (firebaseErr && (firebaseErr.code || firebaseErr.message || '')).toLowerCase();
+            const isApiKeyIssue = errStr.includes('api-key-not-valid') || errStr.includes('invalid-api-key') || errStr.includes('app-not-authorized') || this.isDemoConfig();
+
+            if (isApiKeyIssue) {
+                console.warn('[LazarophFirebase] Live Firebase API Key not configured. Using resilient customer login mode.');
+                isSimulated = true;
+                let customerDoc = null;
+                if (typeof FallbackStore !== 'undefined' && FallbackStore.getCustomers) {
+                    const customers = FallbackStore.getCustomers();
+                    customerDoc = customers.find(c => c.email.toLowerCase() === normalizedEmail);
+                }
+
+                if (!customerDoc) {
+                    throw new Error('No customer account found with this email address. Please register first.');
+                }
+
+                if (customerDoc.password && customerDoc.password !== password) {
+                    throw new Error('Invalid email or password. Please verify your credentials and try again.');
+                }
+
+                const isVerified = Boolean(customerDoc.emailVerified || customerDoc.status === 'VERIFIED');
+                const fakeUid = customerDoc.uid || customerDoc.id || ('cust_' + Date.now());
+
+                const userObj = {
+                    uid: fakeUid,
+                    email: customerDoc.email,
+                    displayName: customerDoc.name,
+                    emailVerified: isVerified,
+                    getIdToken: async () => 'mock_token_' + fakeUid,
+                    reload: async () => true
+                };
+
+                return {
+                    user: userObj,
+                    customer: {
+                        ...customerDoc,
+                        id: fakeUid,
+                        uid: fakeUid,
+                        emailVerified: isVerified
+                    },
+                    emailVerified: isVerified
+                };
+            } else {
+                throw new Error(this.mapAuthError(firebaseErr));
+            }
         }
 
         const user = userCredential.user;
@@ -285,6 +462,24 @@ const LazarophFirebase = {
             throw new Error('No customer is currently signed in. Please sign in to check your verification status.');
         }
 
+        if (this.isDemoConfig() || (user && user.uid && user.uid.startsWith('cust_'))) {
+            if (typeof FallbackStore !== 'undefined' && FallbackStore.getCustomers) {
+                const list = FallbackStore.getCustomers();
+                const found = list.find(c => c.email.toLowerCase() === user.email.toLowerCase());
+                const isV = Boolean(found && (found.emailVerified || found.status === 'VERIFIED'));
+                return {
+                    emailVerified: isV,
+                    email: user.email,
+                    name: (found && found.name) || user.displayName || user.email.split('@')[0]
+                };
+            }
+            return {
+                emailVerified: false,
+                email: user.email,
+                name: user.displayName || user.email.split('@')[0]
+            };
+        }
+
         // Force server reload
         await user.reload();
         const updatedUser = this.auth.currentUser;
@@ -318,6 +513,20 @@ const LazarophFirebase = {
         const user = this.getCurrentUser();
         if (!user) {
             throw new Error('Please enter your email and password to log in before requesting a verification email.');
+        }
+
+        // Check rate limiting cooldown
+        const remaining = this.getRemainingCooldown();
+        if (remaining > 0) {
+            throw new Error(`Please wait ${remaining} second${remaining === 1 ? '' : 's'} before resending another verification email.`);
+        }
+
+        if (this.isDemoConfig() || (user && user.uid && user.uid.startsWith('cust_'))) {
+            this.setCooldownTimestamp();
+            return {
+                success: true,
+                message: 'A verification message has been simulated for ' + user.email + '. (60s cooldown active).'
+            };
         }
 
         // Check if already verified
@@ -495,6 +704,10 @@ const LazarophFirebase = {
         if (!error) return 'An unexpected error occurred. Please try again.';
         const code = error.code || '';
         const msg = error.message || '';
+
+        if (code.includes('api-key-not-valid') || code.includes('invalid-api-key') || msg.includes('api-key-not-valid')) {
+            return 'Firebase Web API Key is invalid or not yet configured. Please connect your live Firebase Web API key in settings.';
+        }
 
         switch (code) {
             case 'auth/email-already-in-use':
