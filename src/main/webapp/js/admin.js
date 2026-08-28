@@ -38,56 +38,66 @@ const Admin = {
     // =========================================================================
     // SHARED HIGH-PERFORMANCE DELETE ENGINE & NON-BLOCKING CONFIRMATIONS
     // =========================================================================
+    safeEscape(val) {
+        if (val === null || val === undefined) return '';
+        return String(val)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    },
+
     confirmModal({ title = 'Confirm Deletion', message = 'Are you sure you want to delete this item?', warningText = '', confirmText = 'Yes, Delete', cancelText = 'Cancel' } = {}) {
         return new Promise((resolve) => {
             let modal = document.getElementById('modal-admin-delete-confirm');
             if (!modal) {
                 modal = document.createElement('div');
                 modal.id = 'modal-admin-delete-confirm';
-                modal.className = 'modal-overlay';
-                modal.style.position = 'fixed';
-                modal.style.top = '0';
-                modal.style.left = '0';
-                modal.style.right = '0';
-                modal.style.bottom = '0';
-                modal.style.width = '100vw';
-                modal.style.height = '100vh';
-                modal.style.background = 'rgba(0, 0, 0, 0.85)';
-                modal.style.backdropFilter = 'blur(6px)';
-                modal.style.webkitBackdropFilter = 'blur(6px)';
-                modal.style.display = 'flex';
-                modal.style.alignItems = 'center';
-                modal.style.justifyContent = 'center';
-                modal.style.zIndex = '999999';
                 document.body.appendChild(modal);
             }
+
+            modal.className = 'admin-delete-modal-overlay active';
+            modal.classList.remove('hidden-modal');
+            modal.style.display = 'flex';
+            modal.style.opacity = '1';
+            modal.style.visibility = 'visible';
+            modal.style.pointerEvents = 'auto';
+
+            const safeTitle = Admin.safeEscape(title);
+            const safeMessage = Admin.safeEscape(message);
+            const safeWarning = Admin.safeEscape(warningText);
+            const safeCancel = Admin.safeEscape(cancelText);
+            const safeConfirm = Admin.safeEscape(confirmText);
 
             modal.innerHTML = `
                 <div class="admin-delete-modal-card">
                     <div class="admin-delete-modal-header">
                         <div class="admin-delete-modal-icon">🗑️</div>
-                        <h3 class="admin-delete-modal-title">${this.escapeHtml(title)}</h3>
+                        <h3 class="admin-delete-modal-title">${safeTitle}</h3>
                     </div>
                     <div class="admin-delete-modal-body">
-                        <p style="margin: 0; font-size: 0.95rem; color: #ffffff; font-weight: 600;">${this.escapeHtml(message)}</p>
-                        ${warningText ? `
+                        <p style="margin: 0; font-size: 0.95rem; color: #ffffff; font-weight: 600;">${safeMessage}</p>
+                        ${safeWarning ? `
                             <div class="admin-delete-modal-warning-tag">
                                 <span>⚠️</span>
-                                <span>${this.escapeHtml(warningText)}</span>
+                                <span>${safeWarning}</span>
                             </div>
                         ` : ''}
                     </div>
                     <div class="admin-delete-modal-footer">
-                        <button type="button" class="btn btn-secondary" id="admin-confirm-cancel-btn" style="padding: 8px 16px; font-weight: 700;">${this.escapeHtml(cancelText)}</button>
-                        <button type="button" class="btn btn-confirm-delete" id="admin-confirm-proceed-btn">${this.escapeHtml(confirmText)}</button>
+                        <button type="button" class="btn btn-secondary" id="admin-confirm-cancel-btn" style="padding: 8px 16px; font-weight: 700;">${safeCancel}</button>
+                        <button type="button" class="btn btn-confirm-delete" id="admin-confirm-proceed-btn">${safeConfirm}</button>
                     </div>
                 </div>
             `;
 
-            modal.style.display = 'flex';
-
             const cleanup = (result) => {
+                modal.classList.add('hidden-modal');
                 modal.style.display = 'none';
+                modal.style.opacity = '0';
+                modal.style.visibility = 'hidden';
+                modal.style.pointerEvents = 'none';
                 document.removeEventListener('keydown', onKeyDown);
                 resolve(result);
             };
@@ -102,8 +112,8 @@ const Admin = {
             const cancelBtn = document.getElementById('admin-confirm-cancel-btn');
             const proceedBtn = document.getElementById('admin-confirm-proceed-btn');
 
-            if (cancelBtn) cancelBtn.onclick = () => cleanup(false);
-            if (proceedBtn) proceedBtn.onclick = () => cleanup(true);
+            if (cancelBtn) cancelBtn.onclick = (e) => { e.stopPropagation(); cleanup(false); };
+            if (proceedBtn) proceedBtn.onclick = (e) => { e.stopPropagation(); cleanup(true); };
             modal.onclick = (e) => { if (e.target === modal) cleanup(false); };
         });
     },
@@ -120,7 +130,16 @@ const Admin = {
         }
 
         if (targetRowSelector) {
-            targetEl = typeof targetRowSelector === 'string' ? document.querySelector(targetRowSelector) : targetRowSelector;
+            if (typeof targetRowSelector === 'string') {
+                if (targetRowSelector.startsWith('#')) {
+                    targetEl = document.getElementById(targetRowSelector.substring(1)) || document.querySelector(targetRowSelector);
+                } else {
+                    targetEl = document.querySelector(targetRowSelector);
+                }
+            } else {
+                targetEl = targetRowSelector;
+            }
+
             if (targetEl) {
                 targetEl.classList.add('row-deleting');
             }
@@ -390,12 +409,13 @@ const Admin = {
 
         try {
             const products = await API.getAdminProducts();
+            this.products = products || [];
 
             container.innerHTML = `
                 <div class="admin-header">
                     <div>
                         <div class="section-subtitle">CATALOG MANAGEMENT</div>
-                        <h1 class="admin-page-title">ALL PRODUCTS (${products.length})</h1>
+                        <h1 class="admin-page-title">ALL PRODUCTS (${this.products.length})</h1>
                     </div>
                     <button class="btn btn-primary" onclick="Admin.switchTab('add-product')">
                         + Add New Product
@@ -418,7 +438,7 @@ const Admin = {
                                 </tr>
                             </thead>
                             <tbody>
-                                ${products.map(p => `
+                                ${this.products.map(p => `
                                     <tr id="product-row-${p.id}">
                                         <td>
                                             <img src="${p.mainImageUrl}" style="width: 48px; height: 48px; object-fit: contain; background: #0e131d; border-radius: 4px; padding: 2px;" onerror="this.src='images/placeholder-product.png'">
@@ -441,8 +461,8 @@ const Admin = {
                                         <td><span class="status-pill status-${p.status === 'ACTIVE' ? 'confirmed' : 'cancelled'}">${p.status}</span></td>
                                         <td>
                                             <div style="display: flex; gap: 8px;">
-                                                <button class="btn btn-secondary btn-sm" onclick="Admin.editProduct(${p.id})">Edit</button>
-                                                <button class="btn btn-secondary btn-sm" style="color: var(--color-danger);" onclick="Admin.deleteProduct(${p.id}, '${p.name.replace(/'/g, "\\'")}', this)">Delete</button>
+                                                <button class="btn btn-secondary btn-sm" onclick="Admin.editProduct('${p.id}')">Edit</button>
+                                                <button class="btn btn-secondary btn-sm" style="color: var(--color-danger); font-weight: 700;" onclick="Admin.handleDeleteProduct('${p.id}', this)">Delete</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -473,6 +493,12 @@ const Admin = {
         }
     },
 
+    async handleDeleteProduct(id, btn) {
+        const product = (this.products || []).find(p => String(p.id) === String(id));
+        const name = product ? product.name : `Product #${id}`;
+        return this.deleteProduct(id, name, btn);
+    },
+
     async deleteProduct(id, name, btn) {
         const confirmed = await this.confirmModal({
             title: 'Delete Product',
@@ -489,7 +515,12 @@ const Admin = {
             successMsg: `"${name}" deleted successfully.`,
             onComplete: () => {
                 if (Array.isArray(this.products)) {
-                    this.products = this.products.filter(p => p.id !== id);
+                    this.products = this.products.filter(p => String(p.id) !== String(id));
+                }
+                // Update header count
+                const titleEl = document.querySelector('.admin-page-title');
+                if (titleEl && Array.isArray(this.products)) {
+                    titleEl.textContent = `ALL PRODUCTS (${this.products.length})`;
                 }
             }
         });
@@ -1079,44 +1110,42 @@ const Admin = {
 
         try {
             const orders = await API.getAdminOrders();
+            this.orders = orders || [];
 
             container.innerHTML = `
                 <div class="admin-header">
                     <div>
                         <div class="section-subtitle">MANUAL DELIVERY & LOGISTICS MANAGEMENT</div>
-                        <h1 class="admin-page-title">CUSTOMER ORDERS & DELIVERY (${orders.length})</h1>
+                        <h1 class="admin-page-title">CUSTOMER ORDERS & DELIVERY (${this.orders.length})</h1>
                     </div>
                 </div>
 
-                <div class="admin-card" style="border: 1.5px solid #e5e7eb; border-radius: 6px; background: #ffffff;">
+                <div class="admin-card">
                     <div class="table-responsive">
                         <table class="admin-table">
                             <thead>
                                 <tr>
-                                    <th>Order # &amp; Date</th>
-                                    <th>Customer &amp; Contact</th>
-                                    <th>Delivery Method</th>
+                                    <th>Order Details</th>
+                                    <th>Customer & City</th>
+                                    <th>Courier & Delivery</th>
                                     <th>Delivery Fee</th>
-                                    <th>Purchased Items</th>
-                                    <th>Total Amount</th>
-                                    <th>Order Status</th>
+                                    <th>Items Ordered</th>
+                                    <th>Total</th>
+                                    <th>Official Order Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${orders.map(o => {
-                                    const courier = o.courier || 'LALAMOVE';
-                                    const isFeeConfirmed = o.deliveryFeeConfirmed || courier === 'STORE_PICKUP';
-                                    const feeDisplay = isFeeConfirmed ? (o.shippingFee && o.shippingFee > 0 ? formatMoney(o.shippingFee) : 'FREE') : '<span style="color:#e11d48; font-weight:700; font-size:0.8rem; background:#ffe4e6; padding:2px 6px; border-radius:3px;">To be Confirmed</span>';
-
-                                    let badgeHtml = `<span class="courier-badge badge-lalamove">🚚 Lalamove</span>`;
-                                    if (courier === 'LBC') badgeHtml = `<span class="courier-badge badge-lbc">📦 LBC Express</span>`;
-                                    if (courier === 'STORE_PICKUP') badgeHtml = `<span class="courier-badge badge-pickup">🏪 Store Pickup</span>`;
+                                ${this.orders.map(o => {
+                                    const courier = o.courier || (o.lbcTrackingNumber ? 'LBC' : 'LALAMOVE');
+                                    let badgeHtml = `<span class="badge ${courier === 'LALAMOVE' ? 'badge-lalamove' : 'badge-lbc'}">${courier}</span>`;
+                                    const feeDisplay = o.deliveryFeeConfirmed
+                                        ? `<span style="color: #10b981; font-weight: 700;">${formatMoney(o.shippingFee || 0)}</span>`
+                                        : `<span style="color: #f59e0b; font-weight: 700;">${o.shippingFee ? formatMoney(o.shippingFee) + ' (Pending)' : 'Quote Needed'}</span>`;
 
                                     const officialStatuses = [
-                                        'Pending Order',
-                                        'Payment Verification',
-                                        'Delivery Confirmation',
+                                        'Pending Payment',
+                                        'Confirmed',
                                         'Preparing Order',
                                         'Ready for Pickup',
                                         'For Delivery',
@@ -1145,11 +1174,6 @@ const Admin = {
                                                         AWB: <code style="background: #fee2e2; padding: 1px 4px; border-radius: 3px;">${o.lbcTrackingNumber || o.courierTrackingNumber}</code>
                                                     </div>
                                                 ` : ''}
-                                                ${courier === 'LALAMOVE' && o.riderName ? `
-                                                    <div style="font-size: 0.72rem; color: #111827; margin-top: 4px;">
-                                                        Rider: <strong>${o.riderName}</strong>
-                                                    </div>
-                                                ` : ''}
                                             </td>
                                             <td>
                                                 <div style="font-size: 0.9rem; font-weight: 700;">${feeDisplay}</div>
@@ -1163,7 +1187,7 @@ const Admin = {
                                                 <strong style="color: #000000; font-size: 1.05rem; font-weight: 900;">${formatMoney(o.total)}</strong>
                                             </td>
                                             <td>
-                                                <select class="form-control" style="padding: 4px 8px; font-size: 0.8rem; width: 155px; border-color: #d1d5db; font-weight: 600;" onchange="Admin.updateOrderStatus(${o.id}, this.value)">
+                                                <select class="form-control" style="padding: 4px 8px; font-size: 0.8rem; width: 155px; border-color: #d1d5db; font-weight: 600;" onchange="Admin.updateOrderStatus('${o.id}', this.value)">
                                                     ${officialStatuses.map(st => `
                                                         <option value="${st}" ${o.status === st || (o.status && o.status.equalsIgnoreCase && o.status.equalsIgnoreCase(st)) ? 'selected' : ''}>${st}</option>
                                                     `).join('')}
@@ -1171,13 +1195,13 @@ const Admin = {
                                             </td>
                                             <td>
                                                 <div style="display: flex; flex-direction: column; gap: 4px; min-width: 120px;">
-                                                    <button class="btn btn-secondary btn-sm" style="font-size: 0.75rem; font-weight: 800; border: 1.5px solid #000000; background: #ffffff; color: #000000; padding: 4px 8px;" onclick="Admin.openDeliveryModal(${o.id})">
+                                                    <button class="btn btn-secondary btn-sm" style="font-size: 0.75rem; font-weight: 800; border: 1.5px solid #000000; background: #ffffff; color: #000000; padding: 4px 8px;" onclick="Admin.openDeliveryModal('${o.id}')">
                                                         🚚 Delivery Info
                                                     </button>
-                                                    <button class="btn btn-primary btn-sm" style="font-size: 0.75rem; font-weight: 800; background: #000000; color: #ffffff; padding: 4px 8px;" onclick="Admin.openCustomerChat(${o.id}, '${o.orderNumber}')">
+                                                    <button class="btn btn-primary btn-sm" style="font-size: 0.75rem; font-weight: 800; background: #000000; color: #ffffff; padding: 4px 8px;" onclick="Admin.openCustomerChat('${o.id}', '${o.orderNumber}')">
                                                         💬 Chat
                                                     </button>
-                                                    <button class="btn btn-sm" style="font-size: 0.75rem; font-weight: 800; background: rgba(220,38,38,0.1); color: #dc2626; border: 1px solid rgba(220,38,38,0.3); padding: 4px 8px;" onclick="Admin.deleteOrder(${o.id}, '${o.orderNumber}', this)">
+                                                    <button class="btn btn-sm" style="font-size: 0.75rem; font-weight: 800; background: rgba(220,38,38,0.1); color: #dc2626; border: 1px solid rgba(220,38,38,0.3); padding: 4px 8px;" onclick="Admin.handleDeleteOrder('${o.id}', this)">
                                                         🗑️ Delete
                                                     </button>
                                                 </div>
@@ -1198,6 +1222,12 @@ const Admin = {
         }
     },
 
+    async handleDeleteOrder(orderId, btn) {
+        const order = (this.orders || []).find(o => String(o.id) === String(orderId));
+        const orderNumber = order ? order.orderNumber : orderId;
+        return this.deleteOrder(orderId, orderNumber, btn);
+    },
+
     async deleteOrder(orderId, orderNumber, btn) {
         const confirmed = await this.confirmModal({
             title: 'Delete Order Record',
@@ -1211,7 +1241,12 @@ const Admin = {
             btn,
             targetRowSelector: `#order-row-${orderId}`,
             deleteAction: () => API.deleteAdminOrder(orderId),
-            successMsg: `Order #${orderNumber} deleted successfully.`
+            successMsg: `Order #${orderNumber} deleted successfully.`,
+            onComplete: () => {
+                if (Array.isArray(this.orders)) {
+                    this.orders = this.orders.filter(o => String(o.id) !== String(orderId));
+                }
+            }
         });
     },
 
@@ -2175,16 +2210,17 @@ const Admin = {
     },
 
     async loadCustomOrders(container) {
-        container.innerHTML = `<div style="text-align: center; padding: 60px 0;">Loading customized jersey pipeline...</div>`;
+        container.innerHTML = `<div style="text-align: center; padding: 60px 0;">Loading custom design orders...</div>`;
 
         try {
             const customOrders = await API.getAdminCustomOrders();
+            this.customOrders = customOrders || [];
 
             container.innerHTML = `
                 <div class="admin-header">
                     <div>
-                        <div class="section-subtitle">CUSTOM SPORTSWEAR PIPELINE</div>
-                        <h1 class="admin-page-title">CUSTOMIZED JERSEY ORDERS (${customOrders.length})</h1>
+                        <div class="section-subtitle">CUSTOMIZATION STUDIO ORDERS</div>
+                        <h1 class="admin-page-title">JERSEY & APPAREL CUSTOM ORDERS (${this.customOrders.length})</h1>
                     </div>
                 </div>
 
@@ -2204,7 +2240,7 @@ const Admin = {
                                 </tr>
                             </thead>
                             <tbody>
-                                ${customOrders.map(co => `
+                                ${this.customOrders.map(co => `
                                     <tr id="custom-order-row-${co.id}">
                                         <td><strong>${co.orderNumber}</strong></td>
                                         <td>
@@ -2220,7 +2256,7 @@ const Admin = {
                                         </td>
                                         <td>
                                             <div style="display: flex; gap: 6px; align-items: center;">
-                                                <select class="form-control" style="padding: 4px 8px; font-size: 0.82rem; width: 140px;" onchange="Admin.updateCustomStatus(${co.id}, this.value)">
+                                                <select class="form-control" style="padding: 4px 8px; font-size: 0.82rem; width: 140px;" onchange="Admin.updateCustomStatus('${co.id}', this.value)">
                                                     <option value="PENDING_DESIGN" ${co.status === 'PENDING_DESIGN' ? 'selected' : ''}>Pending Design</option>
                                                     <option value="DESIGN_APPROVED" ${co.status === 'DESIGN_APPROVED' ? 'selected' : ''}>Design Approved</option>
                                                     <option value="IN_PRODUCTION" ${co.status === 'IN_PRODUCTION' ? 'selected' : ''}>In Production</option>
@@ -2228,7 +2264,7 @@ const Admin = {
                                                     <option value="SHIPPED" ${co.status === 'SHIPPED' ? 'selected' : ''}>Shipped</option>
                                                     <option value="COMPLETED" ${co.status === 'COMPLETED' ? 'selected' : ''}>Completed</option>
                                                 </select>
-                                                <button type="button" class="btn btn-sm" style="font-size: 0.75rem; padding: 4px 8px; background: rgba(220,38,38,0.1); color: #dc2626; border: 1px solid rgba(220,38,38,0.3);" onclick="Admin.deleteCustomOrder(${co.id}, '${co.orderNumber}', this)" title="Delete custom order">
+                                                <button type="button" class="btn btn-sm" style="font-size: 0.75rem; padding: 4px 8px; background: rgba(220,38,38,0.1); color: #dc2626; border: 1px solid rgba(220,38,38,0.3);" onclick="Admin.handleDeleteCustomOrder('${co.id}', this)" title="Delete custom order">
                                                     🗑️
                                                 </button>
                                             </div>
@@ -2245,6 +2281,12 @@ const Admin = {
         }
     },
 
+    async handleDeleteCustomOrder(id, btn) {
+        const order = (this.customOrders || []).find(co => String(co.id) === String(id));
+        const orderNumber = order ? order.orderNumber : id;
+        return this.deleteCustomOrder(id, orderNumber, btn);
+    },
+
     async deleteCustomOrder(id, orderNumber, btn) {
         const confirmed = await this.confirmModal({
             title: 'Delete Custom Order',
@@ -2258,7 +2300,12 @@ const Admin = {
             btn,
             targetRowSelector: `#custom-order-row-${id}`,
             deleteAction: () => API.deleteCustomOrder(id),
-            successMsg: `Custom order #${orderNumber} deleted successfully.`
+            successMsg: `Custom order #${orderNumber} deleted successfully.`,
+            onComplete: () => {
+                if (Array.isArray(this.customOrders)) {
+                    this.customOrders = this.customOrders.filter(co => String(co.id) !== String(id));
+                }
+            }
         });
     },
 
@@ -2276,12 +2323,13 @@ const Admin = {
 
         try {
             const users = await API.getAdminCustomers();
+            this.customers = users || [];
 
             container.innerHTML = `
                 <div class="admin-header">
                     <div>
                         <div class="section-subtitle">USER DIRECTORY</div>
-                        <h1 class="admin-page-title">ALL REGISTERED ACCOUNTS (${users.length})</h1>
+                        <h1 class="admin-page-title">ALL REGISTERED ACCOUNTS (${this.customers.length})</h1>
                     </div>
                 </div>
 
@@ -2301,17 +2349,17 @@ const Admin = {
                                 </tr>
                             </thead>
                             <tbody>
-                                ${users.map(u => `
+                                ${this.customers.map(u => `
                                     <tr id="customer-row-${u.id || u.uid}">
                                         <td>#${u.id || u.uid}</td>
-                                        <td><strong style="color: #ffffff;">${escapeHtml(u.name)}</strong></td>
-                                        <td>${escapeHtml(u.email)}</td>
-                                        <td>${u.phone ? escapeHtml(u.phone) : 'N/A'}</td>
-                                        <td>${u.city ? `${escapeHtml(u.city)}, ${escapeHtml(u.province || '')}` : 'N/A'}</td>
+                                        <td><strong style="color: #ffffff;">${Admin.safeEscape(u.name)}</strong></td>
+                                        <td>${Admin.safeEscape(u.email)}</td>
+                                        <td>${u.phone ? Admin.safeEscape(u.phone) : 'N/A'}</td>
+                                        <td>${u.city ? `${Admin.safeEscape(u.city)}, ${Admin.safeEscape(u.province || '')}` : 'N/A'}</td>
                                         <td><span class="badge ${u.role === 'ADMIN' ? 'badge-brand' : 'badge-outline'}">${u.role}</span></td>
                                         <td>${new Date(u.createdAt || Date.now()).toLocaleDateString()}</td>
                                         <td style="text-align: right;">
-                                            <button class="btn btn-secondary btn-sm" style="color: var(--color-danger); font-weight: 700;" onclick="Admin.deleteCustomer('${u.id || u.uid}', '${escapeHtml(u.name)}', this)" title="Delete Customer Account">
+                                            <button class="btn btn-secondary btn-sm" style="color: var(--color-danger); font-weight: 700;" onclick="Admin.handleDeleteCustomer('${u.id || u.uid}', this)" title="Delete Customer Account">
                                                 🗑️ Delete
                                             </button>
                                         </td>
@@ -2327,6 +2375,12 @@ const Admin = {
         }
     },
 
+    async handleDeleteCustomer(uid, btn) {
+        const user = (this.customers || []).find(u => String(u.id || u.uid) === String(uid));
+        const name = user ? user.name : `User #${uid}`;
+        return this.deleteCustomer(uid, name, btn);
+    },
+
     async deleteCustomer(uid, name, btn) {
         const confirmed = await this.confirmModal({
             title: 'Delete Customer Account',
@@ -2340,7 +2394,12 @@ const Admin = {
             btn,
             targetRowSelector: `#customer-row-${uid}`,
             deleteAction: () => API.deleteCustomer(uid),
-            successMsg: `Customer "${name}" deleted successfully.`
+            successMsg: `Customer "${name}" deleted successfully.`,
+            onComplete: () => {
+                if (Array.isArray(this.customers)) {
+                    this.customers = this.customers.filter(u => String(u.id || u.uid) !== String(uid));
+                }
+            }
         });
     },
 
@@ -2745,7 +2804,7 @@ const Admin = {
                     <button class="btn btn-secondary btn-sm" style="color: ${b.status === 'ACTIVE' ? '#eab308' : '#22c55e'};" onclick="Admin.toggleBrandStatus(${b.id}, '${b.status}')" title="Toggle Active / Inactive">
                         ${b.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
                     </button>
-                    <button class="btn btn-danger btn-sm" onclick="Admin.deleteBrand(${b.id}, '${b.name.replace(/'/g, "\\'")}', this)" title="Delete Brand">
+                    <button class="btn btn-danger btn-sm" onclick="Admin.handleDeleteBrand('${b.id}', this)" title="Delete Brand">
                         🗑️
                     </button>
                 </td>
@@ -3070,28 +3129,34 @@ const Admin = {
         }
     },
 
+    async handleDeleteBrand(id, btn) {
+        const brand = (this.brands || []).find(b => String(b.id) === String(id));
+        const name = brand ? brand.name : `Brand #${id}`;
+        return this.deleteBrand(id, name, btn);
+    },
+
     async deleteBrand(id, name, btn) {
-        const brand = (this.brands || []).find(b => b.id === id);
+        const brand = (this.brands || []).find(b => String(b.id) === String(id));
         const productCount = brand ? (brand.productCount || 0) : 0;
 
         if (productCount > 0) {
             const confirmed = await this.confirmModal({
                 title: 'Brand Linked to Products',
-                message: `Brand "${name}" is currently linked to ${productCount} active product(s) in the catalog. To prevent orphaned catalog items, it cannot be permanently deleted while products are assigned.`,
-                warningText: 'Would you like to deactivate this brand instead? Deactivating hides the brand from storefront filters while preserving existing product data.',
+                message: `Brand "${name}" is currently linked to ${productCount} active product(s) in the catalog. Would you like to deactivate this brand instead, or permanently delete it?`,
+                warningText: 'Deactivating hides the brand from storefront filters while preserving existing product data.',
                 confirmText: 'Deactivate Brand',
-                cancelText: 'Keep Active'
+                cancelText: 'Delete Brand'
             });
             if (confirmed) {
                 await this.toggleBrandStatus(id, 'ACTIVE');
+                return;
             }
-            return;
         }
 
         const confirmed = await this.confirmModal({
             title: 'Delete Brand',
             message: `Are you sure you want to permanently delete brand "${name}"?`,
-            warningText: 'This brand will be permanently removed from the brand directory.',
+            warningText: 'This brand will be permanently removed from the store brand directory.',
             confirmText: 'Yes, Delete Brand'
         });
         if (!confirmed) return;
@@ -3103,7 +3168,7 @@ const Admin = {
             successMsg: `Brand "${name}" deleted successfully.`,
             onComplete: () => {
                 if (Array.isArray(this.brands)) {
-                    this.brands = this.brands.filter(b => b.id !== id);
+                    this.brands = this.brands.filter(b => String(b.id) !== String(id));
                 }
                 const countSpan = document.getElementById('admin-brand-count');
                 if (countSpan && this.brands) {
@@ -3121,6 +3186,7 @@ const Admin = {
 
         try {
             const admins = await API.getAdminList();
+            this.adminUsers = admins || [];
             const currentAdmin = AdminAuth.getAdmin() || {};
 
             container.innerHTML = `
@@ -3210,10 +3276,10 @@ const Admin = {
                                                         🔑 Reset Credentials
                                                     </button>
                                                     ${!isSelf ? `
-                                                        <button class="btn btn-sm" style="font-size: 0.78rem; padding: 4px 10px; background: ${isActive ? '#f59e0b' : '#10b981'}; color: #000; font-weight: 700;" onclick="Admin.toggleAdminStatus(${a.id}, '${a.status}')">
+                                                        <button class="btn btn-sm" style="font-size: 0.78rem; padding: 4px 10px; background: ${isActive ? '#f59e0b' : '#10b981'}; color: #000; font-weight: 700;" onclick="Admin.toggleAdminStatus('${a.id}', '${a.status}')">
                                                             ${isActive ? 'Disable' : 'Enable'}
                                                         </button>
-                                                        <button class="btn btn-sm" style="font-size: 0.78rem; padding: 4px 8px; background: rgba(220,38,38,0.2); color: #f87171; border: 1px solid rgba(220,38,38,0.4);" onclick="Admin.deleteAdminUser(${a.id}, '${escapeHtml(a.name)}', this)" title="Delete Administrator">
+                                                        <button class="btn btn-sm" style="font-size: 0.78rem; padding: 4px 8px; background: rgba(220,38,38,0.2); color: #f87171; border: 1px solid rgba(220,38,38,0.4);" onclick="Admin.handleDeleteAdminUser('${a.id}', this)" title="Delete Administrator">
                                                             ✕
                                                         </button>
                                                     ` : ''}
@@ -3533,6 +3599,12 @@ const Admin = {
         }
     },
 
+    async handleDeleteAdminUser(adminId, btn) {
+        const admin = (this.adminUsers || []).find(a => String(a.id) === String(adminId));
+        const name = admin ? admin.name : `Admin #${adminId}`;
+        return this.deleteAdminUser(adminId, name, btn);
+    },
+
     async deleteAdminUser(adminId, adminName, btn) {
         const currentAdmin = AdminAuth.getAdmin() || {};
         if (String(currentAdmin.id) === String(adminId) || currentAdmin.name === adminName || currentAdmin.email === adminName) {
@@ -3561,7 +3633,12 @@ const Admin = {
             btn,
             targetRowSelector: `#admin-user-row-${adminId}`,
             deleteAction: () => API.deleteAdmin(adminId),
-            successMsg: `Administrator "${adminName}" deleted successfully.`
+            successMsg: `Administrator "${adminName}" deleted successfully.`,
+            onComplete: () => {
+                if (Array.isArray(this.adminUsers)) {
+                    this.adminUsers = this.adminUsers.filter(a => String(a.id) !== String(adminId));
+                }
+            }
         });
     },
 

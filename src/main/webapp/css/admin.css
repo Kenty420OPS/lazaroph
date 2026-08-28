@@ -1157,7 +1157,39 @@
     cursor: wait !important;
 }
 
-/* Modern Non-Blocking Admin Delete Confirmation Dialog */
+/* Modern Non-Blocking Admin Delete Confirmation Dialog Overlay & Card */
+#modal-admin-delete-confirm,
+.admin-delete-modal-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.85) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 9999999 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+}
+
+#modal-admin-delete-confirm.hidden-modal,
+.admin-delete-modal-overlay.hidden-modal {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
 .admin-delete-modal-card {
     background: #0f172a;
     border: 1px solid #334155;

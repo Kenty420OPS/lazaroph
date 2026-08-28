@@ -231,12 +231,14 @@ module.exports = async (req, res) => {
                 return sendJson(res, 400, { success: false, error: 'Product ID is required for deletion.' });
             }
 
-            const index = productsStore.findIndex(p => p.id === id);
-            if (index === -1 && deletedProductIds.has(id)) {
+            const strId = String(id);
+            const index = productsStore.findIndex(p => String(p.id) === strId);
+            if (index === -1 && (deletedProductIds.has(id) || deletedProductIds.has(strId))) {
                 return sendJson(res, 200, { success: true, message: `Product #${id} is already deleted.` });
             }
 
             deletedProductIds.add(id);
+            deletedProductIds.add(strId);
             if (index !== -1) {
                 productsStore.splice(index, 1);
             }
