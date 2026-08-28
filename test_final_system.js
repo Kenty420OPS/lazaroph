@@ -143,6 +143,8 @@ const requiredRoutes = [
     'admin/index.html',
     'admin/login/index.html',
     'admin/dashboard/index.html',
+    'admin/sales/index.html',
+    'admin/gross-sales/index.html',
     'admin/security-verification/index.html'
 ];
 
@@ -158,6 +160,8 @@ console.log('\n[TEST GROUP 6: GOOGLE AUTHENTICATION INTEGRATION]');
 const authJs = fs.readFileSync(path.join(__dirname, 'src/main/webapp/js/auth.js'), 'utf8');
 const authCss = fs.readFileSync(path.join(__dirname, 'src/main/webapp/css/auth.css'), 'utf8');
 const appJs = fs.readFileSync(path.join(__dirname, 'src/main/webapp/js/app.js'), 'utf8');
+const adminJs = fs.readFileSync(path.join(__dirname, 'src/main/webapp/js/admin.js'), 'utf8');
+const adminCss = fs.readFileSync(path.join(__dirname, 'src/main/webapp/css/admin.css'), 'utf8');
 
 assert(firebaseConfigJs.includes('signInWithGoogle()'), 'firebase-config.js exposes signInWithGoogle()');
 assert(authJs.includes('handleGoogleSignIn(source'), 'auth.js exposes CustomerAuth.handleGoogleSignIn()');
@@ -172,6 +176,14 @@ assert(!indexHtml.includes('view-customer-verify-pending'), 'index.html does NOT
 assert(!authJs.includes("App.navigate('verify-pending')"), 'auth.js does NOT redirect customers to verify-pending');
 assert(!appJs.includes('Please verify your email address to activate your account'), 'app.js does NOT block account view with activation screen');
 
+// 8. Verify Dedicated Gross Sales Breakdown Engine
+console.log('\n[TEST GROUP 8: DEDICATED GROSS SALES VIEW & CLICKABILITY]');
+assert(adminJs.includes("Admin.switchTab('sales')"), 'admin.js KPI Gross Sales card directly switches to sales tab');
+assert(adminJs.includes('loadGrossSales(container'), 'admin.js exposes loadGrossSales method');
+assert(adminJs.includes('renderGrossSalesLedger(period'), 'admin.js exposes renderGrossSalesLedger method');
+assert(adminCss.includes('.gross-sales-hero-card'), 'admin.css contains .gross-sales-hero-card styles');
+assert(indexHtml.includes('data-tab="sales"'), 'index.html contains data-tab="sales" sidebar navigation button');
+
 console.log('\n================================================================');
 console.log(`TOTAL TESTS: ${testsPassed + testsFailed} | PASSED: ${testsPassed} | FAILED: ${testsFailed}`);
 console.log('================================================================');
@@ -179,7 +191,7 @@ console.log('================================================================');
 if (testsFailed > 0) {
     process.exit(1);
 } else {
-    console.log('✨ ALL SYSTEM, PERSISTENCE, GOOGLE AUTH & UNBLOCKED TESTS PASSED 100%!');
+    console.log('✨ ALL SYSTEM, PERSISTENCE, GOOGLE AUTH, UNBLOCKED & GROSS SALES TESTS PASSED 100%!');
     process.exit(0);
 }
 

@@ -74,6 +74,12 @@ async function testLiveVercel() {
         const shopRes = await fetchUrl('https://lazaroph.vercel.app/shop');
         assert('Direct route /shop returns HTTP 200', shopRes.status === 200);
 
+        // Test 4B: Direct SPA Route /account
+        const accountRes = await fetchUrl('https://lazaroph.vercel.app/account');
+        assert('Direct route /account returns HTTP 200', accountRes.status === 200);
+        assert('Live site contains NO "view-customer-verify-pending"', !accountRes.body.includes('view-customer-verify-pending'));
+        assert('Live site contains NO "Account Activation Required" screen', !accountRes.body.includes('Account Activation Required'));
+
         // Test 5: Vercel Serverless API /api/products
         console.log('\n[TEST GROUP 2: VERCEL SERVERLESS API ENDPOINTS]');
         const prodRes = await fetchUrl('https://lazaroph.vercel.app/api/products');
