@@ -104,7 +104,7 @@ const CustomerAuth = {
 
     startCooldownWatcher() {
         if (this.cooldownInterval) clearInterval(this.cooldownInterval);
-        this.cooldownInterval = setInterval(() => {
+        const updateButtons = () => {
             const remaining = typeof LazarophFirebase !== 'undefined' ? LazarophFirebase.getRemainingCooldown() : 0;
             const buttons = [
                 document.getElementById('btn-pending-resend-verification'),
@@ -117,14 +117,16 @@ const CustomerAuth = {
                 if (remaining > 0) {
                     btn.disabled = true;
                     btn.classList.add('btn-cooldown');
-                    btn.innerHTML = `⏳ Resend Verification (${remaining}s)`;
+                    btn.innerHTML = `Resend available in ${remaining} seconds`;
                 } else {
                     btn.disabled = false;
                     btn.classList.remove('btn-cooldown');
-                    btn.innerHTML = `📧 Resend Verification Email`;
+                    btn.innerHTML = `Resend Verification Email`;
                 }
             });
-        }, 1000);
+        };
+        updateButtons();
+        this.cooldownInterval = setInterval(updateButtons, 1000);
     },
 
     // Customer Login Handler
@@ -182,6 +184,29 @@ const CustomerAuth = {
         }
     },
 
+    resetRegistrationForm() {
+        this.registrationCompleted = false;
+        const formContainer = document.getElementById('cust-reg-form-container');
+        const successContainer = document.getElementById('cust-reg-success-container');
+        if (formContainer) formContainer.style.display = 'block';
+        if (successContainer) successContainer.style.display = 'none';
+        const alertEl = document.getElementById('cust-reg-alert');
+        if (alertEl) {
+            alertEl.style.display = 'none';
+            alertEl.innerHTML = '';
+        }
+    },
+
+    showRegError(alertEl, msg) {
+        if (alertEl) {
+            alertEl.style.display = 'block';
+            alertEl.className = 'auth-alert auth-alert-error';
+            alertEl.innerHTML = `<span>❌ ${escapeHtml(msg)}</span>`;
+        } else {
+            showToast(msg, 'error');
+        }
+    },
+
     // Customer Registration Handler
     async handleRegister(event) {
         if (event) event.preventDefault();
@@ -207,22 +232,51 @@ const CustomerAuth = {
             alertEl.innerHTML = '';
         }
 
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = '<span class="btn-spinner"></span> CREATING ACCOUNT...';
+        // Field validation
+        if (!name) {
+            this.showRegError(alertEl, 'Please enter your full name.');
+            return;
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email || !emailRegex.test(email)) {
+            this.showRegError(alertEl, 'Please enter a valid email address (e.g. yourname@gmail.com).');
+            return;
+        }
+        if (!password || password.length < 6) {
+            this.showRegError(alertEl, 'Password must be at least 6 characters long.');
+            return;
+        }
+        if (password !== confirmPassword) {
+            this.showRegError(alertEl, 'Passwords do not match. Please re-enter your password.');
+            return;
         }
 
+        // 1. Immediately show loading state & disable inputs to prevent multiple clicks
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="btn-spinner"></span> Creating your account...';
+        }
+        const inputs = [nameEl, emailEl, passEl, confirmEl, phoneEl, addressEl].filter(Boolean);
+        inputs.forEach(input => input.disabled = true);
+
         try {
+            // 2. Sequential async registration with dynamic progress status updates
             const res = await LazarophFirebase.registerCustomer({
                 name,
                 email,
                 password,
                 confirmPassword,
                 phone,
-                address
+                address,
+                onProgress: (statusText) => {
+                    if (btn) {
+                        btn.innerHTML = `<span class="btn-spinner"></span> ${statusText}`;
+                    }
+                }
             });
 
-            // Store customer profile as unverified
+            // 3. Mark registration completed & update application auth state immediately
+            this.registrationCompleted = true;
             const token = await res.user.getIdToken().catch(() => 'fb_' + res.user.uid);
             this.setToken(token);
             this.setCustomer({
@@ -236,30 +290,33 @@ const CustomerAuth = {
                 emailVerified: false
             });
 
-            // Show post-registration pending verification message
+            // 4. Immediately update page state to the success screen (NO REFRESH REQUIRED!)
             const formContainer = document.getElementById('cust-reg-form-container');
             const successContainer = document.getElementById('cust-reg-success-container');
             if (formContainer && successContainer) {
                 formContainer.style.display = 'none';
                 successContainer.style.display = 'block';
+
                 const emailSpan = document.getElementById('cust-reg-success-email');
                 if (emailSpan) emailSpan.textContent = res.email;
+
+                const msgEl = document.getElementById('cust-reg-success-message');
+                if (msgEl && res.message) {
+                    msgEl.textContent = res.message;
+                }
             }
 
-            showToast('Account created! Please check your email and verify your address.', 'success');
+            // 5. Start real-time 60-second cooldown timer immediately
+            this.startCooldownWatcher();
+
+            showToast(res.message || 'Your account has been created successfully. A verification email has been sent to your email address.', 'success');
         } catch (err) {
-            if (alertEl) {
-                alertEl.style.display = 'block';
-                alertEl.className = 'auth-alert auth-alert-error';
-                alertEl.innerHTML = `<span>❌ ${escapeHtml(err.message)}</span>`;
-            } else {
-                showToast(err.message, 'error');
-            }
-        } finally {
+            inputs.forEach(input => input.disabled = false);
             if (btn) {
                 btn.disabled = false;
                 btn.innerHTML = 'CREATE ACCOUNT';
             }
+            this.showRegError(alertEl, err.message);
         }
     },
 
@@ -292,8 +349,12 @@ const CustomerAuth = {
 
     // Resend Verification Email (with anti-abuse rate limit)
     async resendVerification() {
+        const btn = document.getElementById('btn-reg-resend-verification') || document.getElementById('btn-pending-resend-verification');
         try {
-            showToast('Sending new verification email...', 'info');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="btn-spinner"></span> Sending verification email...';
+            }
             const res = await LazarophFirebase.resendVerificationEmail();
             if (res.alreadyVerified) {
                 showToast(res.message, 'success');
@@ -303,9 +364,11 @@ const CustomerAuth = {
                 App.navigate('account');
                 return;
             }
-            showToast('Verification email sent. Please check your inbox and spam folder.', 'success');
+            showToast('A verification email has been sent to your email address. Please check your inbox or spam folder.', 'success');
+            this.startCooldownWatcher();
         } catch (err) {
             showToast(err.message, 'error');
+            this.startCooldownWatcher();
         }
     },
 

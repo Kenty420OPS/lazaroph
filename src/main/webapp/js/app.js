@@ -89,6 +89,9 @@ const App = {
     },
 
     navigate(view, params = {}) {
+        if (view === 'register' && typeof CustomerAuth !== 'undefined' && CustomerAuth.resetRegistrationForm) {
+            CustomerAuth.resetRegistrationForm();
+        }
         let hash = '#' + view;
         if (params.id) hash += `?id=${params.id}`;
         if (params.category) hash += `?category=${encodeURIComponent(params.category)}`;
@@ -312,8 +315,13 @@ const App = {
                 el.classList.remove('hidden');
                 const formC = document.getElementById('cust-reg-form-container');
                 const succC = document.getElementById('cust-reg-success-container');
-                if (formC) formC.style.display = 'block';
-                if (succC) succC.style.display = 'none';
+                if (typeof CustomerAuth !== 'undefined' && CustomerAuth.registrationCompleted) {
+                    if (formC) formC.style.display = 'none';
+                    if (succC) succC.style.display = 'block';
+                } else {
+                    if (formC) formC.style.display = 'block';
+                    if (succC) succC.style.display = 'none';
+                }
             }
         } else if (view === 'verify-email') {
             const el = document.getElementById('view-customer-verify-email');

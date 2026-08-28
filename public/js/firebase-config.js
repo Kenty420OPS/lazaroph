@@ -185,12 +185,11 @@ const LazarophFirebase = {
     // =========================================================================
     // 1. CUSTOMER REGISTRATION WITH EMAIL VERIFICATION
     // =========================================================================
-    async registerCustomer({ name, email, password, confirmPassword, phone, address, city, province, zipCode }) {
+    async registerCustomer({ name, email, password, confirmPassword, phone, address, city, province, zipCode, onProgress }) {
         if (!this.init()) {
-            throw new Error(this.initError || 'Firebase Authentication is not available.');
+            throw new Error('Firebase Authentication is not available. Please check your internet connection.');
         }
 
-        // 1. Validate fields
         if (!name || !name.trim()) {
             throw new Error('Please enter your full name.');
         }
@@ -208,6 +207,8 @@ const LazarophFirebase = {
         if (password !== confirmPassword) {
             throw new Error('Passwords do not match. Please re-enter your password.');
         }
+
+        if (typeof onProgress === 'function') onProgress('Creating your account...');
 
         // 2. Create account in Firebase Authentication
         let userCredential = null;
@@ -306,16 +307,36 @@ const LazarophFirebase = {
         }
 
         // 5. Automatically send official Firebase email verification
-        try {
-            const actionCodeSettings = {
-                url: window.location.origin + window.location.pathname + '#verify-email',
-                handleCodeInApp: true
-            };
-            await user.sendEmailVerification(actionCodeSettings);
+        if (typeof onProgress === 'function') onProgress('Sending verification email...');
+
+        let emailSent = false;
+        let emailError = null;
+
+        if (isSimulated) {
+            emailSent = true;
             this.setCooldownTimestamp();
-            console.log('[LazarophFirebase] Official verification email sent to:', normalizedEmail);
-        } catch (mailErr) {
-            console.warn('[LazarophFirebase] sendEmailVerification warning:', mailErr.message);
+        } else {
+            try {
+                const actionCodeSettings = {
+                    url: window.location.origin + '/login',
+                    handleCodeInApp: true
+                };
+                await user.sendEmailVerification(actionCodeSettings);
+                emailSent = true;
+                this.setCooldownTimestamp();
+                console.log('[LazarophFirebase] Official verification email sent to:', normalizedEmail);
+            } catch (mailErr) {
+                console.warn('[LazarophFirebase] sendEmailVerification with settings failed, trying default:', mailErr.message);
+                try {
+                    await user.sendEmailVerification();
+                    emailSent = true;
+                    this.setCooldownTimestamp();
+                    console.log('[LazarophFirebase] Default verification email sent to:', normalizedEmail);
+                } catch (fallbackErr) {
+                    console.error('[LazarophFirebase] sendEmailVerification fallback failed:', fallbackErr);
+                    emailError = fallbackErr.message;
+                }
+            }
         }
 
         return {
@@ -323,7 +344,10 @@ const LazarophFirebase = {
             email: normalizedEmail,
             name: name.trim(),
             emailVerified: false,
-            message: 'Your account has been created. Please check your email and verify your email address before continuing.'
+            emailSent,
+            message: emailSent
+                ? 'Your account has been created successfully. A verification email has been sent to your email address. Please check your inbox or spam folder.'
+                : 'Your account was created, but we were unable to send the verification email. Please try again.'
         };
     },
 
@@ -547,7 +571,7 @@ const LazarophFirebase = {
 
         try {
             const actionCodeSettings = {
-                url: window.location.origin + window.location.pathname + '#verify-email',
+                url: window.location.origin + '/login',
                 handleCodeInApp: true
             };
             await user.sendEmailVerification(actionCodeSettings);
@@ -555,10 +579,19 @@ const LazarophFirebase = {
 
             return {
                 success: true,
-                message: 'Verification email sent. Please check your inbox and spam folder.'
+                message: 'A verification email has been sent to your email address. Please check your inbox or spam folder.'
             };
         } catch (err) {
-            throw new Error(this.mapAuthError(err));
+            try {
+                await user.sendEmailVerification();
+                this.setCooldownTimestamp();
+                return {
+                    success: true,
+                    message: 'A verification email has been sent to your email address. Please check your inbox or spam folder.'
+                };
+            } catch (fallbackErr) {
+                throw new Error(this.mapAuthError(fallbackErr));
+            }
         }
     },
 
@@ -763,8 +796,10 @@ const LazarophFirebase = {
                 return 'This verification link is invalid or has already been used.';
             case 'auth/network-request-failed':
                 return 'Network connection error. Please check your internet connection and try again.';
-            default:
-                return msg || 'Authentication failed. Please try again.';
+            default: {
+                let clean = msg.replace(/^Firebase:\s*/i, '').replace(/\(auth\/[^)]+\)\.?/gi, '').trim();
+                return clean || 'Authentication failed. Please try again.';
+            }
         }
     },
 

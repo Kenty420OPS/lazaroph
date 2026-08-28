@@ -611,12 +611,6 @@
                     <button type="button" class="btn btn-secondary btn-block" onclick="App.navigate('register')">
                         CREATE ACCOUNT
                     </button>
-
-                    <div style="text-align: center; margin-top: 14px;">
-                        <button type="button" onclick="LazarophFirebase.openConfigModal()" style="background: none; border: none; color: var(--color-text-muted); font-size: 0.76rem; text-decoration: underline; cursor: pointer;">
-                            ⚙️ Configure Live Firebase Credentials
-                        </button>
-                    </div>
                 </div>
             </div>
         </section>
@@ -675,36 +669,24 @@
                         <button type="button" class="btn btn-secondary btn-block" onclick="App.navigate('login')">
                             LOGIN HERE
                         </button>
-
-                        <div style="text-align: center; margin-top: 14px;">
-                            <button type="button" onclick="LazarophFirebase.openConfigModal()" style="background: none; border: none; color: var(--color-text-muted); font-size: 0.76rem; text-decoration: underline; cursor: pointer;">
-                                ⚙️ Configure Live Firebase Credentials
-                            </button>
-                        </div>
                     </div>
 
-                    <!-- Post-Registration Pending Verification Success Message -->
+                    <!-- Post-Registration Verification Screen (Clean, Production) -->
                     <div id="cust-reg-success-container" style="display: none;" class="verify-state-card">
                         <div class="verify-icon-pulse">✉️</div>
-                        <h3 style="color: #0f172a; margin-bottom: 8px; font-weight: 800;">Verify Your Email</h3>
-                        <p style="color: #64748b; font-size: 0.95rem; line-height: 1.6; margin-bottom: 18px;">
-                            Your account has been created. Please check your email and verify your email address before continuing.
+                        <h3 style="color: #0f172a; margin-bottom: 8px; font-weight: 800; font-size: 1.3rem;">Verification Email Sent</h3>
+                        <p id="cust-reg-success-message" style="color: #475569; font-size: 0.95rem; line-height: 1.6; margin-bottom: 18px;">
+                            Your account has been created successfully. A verification email has been sent to your email address. Please check your inbox or spam folder.
                         </p>
-                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 0.88rem; color: #1e293b;">
-                            Verification email sent to: <strong id="cust-reg-success-email" style="color: #e11d48; word-break: break-all;"></strong>
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 22px; font-size: 0.9rem; color: #1e293b;">
+                            Registered Email: <strong id="cust-reg-success-email" style="color: #e11d48; word-break: break-all;"></strong>
                         </div>
-                        <div style="display: flex; flex-direction: column; gap: 10px;">
-                            <button type="button" class="btn btn-primary btn-block" id="btn-reg-check-status" onclick="CustomerAuth.checkStatus()">
-                                🔄 Check Verification Status
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <button type="button" class="btn btn-secondary btn-block btn-lg" id="btn-reg-resend-verification" onclick="CustomerAuth.resendVerification()">
+                                Resend Verification Email
                             </button>
-                            <button type="button" class="btn btn-secondary btn-block" id="btn-reg-resend-verification" onclick="CustomerAuth.resendVerification()">
-                                📧 Resend Verification Email
-                            </button>
-                            <button type="button" class="btn btn-block" style="background: #10b981; color: #ffffff; font-weight: 700;" onclick="CustomerAuth.runVerifyEmail('sim_activate')">
-                                ⚡ Activate &amp; Verify Email Now
-                            </button>
-                            <button type="button" class="btn btn-block" style="background: none; color: #64748b; text-decoration: underline;" onclick="App.navigate('login')">
-                                Back to Login
+                            <button type="button" class="btn btn-primary btn-block btn-lg" onclick="App.navigate('login')">
+                                Proceed to Login
                             </button>
                         </div>
                     </div>
@@ -736,15 +718,12 @@
                         <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px; margin-bottom: 22px; font-size: 0.88rem; color: #92400e;">
                             Registered Email: <strong id="cust-pending-user-email" style="color: #78350f; word-break: break-all;"></strong>
                         </div>
-                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
                             <button type="button" class="btn btn-primary btn-block btn-lg" id="btn-pending-check-status" onclick="CustomerAuth.checkStatus()">
                                 🔄 Check Verification Status
                             </button>
-                            <button type="button" class="btn btn-secondary btn-block" id="btn-pending-resend-verification" onclick="CustomerAuth.resendVerification()">
-                                📧 Resend Verification Email
-                            </button>
-                            <button type="button" class="btn btn-block" style="background: #10b981; color: #ffffff; font-weight: 700;" onclick="CustomerAuth.runVerifyEmail('sim_activate')">
-                                ⚡ Activate &amp; Verify Email Now
+                            <button type="button" class="btn btn-secondary btn-block btn-lg" id="btn-pending-resend-verification" onclick="CustomerAuth.resendVerification()">
+                                Resend Verification Email
                             </button>
                             <button type="button" class="btn btn-block" style="background: none; color: #64748b; text-decoration: underline;" onclick="CustomerAuth.logout()">
                                 Logout
