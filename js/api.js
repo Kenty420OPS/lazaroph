@@ -1719,7 +1719,10 @@ const API = {
         });
     },
 
-    deleteAdminOrder(orderId) {
+    async deleteAdminOrder(orderId) {
+        if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
+            return LazarophFirebase.deleteOrder(orderId);
+        }
         return this.request(`/api/admin/orders/delete/${orderId}`, { method: 'POST' });
     },
 
@@ -1727,7 +1730,10 @@ const API = {
         return this.request('/api/admin/custom-orders');
     },
 
-    deleteCustomOrder(id) {
+    async deleteCustomOrder(id) {
+        if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
+            return LazarophFirebase.deleteCustomOrder(id);
+        }
         return this.request(`/api/admin/custom-orders/delete/${id}`, { method: 'POST' });
     },
 
@@ -1740,6 +1746,13 @@ const API = {
 
     getAdminCustomers() {
         return this.request('/api/admin/customers');
+    },
+
+    async deleteCustomer(uid) {
+        if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
+            return LazarophFirebase.deleteCustomer(uid);
+        }
+        return this.request(`/api/admin/customers/delete/${uid}`, { method: 'POST' });
     },
 
     getStoreSettings() {

@@ -182,6 +182,18 @@ module.exports = async (req, res) => {
             return sendJson(res, 200, { success: true, message: 'Order updated successfully.', data: ordersStore[index] });
         }
 
+        if (method === 'DELETE' || (method === 'POST' && (req.url || '').includes('/delete'))) {
+            const data = typeof body === 'string' ? JSON.parse(body || '{}') : (body || {});
+            const targetId = id || data.id || data.orderId;
+            const index = ordersStore.findIndex(o => String(o.id) === String(targetId) || o.orderNumber === targetId || String(o.orderNumber) === String(targetId));
+
+            if (index !== -1) {
+                const deleted = ordersStore.splice(index, 1)[0];
+                return sendJson(res, 200, { success: true, message: 'Order deleted successfully.', data: deleted });
+            }
+            return sendJson(res, 200, { success: true, message: 'Order processed/removed.' });
+        }
+
         return sendJson(res, 405, { success: false, error: `Method ${method} not allowed.` });
     } catch (err) {
         console.error('[API Orders Error]:', err);

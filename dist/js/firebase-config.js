@@ -1316,6 +1316,67 @@ const LazarophFirebase = {
             updatedAt: new Date().toISOString()
         });
         return { success: true, status };
+    },
+
+    async deleteOrder(id) {
+        this.init();
+        const strId = String(id);
+        if (!this.db) {
+            if (typeof FallbackStore !== 'undefined' && FallbackStore.orders) {
+                FallbackStore.orders = FallbackStore.orders.filter(o => String(o.id) !== strId && String(o.orderNumber) !== strId);
+            }
+            return { success: true, message: 'Order removed from local store.' };
+        }
+        try {
+            await this.db.collection('orders').doc(strId).delete();
+            console.log('[LazarophFirebase] Order permanently deleted from Firestore:', strId);
+            if (typeof FallbackStore !== 'undefined' && FallbackStore.orders) {
+                FallbackStore.orders = FallbackStore.orders.filter(o => String(o.id) !== strId && String(o.orderNumber) !== strId);
+            }
+            return { success: true, message: 'Order permanently deleted from Firestore.' };
+        } catch (err) {
+            console.error('[LazarophFirebase] Error deleting order from Firestore:', err);
+            throw err;
+        }
+    },
+
+    // =========================================================================
+    // 14. CLOUD FIRESTORE — CUSTOM ORDERS & CUSTOMER DIRECTORY DELETIONS
+    // =========================================================================
+    async deleteCustomOrder(id) {
+        this.init();
+        const strId = String(id);
+        if (!this.db) {
+            if (typeof FallbackStore !== 'undefined' && FallbackStore.customOrders) {
+                FallbackStore.customOrders = FallbackStore.customOrders.filter(co => String(co.id) !== strId);
+            }
+            return { success: true, message: 'Custom order removed.' };
+        }
+        try {
+            await this.db.collection('customOrders').doc(strId).delete();
+            return { success: true, message: 'Custom order deleted permanently.' };
+        } catch (err) {
+            console.error('[LazarophFirebase] Error deleting custom order:', err);
+            throw err;
+        }
+    },
+
+    async deleteCustomer(uid) {
+        this.init();
+        const strUid = String(uid);
+        if (!this.db) {
+            if (typeof FallbackStore !== 'undefined' && FallbackStore.customers) {
+                FallbackStore.customers = FallbackStore.customers.filter(c => String(c.id || c.uid) !== strUid);
+            }
+            return { success: true, message: 'Customer record removed.' };
+        }
+        try {
+            await this.db.collection('customers').doc(strUid).delete();
+            return { success: true, message: 'Customer profile deleted permanently from Firestore.' };
+        } catch (err) {
+            console.error('[LazarophFirebase] Error deleting customer:', err);
+            throw err;
+        }
     }
 };
 

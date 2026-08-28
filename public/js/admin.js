@@ -35,6 +35,130 @@ const Admin = {
         this.switchTab('dashboard');
     },
 
+    // =========================================================================
+    // SHARED HIGH-PERFORMANCE DELETE ENGINE & NON-BLOCKING CONFIRMATIONS
+    // =========================================================================
+    confirmModal({ title = 'Confirm Deletion', message = 'Are you sure you want to delete this item?', warningText = '', confirmText = 'Yes, Delete', cancelText = 'Cancel' } = {}) {
+        return new Promise((resolve) => {
+            let modal = document.getElementById('modal-admin-delete-confirm');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'modal-admin-delete-confirm';
+                modal.className = 'modal-overlay';
+                modal.style.position = 'fixed';
+                modal.style.top = '0';
+                modal.style.left = '0';
+                modal.style.right = '0';
+                modal.style.bottom = '0';
+                modal.style.width = '100vw';
+                modal.style.height = '100vh';
+                modal.style.background = 'rgba(0, 0, 0, 0.85)';
+                modal.style.backdropFilter = 'blur(6px)';
+                modal.style.webkitBackdropFilter = 'blur(6px)';
+                modal.style.display = 'flex';
+                modal.style.alignItems = 'center';
+                modal.style.justifyContent = 'center';
+                modal.style.zIndex = '999999';
+                document.body.appendChild(modal);
+            }
+
+            modal.innerHTML = `
+                <div class="admin-delete-modal-card">
+                    <div class="admin-delete-modal-header">
+                        <div class="admin-delete-modal-icon">🗑️</div>
+                        <h3 class="admin-delete-modal-title">${this.escapeHtml(title)}</h3>
+                    </div>
+                    <div class="admin-delete-modal-body">
+                        <p style="margin: 0; font-size: 0.95rem; color: #ffffff; font-weight: 600;">${this.escapeHtml(message)}</p>
+                        ${warningText ? `
+                            <div class="admin-delete-modal-warning-tag">
+                                <span>⚠️</span>
+                                <span>${this.escapeHtml(warningText)}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="admin-delete-modal-footer">
+                        <button type="button" class="btn btn-secondary" id="admin-confirm-cancel-btn" style="padding: 8px 16px; font-weight: 700;">${this.escapeHtml(cancelText)}</button>
+                        <button type="button" class="btn btn-confirm-delete" id="admin-confirm-proceed-btn">${this.escapeHtml(confirmText)}</button>
+                    </div>
+                </div>
+            `;
+
+            modal.style.display = 'flex';
+
+            const cleanup = (result) => {
+                modal.style.display = 'none';
+                document.removeEventListener('keydown', onKeyDown);
+                resolve(result);
+            };
+
+            const onKeyDown = (e) => {
+                if (e.key === 'Escape') cleanup(false);
+                else if (e.key === 'Enter') cleanup(true);
+            };
+
+            document.addEventListener('keydown', onKeyDown);
+
+            const cancelBtn = document.getElementById('admin-confirm-cancel-btn');
+            const proceedBtn = document.getElementById('admin-confirm-proceed-btn');
+
+            if (cancelBtn) cancelBtn.onclick = () => cleanup(false);
+            if (proceedBtn) proceedBtn.onclick = () => cleanup(true);
+            modal.onclick = (e) => { if (e.target === modal) cleanup(false); };
+        });
+    },
+
+    async executeDelete({ btn, targetRowSelector, deleteAction, successMsg = 'Deleted successfully.', onComplete } = {}) {
+        let originalHtml = '';
+        let targetEl = null;
+
+        if (btn) {
+            originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.classList.add('btn-delete-loading');
+            btn.innerHTML = `<span class="btn-spinner" style="width:12px;height:12px;display:inline-block;vertical-align:middle;margin-right:4px;"></span> Deleting...`;
+        }
+
+        if (targetRowSelector) {
+            targetEl = typeof targetRowSelector === 'string' ? document.querySelector(targetRowSelector) : targetRowSelector;
+            if (targetEl) {
+                targetEl.classList.add('row-deleting');
+            }
+        }
+
+        try {
+            await deleteAction();
+
+            if (targetEl) {
+                targetEl.classList.remove('row-deleting');
+                targetEl.classList.add('row-deleted');
+                setTimeout(() => {
+                    if (targetEl && targetEl.parentNode) {
+                        targetEl.parentNode.removeChild(targetEl);
+                    }
+                }, 300);
+            }
+
+            showToast(successMsg, 'success');
+            if (typeof onComplete === 'function') {
+                onComplete();
+            }
+            return true;
+        } catch (err) {
+            console.error('[Admin Delete Error]:', err);
+            if (targetEl) {
+                targetEl.classList.remove('row-deleting');
+            }
+            if (btn) {
+                btn.disabled = false;
+                btn.classList.remove('btn-delete-loading');
+                btn.innerHTML = originalHtml;
+            }
+            showToast(err.message || 'Deletion failed. Please check network or permissions.', 'error');
+            return false;
+        }
+    },
+
     async checkUnreadMessages() {
         try {
             const data = await API.getUnreadChatCount();
@@ -295,7 +419,7 @@ const Admin = {
                             </thead>
                             <tbody>
                                 ${products.map(p => `
-                                    <tr>
+                                    <tr id="product-row-${p.id}">
                                         <td>
                                             <img src="${p.mainImageUrl}" style="width: 48px; height: 48px; object-fit: contain; background: #0e131d; border-radius: 4px; padding: 2px;" onerror="this.src='images/placeholder-product.png'">
                                         </td>
@@ -318,7 +442,7 @@ const Admin = {
                                         <td>
                                             <div style="display: flex; gap: 8px;">
                                                 <button class="btn btn-secondary btn-sm" onclick="Admin.editProduct(${p.id})">Edit</button>
-                                                <button class="btn btn-secondary btn-sm" style="color: var(--color-danger);" onclick="Admin.deleteProduct(${p.id}, '${p.name.replace(/'/g, "\\'")}')">Delete</button>
+                                                <button class="btn btn-secondary btn-sm" style="color: var(--color-danger);" onclick="Admin.deleteProduct(${p.id}, '${p.name.replace(/'/g, "\\'")}', this)">Delete</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -349,16 +473,26 @@ const Admin = {
         }
     },
 
-    async deleteProduct(id, name) {
-        if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) return;
+    async deleteProduct(id, name, btn) {
+        const confirmed = await this.confirmModal({
+            title: 'Delete Product',
+            message: `Are you sure you want to permanently delete "${name}"?`,
+            warningText: 'This will remove the product, images, and size variants from the store catalog.',
+            confirmText: 'Yes, Delete Product'
+        });
+        if (!confirmed) return;
 
-        try {
-            await API.deleteProduct(id);
-            showToast(`"${name}" deleted successfully.`, 'success');
-            this.switchTab('products');
-        } catch (err) {
-            showToast(err.message, 'error');
-        }
+        await this.executeDelete({
+            btn,
+            targetRowSelector: `#product-row-${id}`,
+            deleteAction: () => API.deleteProduct(id),
+            successMsg: `"${name}" deleted successfully.`,
+            onComplete: () => {
+                if (Array.isArray(this.products)) {
+                    this.products = this.products.filter(p => p.id !== id);
+                }
+            }
+        });
     },
 
     loadProductForm(container, product) {
@@ -993,7 +1127,7 @@ const Admin = {
                                     ];
 
                                     return `
-                                        <tr>
+                                        <tr id="order-row-${o.id}">
                                             <td>
                                                 <div style="font-weight: 800; font-size: 0.95rem; color: #000000;">${o.orderNumber}</div>
                                                 <div style="font-size: 0.75rem; color: #6b7280;">${new Date(o.createdAt).toLocaleDateString()}</div>
@@ -1043,7 +1177,7 @@ const Admin = {
                                                     <button class="btn btn-primary btn-sm" style="font-size: 0.75rem; font-weight: 800; background: #000000; color: #ffffff; padding: 4px 8px;" onclick="Admin.openCustomerChat(${o.id}, '${o.orderNumber}')">
                                                         💬 Chat
                                                     </button>
-                                                    <button class="btn btn-sm" style="font-size: 0.75rem; font-weight: 800; background: rgba(220,38,38,0.1); color: #dc2626; border: 1px solid rgba(220,38,38,0.3); padding: 4px 8px;" onclick="Admin.deleteOrder(${o.id}, '${o.orderNumber}')">
+                                                    <button class="btn btn-sm" style="font-size: 0.75rem; font-weight: 800; background: rgba(220,38,38,0.1); color: #dc2626; border: 1px solid rgba(220,38,38,0.3); padding: 4px 8px;" onclick="Admin.deleteOrder(${o.id}, '${o.orderNumber}', this)">
                                                         🗑️ Delete
                                                     </button>
                                                 </div>
@@ -1064,16 +1198,21 @@ const Admin = {
         }
     },
 
-    async deleteOrder(orderId, orderNumber) {
-        if (!confirm(`Are you sure you want to permanently delete order #${orderNumber}?`)) return;
-        try {
-            await API.deleteAdminOrder(orderId);
-            showToast(`Order #${orderNumber} deleted successfully.`, 'success');
-            const content = document.getElementById('admin-content-area');
-            if (content) this.loadOrders(content);
-        } catch (err) {
-            showToast(err.message, 'error');
-        }
+    async deleteOrder(orderId, orderNumber, btn) {
+        const confirmed = await this.confirmModal({
+            title: 'Delete Order Record',
+            message: `Are you sure you want to permanently delete order #${orderNumber}?`,
+            warningText: 'This will remove the order record from the ledger. This action cannot be reversed.',
+            confirmText: 'Yes, Delete Order'
+        });
+        if (!confirmed) return;
+
+        await this.executeDelete({
+            btn,
+            targetRowSelector: `#order-row-${orderId}`,
+            deleteAction: () => API.deleteAdminOrder(orderId),
+            successMsg: `Order #${orderNumber} deleted successfully.`
+        });
     },
 
     async updateOrderStatus(orderId, status) {
@@ -2066,7 +2205,7 @@ const Admin = {
                             </thead>
                             <tbody>
                                 ${customOrders.map(co => `
-                                    <tr>
+                                    <tr id="custom-order-row-${co.id}">
                                         <td><strong>${co.orderNumber}</strong></td>
                                         <td>
                                             ${co.customerName}
@@ -2089,7 +2228,7 @@ const Admin = {
                                                     <option value="SHIPPED" ${co.status === 'SHIPPED' ? 'selected' : ''}>Shipped</option>
                                                     <option value="COMPLETED" ${co.status === 'COMPLETED' ? 'selected' : ''}>Completed</option>
                                                 </select>
-                                                <button type="button" class="btn btn-sm" style="font-size: 0.75rem; padding: 4px 8px; background: rgba(220,38,38,0.1); color: #dc2626; border: 1px solid rgba(220,38,38,0.3);" onclick="Admin.deleteCustomOrder(${co.id}, '${co.orderNumber}')" title="Delete custom order">
+                                                <button type="button" class="btn btn-sm" style="font-size: 0.75rem; padding: 4px 8px; background: rgba(220,38,38,0.1); color: #dc2626; border: 1px solid rgba(220,38,38,0.3);" onclick="Admin.deleteCustomOrder(${co.id}, '${co.orderNumber}', this)" title="Delete custom order">
                                                     🗑️
                                                 </button>
                                             </div>
@@ -2106,16 +2245,21 @@ const Admin = {
         }
     },
 
-    async deleteCustomOrder(id, orderNumber) {
-        if (!confirm(`Are you sure you want to permanently delete custom order #${orderNumber}?`)) return;
-        try {
-            await API.deleteCustomOrder(id);
-            showToast(`Custom order #${orderNumber} deleted successfully.`, 'success');
-            const content = document.getElementById('admin-content-area');
-            if (content) this.loadCustomOrders(content);
-        } catch (err) {
-            showToast(err.message, 'error');
-        }
+    async deleteCustomOrder(id, orderNumber, btn) {
+        const confirmed = await this.confirmModal({
+            title: 'Delete Custom Order',
+            message: `Are you sure you want to permanently delete custom order #${orderNumber}?`,
+            warningText: 'This will remove the custom design order record from the system.',
+            confirmText: 'Yes, Delete Order'
+        });
+        if (!confirmed) return;
+
+        await this.executeDelete({
+            btn,
+            targetRowSelector: `#custom-order-row-${id}`,
+            deleteAction: () => API.deleteCustomOrder(id),
+            successMsg: `Custom order #${orderNumber} deleted successfully.`
+        });
     },
 
     async updateCustomStatus(id, status) {
@@ -2153,18 +2297,24 @@ const Admin = {
                                     <th>Address / City</th>
                                     <th>Role</th>
                                     <th>Registered</th>
+                                    <th style="text-align: right;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${users.map(u => `
-                                    <tr>
-                                        <td>#${u.id}</td>
-                                        <td><strong style="color: #ffffff;">${u.name}</strong></td>
-                                        <td>${u.email}</td>
-                                        <td>${u.phone || 'N/A'}</td>
-                                        <td>${u.city ? `${u.city}, ${u.province || ''}` : 'N/A'}</td>
+                                    <tr id="customer-row-${u.id || u.uid}">
+                                        <td>#${u.id || u.uid}</td>
+                                        <td><strong style="color: #ffffff;">${escapeHtml(u.name)}</strong></td>
+                                        <td>${escapeHtml(u.email)}</td>
+                                        <td>${u.phone ? escapeHtml(u.phone) : 'N/A'}</td>
+                                        <td>${u.city ? `${escapeHtml(u.city)}, ${escapeHtml(u.province || '')}` : 'N/A'}</td>
                                         <td><span class="badge ${u.role === 'ADMIN' ? 'badge-brand' : 'badge-outline'}">${u.role}</span></td>
-                                        <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+                                        <td>${new Date(u.createdAt || Date.now()).toLocaleDateString()}</td>
+                                        <td style="text-align: right;">
+                                            <button class="btn btn-secondary btn-sm" style="color: var(--color-danger); font-weight: 700;" onclick="Admin.deleteCustomer('${u.id || u.uid}', '${escapeHtml(u.name)}', this)" title="Delete Customer Account">
+                                                🗑️ Delete
+                                            </button>
+                                        </td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -2175,6 +2325,23 @@ const Admin = {
         } catch (err) {
             container.innerHTML = `<div style="color: var(--color-danger); padding: 40px;">Failed to load users: ${err.message}</div>`;
         }
+    },
+
+    async deleteCustomer(uid, name, btn) {
+        const confirmed = await this.confirmModal({
+            title: 'Delete Customer Account',
+            message: `Are you sure you want to permanently delete customer account "${name}"?`,
+            warningText: 'This will remove the customer profile from the directory.',
+            confirmText: 'Yes, Delete Customer'
+        });
+        if (!confirmed) return;
+
+        await this.executeDelete({
+            btn,
+            targetRowSelector: `#customer-row-${uid}`,
+            deleteAction: () => API.deleteCustomer(uid),
+            successMsg: `Customer "${name}" deleted successfully.`
+        });
     },
 
     async loadSettings(container) {
@@ -2546,7 +2713,7 @@ const Admin = {
         }
 
         return brands.map(b => `
-            <tr data-brand-id="${b.id}">
+            <tr id="brand-row-${b.id}" data-brand-id="${b.id}">
                 <td>
                     <div style="width: 52px; height: 40px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 6px; display: flex; align-items: center; justify-content: center; padding: 4px; overflow: hidden;">
                         <img src="${b.logoUrl || '/images/logo.png'}" alt="${b.name}" style="max-width: 100%; max-height: 100%; object-fit: contain;" onerror="this.src='/images/logo.png'">
@@ -2578,7 +2745,7 @@ const Admin = {
                     <button class="btn btn-secondary btn-sm" style="color: ${b.status === 'ACTIVE' ? '#eab308' : '#22c55e'};" onclick="Admin.toggleBrandStatus(${b.id}, '${b.status}')" title="Toggle Active / Inactive">
                         ${b.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
                     </button>
-                    <button class="btn btn-danger btn-sm" onclick="Admin.deleteBrand(${b.id}, '${b.name.replace(/'/g, "\\'")}')" title="Delete Brand">
+                    <button class="btn btn-danger btn-sm" onclick="Admin.deleteBrand(${b.id}, '${b.name.replace(/'/g, "\\'")}', this)" title="Delete Brand">
                         🗑️
                     </button>
                 </td>
@@ -2629,7 +2796,14 @@ const Admin = {
         const brand = (this.brands || []).find(b => b.id === brandId);
         const brandName = brand ? brand.name : 'Selected Brand';
 
-        if (!confirm(`Are you sure you want to delete brand "${brandName}"?`)) {
+        const confirmed = await this.confirmModal({
+            title: 'Delete Brand',
+            message: `Are you sure you want to delete brand "${brandName}" from available options?`,
+            warningText: 'This will remove the brand from the catalog selection.',
+            confirmText: 'Yes, Delete'
+        });
+
+        if (!confirmed) {
             if (brandSelect.value === '__DELETE_CURRENT__') {
                 brandSelect.value = this._lastSelectedBrandId || (this.brands && this.brands[0] ? this.brands[0].id : '1');
             }
@@ -2640,8 +2814,9 @@ const Admin = {
             await API.deleteAdminBrand(brandId);
             showToast(`Brand "${brandName}" deleted successfully!`, 'success');
 
-            // Refresh local brands state
-            this.brands = await API.getAdminBrands();
+            if (Array.isArray(this.brands)) {
+                this.brands = this.brands.filter(b => b.id !== brandId);
+            }
             const activeBrands = (this.brands || []).filter(b => b.status === 'ACTIVE');
 
             brandSelect.innerHTML = activeBrands.map(b => `
@@ -2895,20 +3070,47 @@ const Admin = {
         }
     },
 
-    async deleteBrand(id, name) {
-        if (!confirm(`Are you sure you want to delete brand "${name}"? If products are linked, it will be safely deactivated.`)) return;
+    async deleteBrand(id, name, btn) {
+        const brand = (this.brands || []).find(b => b.id === id);
+        const productCount = brand ? (brand.productCount || 0) : 0;
 
-        try {
-            await API.deleteAdminBrand(id);
-            showToast(`Brand "${name}" processed successfully.`, 'success');
-            this.brands = await API.getAdminBrands();
-            if (this.currentTab === 'brands') {
-                const content = document.getElementById('admin-content-area');
-                if (content) this.loadBrands(content);
+        if (productCount > 0) {
+            const confirmed = await this.confirmModal({
+                title: 'Brand Linked to Products',
+                message: `Brand "${name}" is currently linked to ${productCount} active product(s) in the catalog. To prevent orphaned catalog items, it cannot be permanently deleted while products are assigned.`,
+                warningText: 'Would you like to deactivate this brand instead? Deactivating hides the brand from storefront filters while preserving existing product data.',
+                confirmText: 'Deactivate Brand',
+                cancelText: 'Keep Active'
+            });
+            if (confirmed) {
+                await this.toggleBrandStatus(id, 'ACTIVE');
             }
-        } catch (err) {
-            showToast(err.message, 'error');
+            return;
         }
+
+        const confirmed = await this.confirmModal({
+            title: 'Delete Brand',
+            message: `Are you sure you want to permanently delete brand "${name}"?`,
+            warningText: 'This brand will be permanently removed from the brand directory.',
+            confirmText: 'Yes, Delete Brand'
+        });
+        if (!confirmed) return;
+
+        await this.executeDelete({
+            btn,
+            targetRowSelector: `#brand-row-${id}`,
+            deleteAction: () => API.deleteAdminBrand(id),
+            successMsg: `Brand "${name}" deleted successfully.`,
+            onComplete: () => {
+                if (Array.isArray(this.brands)) {
+                    this.brands = this.brands.filter(b => b.id !== id);
+                }
+                const countSpan = document.getElementById('admin-brand-count');
+                if (countSpan && this.brands) {
+                    countSpan.textContent = this.brands.length;
+                }
+            }
+        });
     },
 
     // =========================================================================
@@ -2980,7 +3182,7 @@ const Admin = {
                                     const isLocked = !!a.isLocked;
 
                                     return `
-                                        <tr>
+                                        <tr id="admin-user-row-${a.id}">
                                             <td style="font-weight: 700; color: #94a3b8;">#${a.id}</td>
                                             <td>
                                                 <div style="font-weight: 700; color: #ffffff;">${escapeHtml(a.name)}</div>
@@ -3011,7 +3213,7 @@ const Admin = {
                                                         <button class="btn btn-sm" style="font-size: 0.78rem; padding: 4px 10px; background: ${isActive ? '#f59e0b' : '#10b981'}; color: #000; font-weight: 700;" onclick="Admin.toggleAdminStatus(${a.id}, '${a.status}')">
                                                             ${isActive ? 'Disable' : 'Enable'}
                                                         </button>
-                                                        <button class="btn btn-sm" style="font-size: 0.78rem; padding: 4px 8px; background: rgba(220,38,38,0.2); color: #f87171; border: 1px solid rgba(220,38,38,0.4);" onclick="Admin.deleteAdminUser(${a.id}, '${escapeHtml(a.name)}')">
+                                                        <button class="btn btn-sm" style="font-size: 0.78rem; padding: 4px 8px; background: rgba(220,38,38,0.2); color: #f87171; border: 1px solid rgba(220,38,38,0.4);" onclick="Admin.deleteAdminUser(${a.id}, '${escapeHtml(a.name)}', this)" title="Delete Administrator">
                                                             ✕
                                                         </button>
                                                     ` : ''}
@@ -3313,7 +3515,13 @@ const Admin = {
 
     async toggleAdminStatus(adminId, currentStatus) {
         const newStatus = currentStatus === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
-        if (!confirm(`Are you sure you want to change this administrator status to ${newStatus}?`)) return;
+        const confirmed = await this.confirmModal({
+            title: `${newStatus === 'DISABLED' ? 'Disable' : 'Enable'} Administrator`,
+            message: `Are you sure you want to change this administrator status to ${newStatus}?`,
+            warningText: newStatus === 'DISABLED' ? 'This administrator will temporarily lose access to the portal.' : '',
+            confirmText: `Yes, ${newStatus === 'DISABLED' ? 'Disable' : 'Enable'}`
+        });
+        if (!confirmed) return;
 
         try {
             await API.updateAdminStatus(adminId, newStatus);
@@ -3323,6 +3531,38 @@ const Admin = {
         } catch (err) {
             showToast(err.message, 'error');
         }
+    },
+
+    async deleteAdminUser(adminId, adminName, btn) {
+        const currentAdmin = AdminAuth.getAdmin() || {};
+        if (String(currentAdmin.id) === String(adminId) || currentAdmin.name === adminName || currentAdmin.email === adminName) {
+            showToast('You cannot delete your own currently active administrator account.', 'warning');
+            return;
+        }
+
+        try {
+            const adminList = await API.getAdminList();
+            const activeSuperAdmins = (adminList || []).filter(a => (a.role === 'SUPER_ADMIN' || a.role === 'ADMIN') && a.status === 'ACTIVE' && String(a.id) !== String(adminId));
+            if (activeSuperAdmins.length === 0) {
+                showToast('Cannot delete the last remaining active Administrator.', 'error');
+                return;
+            }
+        } catch (ignored) {}
+
+        const confirmed = await this.confirmModal({
+            title: 'Delete Administrator',
+            message: `Are you sure you want to permanently revoke and delete administrator access for "${adminName}"?`,
+            warningText: 'This administrator will no longer be able to log in to the LAZAROPH Admin portal.',
+            confirmText: 'Yes, Delete Admin'
+        });
+        if (!confirmed) return;
+
+        await this.executeDelete({
+            btn,
+            targetRowSelector: `#admin-user-row-${adminId}`,
+            deleteAction: () => API.deleteAdmin(adminId),
+            successMsg: `Administrator "${adminName}" deleted successfully.`
+        });
     },
 
     // =========================================================================
@@ -3404,7 +3644,7 @@ const Admin = {
                                             Choose Image
                                         </button>
                                         ${isUploaded ? `
-                                            <button type="button" class="btn btn-secondary" style="padding: 8px 12px; font-size: 0.78rem;" title="Reset to default image" onclick="Admin.resetCategoryPhoto('${key}')">
+                                            <button type="button" class="btn btn-secondary" style="padding: 8px 12px; font-size: 0.78rem;" title="Reset to default image" onclick="Admin.resetCategoryPhoto('${key}', this)">
                                                 ↺ Reset
                                             </button>
                                         ` : ''}
@@ -3597,8 +3837,21 @@ const Admin = {
         }
     },
 
-    async resetCategoryPhoto(categoryKey) {
-        if (!confirm(`Are you sure you want to reset the ${categoryKey.toUpperCase()} category image back to default?`)) return;
+    async resetCategoryPhoto(categoryKey, btn) {
+        const confirmed = await this.confirmModal({
+            title: 'Reset Category Photo',
+            message: `Are you sure you want to reset the ${categoryKey.toUpperCase()} category image back to default?`,
+            warningText: 'The custom uploaded photo will be removed and reverted to default.',
+            confirmText: 'Yes, Reset'
+        });
+        if (!confirmed) return;
+
+        let originalHtml = '';
+        if (btn) {
+            originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<span class="btn-spinner" style="width:12px;height:12px;display:inline-block;vertical-align:middle;margin-right:4px;"></span> Resetting...`;
+        }
 
         try {
             await API.resetFeaturedCategory(categoryKey);
@@ -3608,11 +3861,36 @@ const Admin = {
                 Store.loadFeaturedCategories();
             }
 
-            const content = document.getElementById('admin-content-area');
-            if (content && (Admin.currentTab === 'homepage-management' || Admin.currentTab === 'featured-categories')) {
-                Admin.loadHomepageManagement(content);
+            const previewBg = document.getElementById(`cat-preview-${categoryKey}`);
+            const badge = document.getElementById(`cat-badge-${categoryKey}`);
+            const detailBox = document.getElementById(`cat-file-detail-${categoryKey}`);
+
+            if (previewBg) {
+                const defaultImgs = {
+                    men: 'images/category-men.png',
+                    women: 'images/category-women.png',
+                    kids: 'images/category-kids.png',
+                    slides: 'images/category-slides.png',
+                    watches: 'images/category-watches.png'
+                };
+                const defaultImg = defaultImgs[categoryKey] || 'images/logo.png';
+                previewBg.style.backgroundImage = `linear-gradient(rgba(17,22,34,0.35), rgba(17,22,34,0.85)), url('${defaultImg}')`;
+            }
+            if (badge) {
+                badge.style.background = '#6b7280';
+                badge.textContent = 'Default Preset Image';
+            }
+            if (detailBox) {
+                detailBox.style.display = 'none';
+            }
+            if (btn) {
+                btn.style.display = 'none';
             }
         } catch (err) {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
             showToast(err.message || 'Failed to reset category image.', 'error');
         }
     },
