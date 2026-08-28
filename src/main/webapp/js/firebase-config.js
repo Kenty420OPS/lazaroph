@@ -481,6 +481,156 @@ const LazarophFirebase = {
     },
 
     // =========================================================================
+    // 2B. GOOGLE AUTHENTICATION (POPUP SIGN-IN & FIRESTORE PROFILE SYNC)
+    // =========================================================================
+    async signInWithGoogle() {
+        if (!this.init()) {
+            throw new Error(this.initError || 'Firebase Authentication is not available.');
+        }
+
+        if (this.isDemoConfig()) {
+            console.warn('[LazarophFirebase] Live Firebase API Key not active. Simulating Google Sign-In.');
+            const demoGoogleEmail = 'google.customer@example.com';
+            const demoGoogleName = 'Google Customer';
+            const fakeUid = 'google_cust_' + Date.now();
+
+            const customerData = {
+                id: fakeUid,
+                uid: fakeUid,
+                name: demoGoogleName,
+                fullName: demoGoogleName,
+                email: demoGoogleEmail,
+                role: 'CUSTOMER',
+                authenticationProvider: 'google',
+                emailVerified: true,
+                status: 'VERIFIED',
+                createdAt: new Date().toISOString()
+            };
+
+            if (typeof FallbackStore !== 'undefined' && FallbackStore.getCustomers && FallbackStore.saveCustomers) {
+                const customers = FallbackStore.getCustomers();
+                customers.push(customerData);
+                FallbackStore.saveCustomers(customers);
+            }
+
+            return {
+                user: {
+                    uid: fakeUid,
+                    email: demoGoogleEmail,
+                    displayName: demoGoogleName,
+                    emailVerified: true,
+                    getIdToken: async () => 'mock_google_token_' + fakeUid
+                },
+                customer: customerData,
+                emailVerified: true
+            };
+        }
+
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.addScope('profile');
+        provider.addScope('email');
+        provider.setCustomParameters({ prompt: 'select_account' });
+
+        let userCredential = null;
+        try {
+            userCredential = await this.auth.signInWithPopup(provider);
+        } catch (popupErr) {
+            console.error('[LazarophFirebase] Google Sign-In popup error:', popupErr);
+            throw new Error(this.mapAuthError(popupErr));
+        }
+
+        const user = userCredential.user;
+        const uid = user.uid;
+        const email = (user.email || '').toLowerCase();
+        const fullName = user.displayName || email.split('@')[0] || 'Customer';
+        const photoURL = user.photoURL || '';
+
+        // Check if customer profile exists in Firestore
+        let existingProfile = null;
+        if (this.db) {
+            try {
+                const docRef = this.db.collection('customers').doc(uid);
+                const docSnap = await docRef.get();
+                if (docSnap.exists) {
+                    existingProfile = docSnap.data();
+                    console.log('[LazarophFirebase] Returning Google customer detected:', uid);
+                } else {
+                    // Create new customer profile in Firestore (SECURITY: STRICTLY ROLE 'CUSTOMER', NO ADMIN ACCESS)
+                    const newProfile = {
+                        uid: uid,
+                        name: fullName,
+                        fullName: fullName,
+                        email: email,
+                        photoURL: photoURL,
+                        role: 'CUSTOMER',
+                        authenticationProvider: 'google',
+                        emailVerified: Boolean(user.emailVerified),
+                        createdAt: firebase.firestore.FieldValue ? firebase.firestore.FieldValue.serverTimestamp() : new Date().toISOString(),
+                        updatedAt: firebase.firestore.FieldValue ? firebase.firestore.FieldValue.serverTimestamp() : new Date().toISOString()
+                    };
+                    await docRef.set(newProfile);
+                    existingProfile = newProfile;
+                    console.log('[LazarophFirebase] New Google customer profile created in Firestore for UID:', uid);
+                }
+            } catch (fsErr) {
+                console.warn('[LazarophFirebase] Firestore profile sync warning:', fsErr.message);
+            }
+        }
+
+        // Save to FallbackStore for offline and same-session resilience
+        if (typeof FallbackStore !== 'undefined' && FallbackStore.getCustomers && FallbackStore.saveCustomers) {
+            const customers = FallbackStore.getCustomers();
+            let cIndex = customers.findIndex(c => (c.uid && c.uid === uid) || (c.email && c.email.toLowerCase() === email));
+            const customerData = {
+                id: uid,
+                uid: uid,
+                name: fullName,
+                fullName: fullName,
+                email: email,
+                photoURL: photoURL,
+                phone: existingProfile ? (existingProfile.phone || '') : '',
+                address: existingProfile ? (existingProfile.address || '') : '',
+                city: existingProfile ? (existingProfile.city || 'Marikina') : 'Marikina',
+                province: existingProfile ? (existingProfile.province || 'Metro Manila') : 'Metro Manila',
+                zipCode: existingProfile ? (existingProfile.zipCode || '1805') : '1805',
+                role: 'CUSTOMER',
+                authenticationProvider: 'google',
+                emailVerified: true,
+                status: 'VERIFIED',
+                createdAt: existingProfile && existingProfile.createdAt ? existingProfile.createdAt : new Date().toISOString()
+            };
+
+            if (cIndex !== -1) {
+                customers[cIndex] = { ...customers[cIndex], ...customerData };
+            } else {
+                customers.push(customerData);
+            }
+            FallbackStore.saveCustomers(customers);
+        }
+
+        return {
+            user,
+            customer: {
+                id: uid,
+                uid: uid,
+                name: fullName,
+                fullName: fullName,
+                email: email,
+                photoURL: photoURL,
+                phone: existingProfile ? (existingProfile.phone || '') : '',
+                address: existingProfile ? (existingProfile.address || '') : '',
+                city: existingProfile ? (existingProfile.city || 'Marikina') : 'Marikina',
+                province: existingProfile ? (existingProfile.province || 'Metro Manila') : 'Metro Manila',
+                zipCode: existingProfile ? (existingProfile.zipCode || '1805') : '1805',
+                role: 'CUSTOMER',
+                authenticationProvider: 'google',
+                emailVerified: Boolean(user.emailVerified || true)
+            },
+            emailVerified: true
+        };
+    },
+
+    // =========================================================================
     // 3. AUTHORITATIVE VERIFICATION STATUS CHECK (CHECK BUTTON)
     // =========================================================================
     async checkVerificationStatus() {

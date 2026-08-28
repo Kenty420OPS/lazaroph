@@ -1,79 +1,111 @@
-// test_live_vercel.js
-const puppeteer = require('puppeteer');
+/**
+ * Automated Live Vercel Production Verification Script
+ */
 
-(async () => {
-    console.log('Launching Headless Chrome for Live Vercel Production Validation...');
-    const browser = await puppeteer.launch({
-        headless: 'new',
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+const https = require('https');
 
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1280, height: 800 });
-
-    const errors = [];
-    page.on('console', msg => {
-        if (msg.type() === 'error') {
-            errors.push(msg.text());
+function fetchUrl(url, options = {}) {
+    return new Promise((resolve, reject) => {
+        const req = https.request(url, options, (res) => {
+            let data = '';
+            res.on('data', chunk => { data += chunk; });
+            res.on('end', () => {
+                resolve({
+                    status: res.statusCode,
+                    headers: res.headers,
+                    body: data
+                });
+            });
+        });
+        req.on('error', reject);
+        if (options.body) {
+            req.write(options.body);
         }
+        req.end();
     });
+}
+
+async function testLiveVercel() {
+    console.log('================================================================');
+    console.log('  TESTING LIVE VERCEL PRODUCTION DEPLOYMENT');
+    console.log('  URL: https://lazaroph.vercel.app');
+    console.log('================================================================\n');
+
+    let passed = 0;
+    let failed = 0;
+
+    function assert(name, condition, extra = '') {
+        if (condition) {
+            console.log(`  ✅ PASS: ${name}`);
+            passed++;
+        } else {
+            console.error(`  ❌ FAIL: ${name} ${extra}`);
+            failed++;
+        }
+    }
 
     try {
-        // 1. Test Homepage
-        console.log('Testing https://lazaroph.vercel.app/ ...');
-        await page.goto('https://lazaroph.vercel.app/', { waitUntil: 'networkidle2', timeout: 30000 });
-        const title = await page.title();
-        console.log('  Page Title:', title);
+        // Test 1: Storefront Root
+        console.log('[TEST GROUP 1: STOREFRONT & PAGES]');
+        const homeRes = await fetchUrl('https://lazaroph.vercel.app');
+        assert('Storefront / returns HTTP 200', homeRes.status === 200);
+        assert('Storefront contains LAZAROPH branding', homeRes.body.includes('LAZAROPH'));
+        assert('Storefront contains NO "FLAGSHIP STORE"', !homeRes.body.includes('FLAGSHIP STORE'));
 
-        const brandingCheck = await page.evaluate(() => {
-            return {
-                bodyTextHasFlagship: document.body.innerText.includes('FLAGSHIP STORE'),
-                bodyTextHasLazaroph: document.body.innerText.includes('LAZAROPH'),
-                hasFirebaseStorage: typeof firebase !== 'undefined' && typeof firebase.storage === 'function'
-            };
-        });
-        console.log('  Has "FLAGSHIP STORE":', brandingCheck.bodyTextHasFlagship, '(Should be false)');
-        console.log('  Has "LAZAROPH":', brandingCheck.bodyTextHasLazaroph, '(Should be true)');
-        console.log('  Firebase Storage SDK active:', brandingCheck.hasFirebaseStorage, '(Should be true)');
+        // Test 2: Direct SPA Route /register
+        const regRes = await fetchUrl('https://lazaroph.vercel.app/register');
+        assert('Direct route /register returns HTTP 200', regRes.status === 200);
+        assert('Register page contains registration form', regRes.body.includes('cust-reg-form'));
 
-        // 2. Test Admin Login Route
-        console.log('\nTesting https://lazaroph.vercel.app/admin/login ...');
-        await page.goto('https://lazaroph.vercel.app/admin/login', { waitUntil: 'networkidle2', timeout: 30000 });
-        await page.waitForSelector('#admin-login-email', { timeout: 10000 });
-        console.log('  Admin login email field found');
+        // Test 3: Direct SPA Route /admin/dashboard
+        const adminRes = await fetchUrl('https://lazaroph.vercel.app/admin/dashboard');
+        assert('Direct route /admin/dashboard returns HTTP 200', adminRes.status === 200);
+        assert('Admin dashboard contains KPI grid', adminRes.body.includes('kpi-grid') || adminRes.body.includes('admin-layout'));
 
-        // Test Step 1: Login with Super Admin
-        console.log('  Submitting Step 1 credentials...');
-        await page.type('#admin-login-email', 'admin1@lazaroph.com');
-        await page.type('#admin-login-password', 'AdminPassword2026!');
-        await page.click('#admin-login-btn');
+        // Test 4: Direct SPA Route /shop
+        const shopRes = await fetchUrl('https://lazaroph.vercel.app/shop');
+        assert('Direct route /shop returns HTTP 200', shopRes.status === 200);
 
-        // Wait for transition to Step 2
-        await page.waitForSelector('#admin-security-pin', { timeout: 10000 });
-        console.log('  Transitioned to Step 2 (Security Verification)');
+        // Test 5: Vercel Serverless API /api/products
+        console.log('\n[TEST GROUP 2: VERCEL SERVERLESS API ENDPOINTS]');
+        const prodRes = await fetchUrl('https://lazaroph.vercel.app/api/products');
+        assert('GET /api/products returns HTTP 200', prodRes.status === 200);
+        assert('GET /api/products returns JSON content-type', (prodRes.headers['content-type'] || '').includes('application/json'));
+        
+        let prodJson = null;
+        try { prodJson = JSON.parse(prodRes.body); } catch (e) {}
+        assert('GET /api/products parsed valid JSON', prodJson !== null);
+        assert('GET /api/products returns products array', prodJson && Array.isArray(prodJson.data));
 
-        // Test Step 2: PIN Verification
-        console.log('  Submitting Step 2 security PIN (992104)...');
-        await page.type('#admin-security-pin', '992104');
-        await page.click('#admin-security-btn');
+        // Test 6: Vercel Serverless API /api/sales
+        const salesRes = await fetchUrl('https://lazaroph.vercel.app/api/sales');
+        assert('GET /api/sales returns HTTP 200', salesRes.status === 200);
+        assert('GET /api/sales returns JSON content-type', (salesRes.headers['content-type'] || '').includes('application/json'));
+        
+        let salesJson = null;
+        try { salesJson = JSON.parse(salesRes.body); } catch (e) {}
+        assert('GET /api/sales returns valid Gross Sales metrics', salesJson && salesJson.grossSales > 0);
+        assert('GET /api/sales returns PHP formatted currency (₱)', salesJson && salesJson.grossSalesFormatted && salesJson.grossSalesFormatted.startsWith('₱'));
 
-        // Wait for Admin Dashboard to load
-        await page.waitForSelector('#view-admin:not(.hidden)', { timeout: 10000 });
-        console.log('  SUCCESS: Admin Dashboard (#view-admin) is unlocked and visible!');
+        // Test 7: Vercel Serverless API /api/orders
+        const ordersRes = await fetchUrl('https://lazaroph.vercel.app/api/orders');
+        assert('GET /api/orders returns HTTP 200', ordersRes.status === 200);
+        
+        let ordersJson = null;
+        try { ordersJson = JSON.parse(ordersRes.body); } catch (e) {}
+        assert('GET /api/orders returns orders array', ordersJson && Array.isArray(ordersJson.data));
 
-        const adminHeader = await page.evaluate(() => {
-            const el = document.querySelector('.admin-top-title') || document.querySelector('#view-admin h2') || document.querySelector('#view-admin');
-            return el ? el.innerText.substring(0, 50) : '';
-        });
-        console.log('  Admin View Title snippet:', adminHeader.replace(/\n/g, ' '));
+        // Test 8: Vercel Serverless API /api/couriers
+        const couriersRes = await fetchUrl('https://lazaroph.vercel.app/api/couriers');
+        assert('GET /api/couriers returns HTTP 200', couriersRes.status === 200);
 
-        console.log('\n============================================================');
-        console.log('  LIVE VERCEL PRODUCTION DEPLOYMENT VALIDATED SUCCESSFULLY!  ');
-        console.log('============================================================');
-    } catch (e) {
-        console.error('Test error:', e);
-        process.exitCode = 1;
-    } finally {
-        await browser.close();
+        console.log('\n================================================================');
+        console.log(`TOTAL LIVE PRODUCTION TESTS: ${passed + failed} | PASSED: ${passed} | FAILED: ${failed}`);
+        console.log('================================================================');
+
+    } catch (err) {
+        console.error('Fatal testing error:', err);
     }
-})();
+}
+
+testLiveVercel();

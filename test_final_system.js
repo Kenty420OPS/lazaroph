@@ -154,6 +154,18 @@ requiredRoutes.forEach(route => {
     assert(fs.existsSync(distPath), `Dist physical route exists: /dist/${route}`);
 });
 
+// 6. Verify Google Authentication Integration
+console.log('\n[TEST GROUP 6: GOOGLE AUTHENTICATION INTEGRATION]');
+const authJs = fs.readFileSync(path.join(__dirname, 'src/main/webapp/js/auth.js'), 'utf8');
+const authCss = fs.readFileSync(path.join(__dirname, 'src/main/webapp/css/auth.css'), 'utf8');
+
+assert(firebaseConfigJs.includes('signInWithGoogle()'), 'firebase-config.js exposes signInWithGoogle()');
+assert(authJs.includes('handleGoogleSignIn(source'), 'auth.js exposes CustomerAuth.handleGoogleSignIn()');
+assert(indexHtml.includes('cust-google-login-btn'), 'index.html includes #cust-google-login-btn');
+assert(indexHtml.includes('cust-google-reg-btn'), 'index.html includes #cust-google-reg-btn');
+assert(indexHtml.includes('Continue with Google'), 'index.html includes "Continue with Google" label');
+assert(authCss.includes('.btn-google-auth'), 'auth.css includes .btn-google-auth styles');
+
 console.log('\n================================================================');
 console.log(`TOTAL TESTS: ${testsPassed + testsFailed} | PASSED: ${testsPassed} | FAILED: ${testsFailed}`);
 console.log('================================================================');
@@ -161,6 +173,7 @@ console.log('================================================================');
 if (testsFailed > 0) {
     process.exit(1);
 } else {
-    console.log('✨ ALL SYSTEM & PERSISTENCE TESTS PASSED 100%!');
+    console.log('✨ ALL SYSTEM, PERSISTENCE & GOOGLE AUTH TESTS PASSED 100%!');
     process.exit(0);
 }
+
