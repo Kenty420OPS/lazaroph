@@ -134,7 +134,6 @@ const requiredRoutes = [
     'login/index.html',
     'register/index.html',
     'verify-email/index.html',
-    'verify-pending/index.html',
     'forgot-password/index.html',
     'reset-password/index.html',
     'account/index.html',
@@ -158,6 +157,7 @@ requiredRoutes.forEach(route => {
 console.log('\n[TEST GROUP 6: GOOGLE AUTHENTICATION INTEGRATION]');
 const authJs = fs.readFileSync(path.join(__dirname, 'src/main/webapp/js/auth.js'), 'utf8');
 const authCss = fs.readFileSync(path.join(__dirname, 'src/main/webapp/css/auth.css'), 'utf8');
+const appJs = fs.readFileSync(path.join(__dirname, 'src/main/webapp/js/app.js'), 'utf8');
 
 assert(firebaseConfigJs.includes('signInWithGoogle()'), 'firebase-config.js exposes signInWithGoogle()');
 assert(authJs.includes('handleGoogleSignIn(source'), 'auth.js exposes CustomerAuth.handleGoogleSignIn()');
@@ -166,6 +166,12 @@ assert(indexHtml.includes('cust-google-reg-btn'), 'index.html includes #cust-goo
 assert(indexHtml.includes('Continue with Google'), 'index.html includes "Continue with Google" label');
 assert(authCss.includes('.btn-google-auth'), 'auth.css includes .btn-google-auth styles');
 
+// 7. Verify Removal of Verification Required Page
+console.log('\n[TEST GROUP 7: UNBLOCKED CUSTOMER EXPERIENCE]');
+assert(!indexHtml.includes('view-customer-verify-pending'), 'index.html does NOT contain view-customer-verify-pending');
+assert(!authJs.includes("App.navigate('verify-pending')"), 'auth.js does NOT redirect customers to verify-pending');
+assert(!appJs.includes('Please verify your email address to activate your account'), 'app.js does NOT block account view with activation screen');
+
 console.log('\n================================================================');
 console.log(`TOTAL TESTS: ${testsPassed + testsFailed} | PASSED: ${testsPassed} | FAILED: ${testsFailed}`);
 console.log('================================================================');
@@ -173,7 +179,7 @@ console.log('================================================================');
 if (testsFailed > 0) {
     process.exit(1);
 } else {
-    console.log('✨ ALL SYSTEM, PERSISTENCE & GOOGLE AUTH TESTS PASSED 100%!');
+    console.log('✨ ALL SYSTEM, PERSISTENCE, GOOGLE AUTH & UNBLOCKED TESTS PASSED 100%!');
     process.exit(0);
 }
 
