@@ -54,6 +54,8 @@ const routes = [
     'admin',
     'admin/login',
     'admin/dashboard',
+    'admin/sales',
+    'admin/gross-sales',
     'admin/security-verification',
     'login',
     'register',

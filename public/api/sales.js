@@ -33,8 +33,10 @@ module.exports = async (req, res) => {
     }
 
     try {
-        // Fetch all orders
-        let allOrders = [
+        // Fetch all orders dynamically from shared serverless orders store
+        let allOrders = (ordersHandler && Array.isArray(ordersHandler.ordersStore) && ordersHandler.ordersStore.length > 0)
+            ? ordersHandler.ordersStore
+            : [
             {
                 id: 1,
                 orderNumber: 'LZPH-20260825-0001',

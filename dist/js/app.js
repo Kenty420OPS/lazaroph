@@ -218,7 +218,9 @@ const App = {
             if (viewAdmin) {
                 viewAdmin.classList.remove('hidden');
                 Admin.init();
-                if (params.tab) {
+                if (view === 'admin/gross-sales' || view === 'admin/sales' || params.tab === 'sales' || params.tab === 'gross-sales') {
+                    Admin.switchTab('sales');
+                } else if (params.tab) {
                     Admin.switchTab(params.tab);
                 }
             }

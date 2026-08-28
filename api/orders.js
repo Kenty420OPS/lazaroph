@@ -188,3 +188,5 @@ module.exports = async (req, res) => {
         return sendJson(res, 500, { success: false, error: err.message || 'Internal server error' });
     }
 };
+
+module.exports.ordersStore = ordersStore;

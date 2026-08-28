@@ -18,6 +18,8 @@
     { "source": "/product-detail", "destination": "/index.html" },
     { "source": "/admin/login", "destination": "/index.html" },
     { "source": "/admin/dashboard", "destination": "/index.html" },
+    { "source": "/admin/sales", "destination": "/index.html" },
+    { "source": "/admin/gross-sales", "destination": "/index.html" },
     { "source": "/admin/security-verification", "destination": "/index.html" },
     { "source": "/admin", "destination": "/index.html" },
     { "source": "/((?!api|images|css|js|favicon.ico).*)", "destination": "/index.html" }

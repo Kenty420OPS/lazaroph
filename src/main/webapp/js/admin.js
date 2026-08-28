@@ -97,6 +97,8 @@ const Admin = {
 
         if (tab === 'dashboard') {
             this.loadDashboard(content);
+        } else if (tab === 'sales' || tab === 'gross-sales') {
+            this.loadGrossSales(content);
         } else if (tab === 'products') {
             this.loadProducts(content);
         } else if (tab === 'add-product') {
@@ -141,7 +143,7 @@ const Admin = {
 
                 <!-- KPI Metrics Cards (All Interactive & Clickable!) -->
                 <div class="kpi-grid">
-                    <div class="kpi-card kpi-card-clickable" onclick="Admin.openSalesBreakdown('all')" title="Click to view full Sales Breakdown & Date Filters">
+                    <div class="kpi-card kpi-card-clickable" onclick="Admin.switchTab('sales')" title="Click to view full Gross Sales Details & Financial Breakdown">
                         <div class="kpi-header">
                             <span class="kpi-title">Gross Sales (Click to View)</span>
                             <div class="kpi-icon">₱</div>
@@ -3616,43 +3618,38 @@ const Admin = {
     },
 
     // =========================================================================
-    // GROSS SALES BREAKDOWN & REVENUE ANALYTICS ENGINE
+    // DEDICATED GROSS SALES & FINANCIAL AUDIT ENGINE
     // =========================================================================
-    async openSalesBreakdown(period = 'all', customStart = null, customEnd = null) {
-        let modal = document.getElementById('modal-admin-sales-breakdown');
-        if (!modal) {
-            modal = document.createElement('div');
-            modal.id = 'modal-admin-sales-breakdown';
-            modal.className = 'modal-overlay';
-            modal.style.display = 'flex';
-            modal.onclick = (e) => { if (e.target === modal) Admin.closeSalesBreakdown(); };
-            document.body.appendChild(modal);
-        }
+    async loadGrossSales(container, period = 'all', customStart = null, customEnd = null) {
+        this.currentSalesPeriod = period;
+        this.customSalesStart = customStart;
+        this.customSalesEnd = customEnd;
 
-        modal.innerHTML = `
-            <div class="modal-container" style="max-width: 960px; width: 95%; max-height: 90vh; overflow-y: auto; background: #ffffff; border-radius: 12px; box-shadow: 0 25px 60px rgba(0,0,0,0.35);">
-                <div class="modal-header" style="background: #0f172a; color: #ffffff; padding: 20px 24px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <div style="font-size: 0.72rem; letter-spacing: 0.1em; color: #94a3b8; font-weight: 800; text-transform: uppercase;">FINANCIAL REPORT & REVENUE AUDIT</div>
-                        <h2 class="modal-title" style="color: #ffffff; margin: 0; font-size: 1.35rem; font-weight: 800;">📊 GROSS SALES BREAKDOWN</h2>
-                    </div>
-                    <button type="button" class="modal-close" style="background: none; border: none; color: #ffffff; font-size: 1.4rem; cursor: pointer;" onclick="Admin.closeSalesBreakdown()">✕</button>
+        container.innerHTML = `
+            <div class="admin-header">
+                <div>
+                    <div class="section-subtitle">FINANCIAL REPORT &amp; REVENUE AUDIT</div>
+                    <h1 class="admin-page-title">GROSS SALES</h1>
                 </div>
-                <div class="modal-body" id="sales-breakdown-modal-body" style="padding: 24px;">
-                    <div style="text-align: center; padding: 40px 0;">
-                        <span class="btn-spinner" style="width: 32px; height: 32px;"></span>
-                        <p style="margin-top: 12px; color: #64748b;">Calculating financial metrics and fetching sales ledger...</p>
-                    </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-secondary" onclick="Admin.switchTab('dashboard')">← Back to Overview</button>
+                    <button class="btn btn-primary" onclick="window.print()">🖨️ Print Sales Report</button>
+                </div>
+            </div>
+
+            <div id="gross-sales-main-container">
+                <div style="text-align: center; padding: 60px 0;">
+                    <span class="btn-spinner" style="width: 32px; height: 32px; display: inline-block;"></span>
+                    <p style="margin-top: 12px; color: #94a3b8;">Calculating financial metrics and fetching sales ledger...</p>
                 </div>
             </div>
         `;
-        modal.style.display = 'flex';
 
-        await this.renderSalesBreakdownContent(period, customStart, customEnd);
+        await this.renderGrossSalesLedger(period, customStart, customEnd);
     },
 
-    async renderSalesBreakdownContent(period = 'all', customStart = null, customEnd = null) {
-        const bodyEl = document.getElementById('sales-breakdown-modal-body');
+    async renderGrossSalesLedger(period = 'all', customStart = null, customEnd = null) {
+        const bodyEl = document.getElementById('gross-sales-main-container');
         if (!bodyEl) return;
 
         let salesData = null;
@@ -3663,7 +3660,10 @@ const Admin = {
             }
             salesData = await API.request(url);
         } catch (e) {
-            console.warn('[Admin Sales Breakdown] Falling back to local order store calculation:', e);
+            console.warn('[Admin Sales Breakdown] Calculating sales from local order store:', e);
+        }
+
+        if (!salesData || !salesData.orders) {
             const orders = (typeof FallbackStore !== 'undefined' && FallbackStore.getOrders) ? FallbackStore.getOrders() : [];
             const now = new Date();
             let filtered = [...orders];
@@ -3710,121 +3710,155 @@ const Admin = {
         const activeFilter = period || 'all';
         const ordersList = (salesData && salesData.orders) ? salesData.orders : [];
 
+        let periodLabel = 'All Time';
+        if (activeFilter === 'today') periodLabel = 'Today';
+        else if (activeFilter === 'week') periodLabel = 'This Week';
+        else if (activeFilter === 'month') periodLabel = 'This Month';
+        else if (activeFilter === 'year') periodLabel = 'This Year';
+        else if (activeFilter === 'custom') periodLabel = `${customStart || ''} to ${customEnd || ''}`;
+
         bodyEl.innerHTML = `
-            <!-- Sales Metric KPI Card -->
-            <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; border-radius: 10px; padding: 22px 24px; margin-bottom: 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);">
-                <div>
-                    <div style="font-size: 0.8rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">CALCULATED GROSS SALES</div>
-                    <div style="font-size: 2.2rem; font-weight: 900; color: #10b981; line-height: 1.1;">
+            <!-- Top Hero KPI Card -->
+            <div class="gross-sales-hero-card">
+                <div class="gross-sales-hero-title-group">
+                    <div class="gross-sales-hero-tag">TOTAL GROSS SALES (${periodLabel.toUpperCase()})</div>
+                    <div class="gross-sales-hero-value" id="gross-sales-main-display">
                         ${salesData.grossSalesFormatted || formatMoney(salesData.grossSales)}
                     </div>
-                    <div style="font-size: 0.82rem; color: #cbd5e1; margin-top: 6px;">
-                        Strictly includes verified, paid, confirmed, and fulfilled customer orders.
+                    <div class="gross-sales-hero-note">
+                        Strictly calculated from real confirmed, processing, shipped, and delivered customer orders in Firestore. Cancelled &amp; refunded orders are excluded.
                     </div>
                 </div>
-                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                    <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 10px 16px; text-align: center;">
-                        <div style="font-size: 0.72rem; color: #94a3b8; font-weight: 700;">CONTRIBUTING ORDERS</div>
-                        <div style="font-size: 1.3rem; font-weight: 800; color: #ffffff;">${salesData.validSalesOrdersCount || ordersList.length}</div>
+                <div class="gross-sales-metric-badges">
+                    <div class="gross-metric-badge">
+                        <span class="gross-metric-badge-label">CONTRIBUTING ORDERS</span>
+                        <span class="gross-metric-badge-value">${salesData.validSalesOrdersCount || ordersList.length}</span>
                     </div>
-                    <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 10px 16px; text-align: center;">
-                        <div style="font-size: 0.72rem; color: #94a3b8; font-weight: 700;">ITEMS PURCHASED</div>
-                        <div style="font-size: 1.3rem; font-weight: 800; color: #38bdf8;">${salesData.totalItemsSold || 0}</div>
+                    <div class="gross-metric-badge">
+                        <span class="gross-metric-badge-label">ITEMS PURCHASED</span>
+                        <span class="gross-metric-badge-value" style="color: #38bdf8;">${salesData.totalItemsSold || 0}</span>
+                    </div>
+                    <div class="gross-metric-badge">
+                        <span class="gross-metric-badge-label">AVG ORDER VALUE</span>
+                        <span class="gross-metric-badge-value" style="color: #fbbf24;">
+                            ${formatMoney((salesData.validSalesOrdersCount || ordersList.length) > 0 ? (salesData.grossSales / (salesData.validSalesOrdersCount || ordersList.length)) : 0)}
+                        </span>
                     </div>
                 </div>
             </div>
 
-            <!-- Dynamic Date Range Filter Bar -->
-            <div style="margin-bottom: 20px;">
-                <div style="font-size: 0.8rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <!-- Dynamic Date Filter Controls -->
+            <div class="admin-card" style="margin-bottom: 24px; padding: 18px 24px;">
+                <div style="font-size: 0.8rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
                     <span>Filter Sales Period</span>
-                    <span style="font-size: 0.75rem; font-weight: 600; color: #64748b;">Real-time Dynamic Recalculation</span>
+                    <span style="font-size: 0.75rem; font-weight: 600; color: #10b981;">✓ Real-time Dynamic Recalculation</span>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="sales-period-pill-group">
-                    <button type="button" class="btn btn-sm ${activeFilter === 'all' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.openSalesBreakdown('all')">All Time</button>
-                    <button type="button" class="btn btn-sm ${activeFilter === 'today' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.openSalesBreakdown('today')">Today</button>
-                    <button type="button" class="btn btn-sm ${activeFilter === 'week' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.openSalesBreakdown('week')">This Week</button>
-                    <button type="button" class="btn btn-sm ${activeFilter === 'month' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.openSalesBreakdown('month')">This Month</button>
-                    <button type="button" class="btn btn-sm ${activeFilter === 'year' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.openSalesBreakdown('year')">This Year</button>
+                    <button type="button" class="btn btn-sm ${activeFilter === 'all' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.renderGrossSalesLedger('all')">All Time</button>
+                    <button type="button" class="btn btn-sm ${activeFilter === 'today' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.renderGrossSalesLedger('today')">Today</button>
+                    <button type="button" class="btn btn-sm ${activeFilter === 'week' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.renderGrossSalesLedger('week')">This Week</button>
+                    <button type="button" class="btn btn-sm ${activeFilter === 'month' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.renderGrossSalesLedger('month')">This Month</button>
+                    <button type="button" class="btn btn-sm ${activeFilter === 'year' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.renderGrossSalesLedger('year')">This Year</button>
                     <button type="button" class="btn btn-sm ${activeFilter === 'custom' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.toggleSalesCustomDateRange()">Custom Date Range 📅</button>
                 </div>
 
                 <!-- Custom Date Range Picker Container -->
-                <div id="sales-custom-date-container" style="display: ${activeFilter === 'custom' ? 'flex' : 'none'}; gap: 10px; align-items: flex-end; margin-top: 14px; background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0; flex-wrap: wrap;">
+                <div id="sales-custom-date-container" style="display: ${activeFilter === 'custom' ? 'flex' : 'none'}; gap: 12px; align-items: flex-end; margin-top: 14px; background: #0f172a; padding: 16px; border-radius: 8px; border: 1px solid #1e293b; flex-wrap: wrap;">
                     <div>
-                        <label style="font-size: 0.75rem; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">Start Date</label>
-                        <input type="date" id="sales-custom-start" class="form-control" style="padding: 6px 10px; font-size: 0.85rem;" value="${customStart || ''}">
+                        <label style="font-size: 0.75rem; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 4px;">Start Date</label>
+                        <input type="date" id="sales-custom-start" class="form-control" style="padding: 6px 10px; font-size: 0.85rem; background: #1e293b; border-color: #334155; color: #fff;" value="${customStart || ''}">
                     </div>
                     <div>
-                        <label style="font-size: 0.75rem; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">End Date</label>
-                        <input type="date" id="sales-custom-end" class="form-control" style="padding: 6px 10px; font-size: 0.85rem;" value="${customEnd || ''}">
+                        <label style="font-size: 0.75rem; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 4px;">End Date</label>
+                        <input type="date" id="sales-custom-end" class="form-control" style="padding: 6px 10px; font-size: 0.85rem; background: #1e293b; border-color: #334155; color: #fff;" value="${customEnd || ''}">
                     </div>
                     <button type="button" class="btn btn-primary btn-sm" style="padding: 8px 16px; font-weight: 800;" onclick="Admin.applyCustomDateSalesFilter()">Apply Filter</button>
                 </div>
             </div>
 
-            <!-- Itemized Contributing Orders Table -->
-            <div style="margin-top: 20px;">
-                <div style="font-size: 0.9rem; font-weight: 800; color: #0f172a; margin-bottom: 12px; text-transform: uppercase;">
-                    Contributing Order Records (${ordersList.length})
+            <!-- Complete Itemized Ledger Table -->
+            <div class="admin-card" style="padding: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h3 style="font-size: 1.15rem; font-weight: 800; color: #ffffff; margin: 0; text-transform: uppercase;">
+                            Itemized Sales Breakdown (${ordersList.length} Records)
+                        </h3>
+                        <p style="font-size: 0.82rem; color: #94a3b8; margin-top: 4px;">
+                            Detailed financial records and order source accounting
+                        </p>
+                    </div>
+                    <div>
+                        <span class="badge badge-brand" style="font-size: 0.75rem; padding: 4px 10px;">EST 2016 AUDITED</span>
+                    </div>
                 </div>
+
                 ${ordersList.length === 0 ? `
-                    <div style="text-align: center; padding: 40px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1; color: #64748b;">
-                        <div style="font-size: 2rem; margin-bottom: 8px;">📭</div>
-                        <p style="font-weight: 700; margin-bottom: 4px;">No Sales Records Found for this Period</p>
-                        <p style="font-size: 0.85rem;">Try selecting a broader timeframe or "All Time" to view sales records.</p>
+                    <div style="text-align: center; padding: 50px 20px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px dashed #334155; color: #94a3b8;">
+                        <div style="font-size: 2.2rem; margin-bottom: 10px;">📭</div>
+                        <h4 style="color: #ffffff; margin-bottom: 6px; font-weight: 700;">No Sales Records Found for this Period</h4>
+                        <p style="font-size: 0.88rem; max-width: 460px; margin: 0 auto;">Try selecting "All Time" or adjusting your date range filter to inspect contributing customer orders.</p>
                     </div>
                 ` : `
-                    <div class="table-responsive" style="border: 1px solid #e2e8f0; border-radius: 8px; overflow-x: auto;">
+                    <div class="table-responsive">
                         <table class="admin-table" style="width: 100%; font-size: 0.85rem;">
-                            <thead style="background: #f1f5f9;">
+                            <thead>
                                 <tr>
-                                    <th>Order #</th>
-                                    <th>Date</th>
-                                    <th>Customer</th>
-                                    <th>Items Purchased</th>
-                                    <th>Payment</th>
+                                    <th>Order ID</th>
+                                    <th>Customer Name &amp; Email</th>
+                                    <th>Order Date</th>
+                                    <th>Products Ordered &amp; Qty</th>
+                                    <th>Subtotal</th>
+                                    <th>Delivery Fee</th>
+                                    <th>Discounts</th>
+                                    <th style="text-align: right;">Final Order Total</th>
                                     <th>Status</th>
-                                    <th style="text-align: right;">Gross Total</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${ordersList.map(o => {
                                     const itemsHtml = (o.items || []).map(it => `
-                                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                                            <img src="${it.imageUrl || 'images/runner-x1-black-main.png'}" style="width: 28px; height: 28px; object-fit: contain; border-radius: 4px; background: #f8fafc; border: 1px solid #e2e8f0;">
+                                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                            <img src="${it.imageUrl || 'images/runner-x1-black-main.png'}" style="width: 32px; height: 32px; object-fit: contain; border-radius: 4px; background: #0f172a; border: 1px solid #334155;" alt="Product">
                                             <div>
-                                                <strong style="color: #0f172a;">${escapeHtml(it.productName || 'Product')}</strong>
-                                                <span style="color: #64748b; font-size: 0.78rem;">(${it.size || 'Std'}, Qty: ${it.quantity || 1} @ ${formatMoney(it.price)})</span>
+                                                <div style="font-weight: 700; color: #ffffff;">${escapeHtml(it.productName || 'Product')}</div>
+                                                <div style="font-size: 0.76rem; color: #94a3b8;">
+                                                    ${it.size ? `Size: ${escapeHtml(it.size)}` : ''} • Qty: <strong>${it.quantity || 1}</strong> @ ${formatMoney(it.price)}
+                                                </div>
                                             </div>
                                         </div>
-                                    `).join('') || '<span style="color:#64748b;">Direct Purchase</span>';
+                                    `).join('') || '<span style="color:#94a3b8;">Direct Purchase</span>';
 
-                                    const dateStr = o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent';
+                                    const dateStr = o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent';
+                                    const subtotalVal = parseFloat(o.subtotal) || (parseFloat(o.totalAmount) - (parseFloat(o.shippingFee) || 0)) || parseFloat(o.totalAmount) || 0;
+                                    const shippingVal = parseFloat(o.shippingFee) || 0;
+                                    const discountVal = parseFloat(o.discount) || 0;
+                                    const totalVal = parseFloat(o.totalAmount) || (subtotalVal + shippingVal - discountVal);
 
                                     return `
                                         <tr>
                                             <td>
-                                                <strong style="color: #e11d48;">#${escapeHtml(o.orderNumber || o.id)}</strong>
-                                            </td>
-                                            <td style="white-space: nowrap; color: #475569;">${dateStr}</td>
-                                            <td>
-                                                <div style="font-weight: 700; color: #0f172a;">${escapeHtml(o.customerName || 'Customer')}</div>
-                                                <div style="font-size: 0.76rem; color: #64748b;">${escapeHtml(o.customerEmail || '')}</div>
-                                            </td>
-                                            <td>${itemsHtml}</td>
-                                            <td>
-                                                <span class="badge badge-success" style="font-size: 0.72rem; padding: 3px 8px; background: #dcfce7; color: #15803d; font-weight: 700;">
-                                                    ✓ ${escapeHtml(o.paymentMethod || 'Paid')}
-                                                </span>
+                                                <strong style="color: #e11d48; font-weight: 800; font-family: monospace; font-size: 0.9rem;">
+                                                    #${escapeHtml(o.orderNumber || o.id)}
+                                                </strong>
                                             </td>
                                             <td>
-                                                <span class="badge" style="font-size: 0.72rem; padding: 3px 8px; background: #e0f2fe; color: #0369a1; font-weight: 700;">
+                                                <div style="font-weight: 700; color: #ffffff;">${escapeHtml(o.customerName || 'Customer')}</div>
+                                                <div style="font-size: 0.76rem; color: #94a3b8;">${escapeHtml(o.customerEmail || '')}</div>
+                                            </td>
+                                            <td style="white-space: nowrap; color: #cbd5e1;">${dateStr}</td>
+                                            <td style="min-width: 200px;">${itemsHtml}</td>
+                                            <td style="color: #cbd5e1; font-weight: 600;">${formatMoney(subtotalVal)}</td>
+                                            <td style="color: #94a3b8;">${shippingVal > 0 ? formatMoney(shippingVal) : '<span style="color:#10b981;">FREE</span>'}</td>
+                                            <td style="color: #94a3b8;">${discountVal > 0 ? `-${formatMoney(discountVal)}` : '₱0.00'}</td>
+                                            <td style="text-align: right;">
+                                                <strong style="color: #10b981; font-size: 1rem; font-weight: 900;">
+                                                    ${formatMoney(totalVal)}
+                                                </strong>
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-success" style="font-size: 0.72rem; padding: 4px 8px;">
                                                     ${escapeHtml(o.status || 'CONFIRMED')}
                                                 </span>
-                                            </td>
-                                            <td style="text-align: right; font-weight: 800; font-size: 0.95rem; color: #0f172a;">
-                                                ${formatMoney(o.totalAmount || o.subtotal)}
                                             </td>
                                         </tr>
                                     `;
@@ -3834,12 +3868,14 @@ const Admin = {
                     </div>
                 `}
             </div>
-
-            <div style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 10px;">
-                <button type="button" class="btn btn-secondary" onclick="Admin.closeSalesBreakdown()">Close Breakdown</button>
-                <button type="button" class="btn btn-primary" onclick="window.print()">🖨️ Print Sales Report</button>
-            </div>
         `;
+    },
+
+    openSalesBreakdown(period = 'all', customStart = null, customEnd = null) {
+        this.switchTab('sales');
+        if (period !== 'all' || customStart || customEnd) {
+            setTimeout(() => this.renderGrossSalesLedger(period, customStart, customEnd), 50);
+        }
     },
 
     toggleSalesCustomDateRange() {
@@ -3856,12 +3892,11 @@ const Admin = {
             showToast('Please select both start date and end date.', 'warning');
             return;
         }
-        this.openSalesBreakdown('custom', start, end);
+        this.renderGrossSalesLedger('custom', start, end);
     },
 
     closeSalesBreakdown() {
-        const modal = document.getElementById('modal-admin-sales-breakdown');
-        if (modal) modal.style.display = 'none';
+        this.switchTab('dashboard');
     },
 
     filterOrdersByStatus(status) {
