@@ -70,6 +70,14 @@ async function testLiveVercel() {
         assert('Direct route /admin/dashboard returns HTTP 200', adminRes.status === 200);
         assert('Admin dashboard contains KPI grid', adminRes.body.includes('kpi-grid') || adminRes.body.includes('admin-layout'));
 
+        // Test 3B: Direct SPA Route /admin/sales
+        const adminSalesRes = await fetchUrl('https://lazaroph.vercel.app/admin/sales');
+        assert('Direct route /admin/sales returns HTTP 200', adminSalesRes.status === 200);
+
+        // Test 3C: Direct SPA Route /admin/gross-sales
+        const grossSalesRes = await fetchUrl('https://lazaroph.vercel.app/admin/gross-sales');
+        assert('Direct route /admin/gross-sales returns HTTP 200', grossSalesRes.status === 200);
+
         // Test 4: Direct SPA Route /shop
         const shopRes = await fetchUrl('https://lazaroph.vercel.app/shop');
         assert('Direct route /shop returns HTTP 200', shopRes.status === 200);
