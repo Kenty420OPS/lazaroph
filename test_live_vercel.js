@@ -56,6 +56,14 @@ async function testLiveVercel() {
         const regRes = await fetchUrl('https://lazaroph.vercel.app/register');
         assert('Direct route /register returns HTTP 200', regRes.status === 200);
         assert('Register page contains registration form', regRes.body.includes('cust-reg-form'));
+        assert('Register page contains Google Sign-In button', regRes.body.includes('cust-google-reg-btn'));
+        assert('Register page contains "OR CONTINUE WITH" divider', regRes.body.includes('OR CONTINUE WITH'));
+
+        // Test 2B: Direct SPA Route /login
+        const loginRes = await fetchUrl('https://lazaroph.vercel.app/login');
+        assert('Direct route /login returns HTTP 200', loginRes.status === 200);
+        assert('Login page contains Google Sign-In button', loginRes.body.includes('cust-google-login-btn'));
+        assert('Login page contains "Continue with Google" label', loginRes.body.includes('Continue with Google'));
 
         // Test 3: Direct SPA Route /admin/dashboard
         const adminRes = await fetchUrl('https://lazaroph.vercel.app/admin/dashboard');
