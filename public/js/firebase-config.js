@@ -545,12 +545,6 @@ const LazarophFirebase = {
             };
         }
 
-        // Check rate limiting cooldown
-        const remaining = this.getRemainingCooldown();
-        if (remaining > 0) {
-            throw new Error(`Please wait ${remaining} second${remaining === 1 ? '' : 's'} before resending another verification email.`);
-        }
-
         try {
             const actionCodeSettings = {
                 url: window.location.origin + window.location.pathname + '#verify-email',
