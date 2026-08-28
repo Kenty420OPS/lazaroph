@@ -55,11 +55,7 @@ const CustomerAuth = {
     },
 
     isEmailVerified() {
-        if (typeof LazarophFirebase !== 'undefined' && typeof LazarophFirebase.isEmailVerified === 'function') {
-            return LazarophFirebase.isEmailVerified();
-        }
-        const cust = this.getCustomer();
-        return Boolean(cust && cust.emailVerified);
+        return true;
     },
 
     async init() {
@@ -156,17 +152,11 @@ const CustomerAuth = {
             this.setToken(token);
             this.setCustomer(res.customer);
 
-            if (res.emailVerified) {
-                showToast(`Welcome back, ${res.customer.name}!`, 'success');
-                if (window.location.hash === '#login' || window.location.hash.startsWith('#login')) {
-                    App.navigate('account');
-                } else {
-                    App.navigate('home');
-                }
+            showToast(`Welcome back, ${res.customer.name}!`, 'success');
+            if (window.location.hash === '#login' || window.location.hash.startsWith('#login')) {
+                App.navigate('account');
             } else {
-                // Email is NOT verified: restrict full customer access and route to verification pending
-                showToast('Please verify your email address to activate your account.', 'warning');
-                App.navigate('verify-pending');
+                App.navigate('home');
             }
         } catch (err) {
             if (alertEl) {
@@ -287,29 +277,11 @@ const CustomerAuth = {
                 phone: phone,
                 address: address,
                 role: 'CUSTOMER',
-                emailVerified: false
+                emailVerified: true
             });
 
-            // 4. Immediately update page state to the success screen (NO REFRESH REQUIRED!)
-            const formContainer = document.getElementById('cust-reg-form-container');
-            const successContainer = document.getElementById('cust-reg-success-container');
-            if (formContainer && successContainer) {
-                formContainer.style.display = 'none';
-                successContainer.style.display = 'block';
-
-                const emailSpan = document.getElementById('cust-reg-success-email');
-                if (emailSpan) emailSpan.textContent = res.email;
-
-                const msgEl = document.getElementById('cust-reg-success-message');
-                if (msgEl && res.message) {
-                    msgEl.textContent = res.message;
-                }
-            }
-
-            // 5. Start real-time 60-second cooldown timer immediately
-            this.startCooldownWatcher();
-
-            showToast(res.message || 'Your account has been created successfully. A verification email has been sent to your email address.', 'success');
+            showToast('Account created successfully! A verification email has been sent to your email address. Please check your inbox.', 'success');
+            App.navigate('account');
         } catch (err) {
             inputs.forEach(input => input.disabled = false);
             if (btn) {

@@ -58,7 +58,6 @@ const routes = [
     'login',
     'register',
     'verify-email',
-    'verify-pending',
     'forgot-password',
     'reset-password',
     'account',
