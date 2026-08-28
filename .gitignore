@@ -4,6 +4,9 @@ target/
 out/
 *.class
 
+# Node.js dependencies
+node_modules/
+
 # IDE and Editor configurations
 .idea/
 *.iml

@@ -41,6 +41,13 @@ copyDir(path.join(webappDir, 'js'), path.join(__dirname, 'js'));
 copyDir(path.join(webappDir, 'images'), path.join(__dirname, 'images'));
 console.log('-> Copied css, js, images to root/');
 
+// Copy api serverless functions to dist/ and public/
+if (fs.existsSync(path.join(__dirname, 'api'))) {
+    copyDir(path.join(__dirname, 'api'), path.join(distDir, 'api'));
+    copyDir(path.join(__dirname, 'api'), path.join(publicDir, 'api'));
+    console.log('-> Copied api/ to dist/api and public/api');
+}
+
 // Generate physical directory index.html files for all SPA routes
 // This guarantees Vercel will NEVER return 404 for any direct URL
 const routes = [

@@ -139,46 +139,51 @@ const Admin = {
                     </button>
                 </div>
 
-                <!-- KPI Metrics Cards -->
+                <!-- KPI Metrics Cards (All Interactive & Clickable!) -->
                 <div class="kpi-grid">
-                    <div class="kpi-card">
+                    <div class="kpi-card kpi-card-clickable" onclick="Admin.openSalesBreakdown('all')" title="Click to view full Sales Breakdown & Date Filters">
                         <div class="kpi-header">
-                            <span class="kpi-title">Total Gross Sales</span>
+                            <span class="kpi-title">Gross Sales (Click to View)</span>
                             <div class="kpi-icon">₱</div>
                         </div>
-                        <div class="kpi-value">${formatMoney(stats.totalSales)}</div>
+                        <div class="kpi-value" style="color: #10b981;">${formatMoney(stats.totalSales)}</div>
+                        <div class="kpi-footer-hint">📊 View itemized sales breakdown →</div>
                     </div>
 
-                    <div class="kpi-card kpi-orders">
+                    <div class="kpi-card kpi-card-clickable kpi-orders" onclick="Admin.switchTab('orders')" title="Click to view Customer Orders">
                         <div class="kpi-header">
                             <span class="kpi-title">Total Orders</span>
                             <div class="kpi-icon">📦</div>
                         </div>
                         <div class="kpi-value">${stats.totalOrders}</div>
+                        <div class="kpi-footer-hint">Manage all orders →</div>
                     </div>
 
-                    <div class="kpi-card kpi-customers">
+                    <div class="kpi-card kpi-card-clickable kpi-customers" onclick="Admin.switchTab('customers')" title="Click to view Registered Customers">
                         <div class="kpi-header">
                             <span class="kpi-title">Registered Customers</span>
                             <div class="kpi-icon">👥</div>
                         </div>
                         <div class="kpi-value">${stats.totalCustomers}</div>
+                        <div class="kpi-footer-hint">View customer directory →</div>
                     </div>
 
-                    <div class="kpi-card">
+                    <div class="kpi-card kpi-card-clickable" onclick="Admin.switchTab('products')" title="Click to view Live Products">
                         <div class="kpi-header">
                             <span class="kpi-title">Live Products</span>
                             <div class="kpi-icon">👟</div>
                         </div>
                         <div class="kpi-value">${stats.totalProducts}</div>
+                        <div class="kpi-footer-hint">Manage catalog items →</div>
                     </div>
 
-                    <div class="kpi-card kpi-stock">
+                    <div class="kpi-card kpi-card-clickable kpi-stock" onclick="Admin.filterOrdersByStatus ? Admin.filterOrdersByStatus('PENDING') : Admin.switchTab('orders')" title="Click to view Pending Orders">
                         <div class="kpi-header">
-                            <span class="kpi-title">Low / Out of Stock</span>
-                            <div class="kpi-icon">⚠️</div>
+                            <span class="kpi-title">Pending Orders</span>
+                            <div class="kpi-icon">⏳</div>
                         </div>
-                        <div class="kpi-value" style="color: var(--color-warning);">${stats.lowStockCount}</div>
+                        <div class="kpi-value" style="color: var(--color-warning);">${stats.pendingOrdersCount !== undefined ? stats.pendingOrdersCount : (stats.orders ? stats.orders.filter(o => o.status === 'PENDING').length : 0)}</div>
+                        <div class="kpi-footer-hint">View pending queue →</div>
                     </div>
                 </div>
 
@@ -3608,5 +3613,265 @@ const Admin = {
         } catch (err) {
             showToast(err.message || 'Failed to reset category image.', 'error');
         }
+    },
+
+    // =========================================================================
+    // GROSS SALES BREAKDOWN & REVENUE ANALYTICS ENGINE
+    // =========================================================================
+    async openSalesBreakdown(period = 'all', customStart = null, customEnd = null) {
+        let modal = document.getElementById('modal-admin-sales-breakdown');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'modal-admin-sales-breakdown';
+            modal.className = 'modal-overlay';
+            modal.style.display = 'flex';
+            modal.onclick = (e) => { if (e.target === modal) Admin.closeSalesBreakdown(); };
+            document.body.appendChild(modal);
+        }
+
+        modal.innerHTML = `
+            <div class="modal-container" style="max-width: 960px; width: 95%; max-height: 90vh; overflow-y: auto; background: #ffffff; border-radius: 12px; box-shadow: 0 25px 60px rgba(0,0,0,0.35);">
+                <div class="modal-header" style="background: #0f172a; color: #ffffff; padding: 20px 24px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 0.72rem; letter-spacing: 0.1em; color: #94a3b8; font-weight: 800; text-transform: uppercase;">FINANCIAL REPORT & REVENUE AUDIT</div>
+                        <h2 class="modal-title" style="color: #ffffff; margin: 0; font-size: 1.35rem; font-weight: 800;">📊 GROSS SALES BREAKDOWN</h2>
+                    </div>
+                    <button type="button" class="modal-close" style="background: none; border: none; color: #ffffff; font-size: 1.4rem; cursor: pointer;" onclick="Admin.closeSalesBreakdown()">✕</button>
+                </div>
+                <div class="modal-body" id="sales-breakdown-modal-body" style="padding: 24px;">
+                    <div style="text-align: center; padding: 40px 0;">
+                        <span class="btn-spinner" style="width: 32px; height: 32px;"></span>
+                        <p style="margin-top: 12px; color: #64748b;">Calculating financial metrics and fetching sales ledger...</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        modal.style.display = 'flex';
+
+        await this.renderSalesBreakdownContent(period, customStart, customEnd);
+    },
+
+    async renderSalesBreakdownContent(period = 'all', customStart = null, customEnd = null) {
+        const bodyEl = document.getElementById('sales-breakdown-modal-body');
+        if (!bodyEl) return;
+
+        let salesData = null;
+        try {
+            let url = `/api/sales?period=${period}`;
+            if (period === 'custom' && customStart && customEnd) {
+                url = `/api/sales?startDate=${customStart}&endDate=${customEnd}`;
+            }
+            salesData = await API.request(url);
+        } catch (e) {
+            console.warn('[Admin Sales Breakdown] Falling back to local order store calculation:', e);
+            const orders = (typeof FallbackStore !== 'undefined' && FallbackStore.getOrders) ? FallbackStore.getOrders() : [];
+            const now = new Date();
+            let filtered = [...orders];
+
+            if (period === 'today') {
+                const todayStr = now.toISOString().slice(0, 10);
+                filtered = filtered.filter(o => (o.createdAt || '').slice(0, 10) === todayStr);
+            } else if (period === 'week') {
+                const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                filtered = filtered.filter(o => new Date(o.createdAt || now) >= sevenDaysAgo);
+            } else if (period === 'month') {
+                const currentMonth = now.toISOString().slice(0, 7);
+                filtered = filtered.filter(o => (o.createdAt || '').slice(0, 7) === currentMonth);
+            } else if (period === 'year') {
+                const currentYear = now.getFullYear().toString();
+                filtered = filtered.filter(o => (o.createdAt || '').slice(0, 4) === currentYear);
+            } else if (period === 'custom' && customStart && customEnd) {
+                const start = new Date(customStart);
+                const end = new Date(customEnd);
+                end.setHours(23, 59, 59, 999);
+                filtered = filtered.filter(o => {
+                    const d = new Date(o.createdAt || now);
+                    return d >= start && d <= end;
+                });
+            }
+
+            const validOrders = filtered.filter(o => o.status !== 'CANCELLED' && o.status !== 'REFUNDED');
+            const grossSales = validOrders.reduce((sum, o) => sum + (parseFloat(o.totalAmount) || 0), 0);
+            const totalItemsSold = validOrders.reduce((sum, o) => {
+                return sum + (o.items ? o.items.reduce((iSum, item) => iSum + (parseInt(item.quantity, 10) || 1), 0) : 1);
+            }, 0);
+
+            salesData = {
+                filter: period,
+                grossSales,
+                grossSalesFormatted: `₱${grossSales.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                totalOrders: filtered.length,
+                validSalesOrdersCount: validOrders.length,
+                totalItemsSold,
+                orders: validOrders
+            };
+        }
+
+        const activeFilter = period || 'all';
+        const ordersList = (salesData && salesData.orders) ? salesData.orders : [];
+
+        bodyEl.innerHTML = `
+            <!-- Sales Metric KPI Card -->
+            <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; border-radius: 10px; padding: 22px 24px; margin-bottom: 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);">
+                <div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">CALCULATED GROSS SALES</div>
+                    <div style="font-size: 2.2rem; font-weight: 900; color: #10b981; line-height: 1.1;">
+                        ${salesData.grossSalesFormatted || formatMoney(salesData.grossSales)}
+                    </div>
+                    <div style="font-size: 0.82rem; color: #cbd5e1; margin-top: 6px;">
+                        Strictly includes verified, paid, confirmed, and fulfilled customer orders.
+                    </div>
+                </div>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 10px 16px; text-align: center;">
+                        <div style="font-size: 0.72rem; color: #94a3b8; font-weight: 700;">CONTRIBUTING ORDERS</div>
+                        <div style="font-size: 1.3rem; font-weight: 800; color: #ffffff;">${salesData.validSalesOrdersCount || ordersList.length}</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 10px 16px; text-align: center;">
+                        <div style="font-size: 0.72rem; color: #94a3b8; font-weight: 700;">ITEMS PURCHASED</div>
+                        <div style="font-size: 1.3rem; font-weight: 800; color: #38bdf8;">${salesData.totalItemsSold || 0}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Date Range Filter Bar -->
+            <div style="margin-bottom: 20px;">
+                <div style="font-size: 0.8rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <span>Filter Sales Period</span>
+                    <span style="font-size: 0.75rem; font-weight: 600; color: #64748b;">Real-time Dynamic Recalculation</span>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="sales-period-pill-group">
+                    <button type="button" class="btn btn-sm ${activeFilter === 'all' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.openSalesBreakdown('all')">All Time</button>
+                    <button type="button" class="btn btn-sm ${activeFilter === 'today' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.openSalesBreakdown('today')">Today</button>
+                    <button type="button" class="btn btn-sm ${activeFilter === 'week' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.openSalesBreakdown('week')">This Week</button>
+                    <button type="button" class="btn btn-sm ${activeFilter === 'month' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.openSalesBreakdown('month')">This Month</button>
+                    <button type="button" class="btn btn-sm ${activeFilter === 'year' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.openSalesBreakdown('year')">This Year</button>
+                    <button type="button" class="btn btn-sm ${activeFilter === 'custom' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.toggleSalesCustomDateRange()">Custom Date Range 📅</button>
+                </div>
+
+                <!-- Custom Date Range Picker Container -->
+                <div id="sales-custom-date-container" style="display: ${activeFilter === 'custom' ? 'flex' : 'none'}; gap: 10px; align-items: flex-end; margin-top: 14px; background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0; flex-wrap: wrap;">
+                    <div>
+                        <label style="font-size: 0.75rem; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">Start Date</label>
+                        <input type="date" id="sales-custom-start" class="form-control" style="padding: 6px 10px; font-size: 0.85rem;" value="${customStart || ''}">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">End Date</label>
+                        <input type="date" id="sales-custom-end" class="form-control" style="padding: 6px 10px; font-size: 0.85rem;" value="${customEnd || ''}">
+                    </div>
+                    <button type="button" class="btn btn-primary btn-sm" style="padding: 8px 16px; font-weight: 800;" onclick="Admin.applyCustomDateSalesFilter()">Apply Filter</button>
+                </div>
+            </div>
+
+            <!-- Itemized Contributing Orders Table -->
+            <div style="margin-top: 20px;">
+                <div style="font-size: 0.9rem; font-weight: 800; color: #0f172a; margin-bottom: 12px; text-transform: uppercase;">
+                    Contributing Order Records (${ordersList.length})
+                </div>
+                ${ordersList.length === 0 ? `
+                    <div style="text-align: center; padding: 40px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1; color: #64748b;">
+                        <div style="font-size: 2rem; margin-bottom: 8px;">📭</div>
+                        <p style="font-weight: 700; margin-bottom: 4px;">No Sales Records Found for this Period</p>
+                        <p style="font-size: 0.85rem;">Try selecting a broader timeframe or "All Time" to view sales records.</p>
+                    </div>
+                ` : `
+                    <div class="table-responsive" style="border: 1px solid #e2e8f0; border-radius: 8px; overflow-x: auto;">
+                        <table class="admin-table" style="width: 100%; font-size: 0.85rem;">
+                            <thead style="background: #f1f5f9;">
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Date</th>
+                                    <th>Customer</th>
+                                    <th>Items Purchased</th>
+                                    <th>Payment</th>
+                                    <th>Status</th>
+                                    <th style="text-align: right;">Gross Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${ordersList.map(o => {
+                                    const itemsHtml = (o.items || []).map(it => `
+                                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                            <img src="${it.imageUrl || 'images/runner-x1-black-main.png'}" style="width: 28px; height: 28px; object-fit: contain; border-radius: 4px; background: #f8fafc; border: 1px solid #e2e8f0;">
+                                            <div>
+                                                <strong style="color: #0f172a;">${escapeHtml(it.productName || 'Product')}</strong>
+                                                <span style="color: #64748b; font-size: 0.78rem;">(${it.size || 'Std'}, Qty: ${it.quantity || 1} @ ${formatMoney(it.price)})</span>
+                                            </div>
+                                        </div>
+                                    `).join('') || '<span style="color:#64748b;">Direct Purchase</span>';
+
+                                    const dateStr = o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent';
+
+                                    return `
+                                        <tr>
+                                            <td>
+                                                <strong style="color: #e11d48;">#${escapeHtml(o.orderNumber || o.id)}</strong>
+                                            </td>
+                                            <td style="white-space: nowrap; color: #475569;">${dateStr}</td>
+                                            <td>
+                                                <div style="font-weight: 700; color: #0f172a;">${escapeHtml(o.customerName || 'Customer')}</div>
+                                                <div style="font-size: 0.76rem; color: #64748b;">${escapeHtml(o.customerEmail || '')}</div>
+                                            </td>
+                                            <td>${itemsHtml}</td>
+                                            <td>
+                                                <span class="badge badge-success" style="font-size: 0.72rem; padding: 3px 8px; background: #dcfce7; color: #15803d; font-weight: 700;">
+                                                    ✓ ${escapeHtml(o.paymentMethod || 'Paid')}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge" style="font-size: 0.72rem; padding: 3px 8px; background: #e0f2fe; color: #0369a1; font-weight: 700;">
+                                                    ${escapeHtml(o.status || 'CONFIRMED')}
+                                                </span>
+                                            </td>
+                                            <td style="text-align: right; font-weight: 800; font-size: 0.95rem; color: #0f172a;">
+                                                ${formatMoney(o.totalAmount || o.subtotal)}
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `}
+            </div>
+
+            <div style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn btn-secondary" onclick="Admin.closeSalesBreakdown()">Close Breakdown</button>
+                <button type="button" class="btn btn-primary" onclick="window.print()">🖨️ Print Sales Report</button>
+            </div>
+        `;
+    },
+
+    toggleSalesCustomDateRange() {
+        const picker = document.getElementById('sales-custom-date-container');
+        if (picker) {
+            picker.style.display = picker.style.display === 'none' ? 'flex' : 'none';
+        }
+    },
+
+    applyCustomDateSalesFilter() {
+        const start = document.getElementById('sales-custom-start') ? document.getElementById('sales-custom-start').value : '';
+        const end = document.getElementById('sales-custom-end') ? document.getElementById('sales-custom-end').value : '';
+        if (!start || !end) {
+            showToast('Please select both start date and end date.', 'warning');
+            return;
+        }
+        this.openSalesBreakdown('custom', start, end);
+    },
+
+    closeSalesBreakdown() {
+        const modal = document.getElementById('modal-admin-sales-breakdown');
+        if (modal) modal.style.display = 'none';
+    },
+
+    filterOrdersByStatus(status) {
+        this.switchTab('orders');
+        setTimeout(() => {
+            const filterEl = document.getElementById('admin-order-filter-status');
+            if (filterEl) {
+                filterEl.value = status;
+                filterEl.dispatchEvent(new Event('change'));
+            }
+        }, 150);
     }
 };

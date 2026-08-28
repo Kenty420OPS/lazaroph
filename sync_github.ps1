@@ -18,7 +18,10 @@ if (Test-Path $dst) {
         "src\main\webapp\css\auth.css",
         "src\main\webapp\css\admin.css",
         "src\main\webapp\css\chat.css",
+        "src\main\webapp\css\main.css",
+        "src\main\webapp\css\responsive.css",
         "src\main\webapp\index.html",
+        "src\main\webapp\js\firebase-config.js",
         "src\main\webapp\js\api.js",
         "src\main\webapp\js\auth.js",
         "src\main\webapp\js\app.js",
@@ -31,6 +34,15 @@ if (Test-Path $dst) {
         "src\main\webapp\js\checkout.js",
         "src\main\java\com\lazaroph\service\CourierService.java",
         "src\main\java\com\lazaroph\Main.java",
+        "api\products.js",
+        "api\orders.js",
+        "api\sales.js",
+        "api\couriers.js",
+        "api\chat.js",
+        "api\auth.js",
+        ".gitignore",
+        "build.js",
+        "vercel.json",
         "verify_all.ps1",
         "verify_chat_payment.ps1"
     )
@@ -53,6 +65,11 @@ if (Test-Path $dst) {
     }
 
     Write-Host "`nAll modified files successfully synchronized to GitHub repository!" -ForegroundColor Green
+    
+    Write-Host "`nRunning node build.js in target repository..." -ForegroundColor Cyan
+    Push-Location $dst
+    node build.js
+    Pop-Location
 } else {
     Write-Host "Destination path not found: $dst" -ForegroundColor Yellow
 }
