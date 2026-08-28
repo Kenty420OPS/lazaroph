@@ -441,6 +441,53 @@ nav {
     color: #000000;
 }
 
+/* Trending Now Section — High Contrast White Text on Dark Background */
+.trending-section,
+.section.trending-section,
+#trending-section {
+    background: #0d111a !important;
+    color: #ffffff !important;
+}
+
+.trending-section .section-title,
+.section.trending-section .section-title,
+#trending-section .section-title,
+div[style*="background: #0d111a"] .section-title,
+div[style*="background:#0d111a"] .section-title {
+    color: #ffffff !important;
+}
+
+.trending-section .section-subtitle,
+.section.trending-section .section-subtitle,
+#trending-section .section-subtitle,
+div[style*="background: #0d111a"] .section-subtitle,
+div[style*="background:#0d111a"] .section-subtitle {
+    color: #ffffff !important;
+    opacity: 0.95;
+    letter-spacing: 0.12em;
+    font-weight: 800;
+}
+
+.trending-section .btn-outline,
+.section.trending-section .btn-outline,
+#trending-section .btn-outline,
+div[style*="background: #0d111a"] .btn-outline,
+div[style*="background:#0d111a"] .btn-outline {
+    border-color: rgba(255, 255, 255, 0.6) !important;
+    color: #ffffff !important;
+    background: transparent !important;
+}
+
+.trending-section .btn-outline:hover,
+.section.trending-section .btn-outline:hover,
+#trending-section .btn-outline:hover,
+div[style*="background: #0d111a"] .btn-outline:hover,
+div[style*="background:#0d111a"] .btn-outline:hover {
+    background: #ffffff !important;
+    color: #0d111a !important;
+    border-color: #ffffff !important;
+}
+
 .categories-grid {
     display: grid;
     grid-template-columns: repeat(12, 1fr);
