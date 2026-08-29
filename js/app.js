@@ -217,12 +217,13 @@ const App = {
             const viewAdmin = document.getElementById('view-admin');
             if (viewAdmin) {
                 viewAdmin.classList.remove('hidden');
-                Admin.init();
+                let initialTab = 'dashboard';
                 if (view === 'admin/gross-sales' || view === 'admin/sales' || params.tab === 'sales' || params.tab === 'gross-sales') {
-                    Admin.switchTab('sales');
+                    initialTab = 'sales';
                 } else if (params.tab) {
-                    Admin.switchTab(params.tab);
+                    initialTab = params.tab;
                 }
+                Admin.init(initialTab);
             }
             return;
         }

@@ -9,8 +9,9 @@ const Admin = {
     productImages: [],
     categories: [],
     brands: [],
+    unreadCheckInterval: null,
 
-    async init() {
+    async init(initialTab = 'dashboard') {
         if (!AdminAuth.isVerified()) {
             App.navigate('admin/login');
             showToast('Access denied. Administrator privileges required.', 'error');
@@ -29,10 +30,13 @@ const Admin = {
             this.checkUnreadMessages();
         } catch (ignored) {}
 
-        // Check unread chat messages periodically
-        setInterval(() => this.checkUnreadMessages(), 8000);
+        // Check unread chat messages periodically (clean existing interval to prevent timer leaks)
+        if (this.unreadCheckInterval) {
+            clearInterval(this.unreadCheckInterval);
+        }
+        this.unreadCheckInterval = setInterval(() => this.checkUnreadMessages(), 8000);
 
-        this.switchTab('dashboard');
+        this.switchTab(initialTab || 'dashboard');
     },
 
     // =========================================================================
@@ -387,7 +391,7 @@ const Admin = {
                                             <td>${v.color}</td>
                                             <td><strong style="color: ${v.stock === 0 ? 'var(--color-danger)' : 'var(--color-warning)'};">${v.stock}</strong></td>
                                             <td>
-                                                <button class="btn btn-secondary btn-sm" onclick="Admin.quickStockPrompt(${v.variantId}, ${v.stock})">
+                                                <button class="btn btn-secondary btn-sm" onclick="Admin.quickStockPrompt('${v.variantId}', ${v.stock})">
                                                     Restock
                                                 </button>
                                             </td>
@@ -1056,7 +1060,7 @@ const Admin = {
                                         <td>
                                             <div style="display: flex; gap: 6px; align-items: center;">
                                                 <input type="number" min="0" value="${m.stock}" id="stock-inp-${m.variantId}" style="width: 70px; background: var(--color-bg-input); border: 1px solid var(--color-border); border-radius: 4px; padding: 4px 8px; color: #ffffff; font-weight: 700;">
-                                                <button class="btn btn-secondary btn-sm" onclick="Admin.updateVariantStockInline(${m.variantId})">
+                                                <button class="btn btn-secondary btn-sm" onclick="Admin.updateVariantStockInline('${m.variantId}')">
                                                     Update
                                                 </button>
                                             </div>
@@ -1189,7 +1193,7 @@ const Admin = {
                                             <td>
                                                 <select class="form-control" style="padding: 4px 8px; font-size: 0.8rem; width: 155px; border-color: #d1d5db; font-weight: 600;" onchange="Admin.updateOrderStatus('${o.id}', this.value)">
                                                     ${officialStatuses.map(st => `
-                                                        <option value="${st}" ${o.status === st || (o.status && o.status.equalsIgnoreCase && o.status.equalsIgnoreCase(st)) ? 'selected' : ''}>${st}</option>
+                                                        <option value="${st}" ${o.status === st || (o.status && o.status.toLowerCase() === st.toLowerCase()) ? 'selected' : ''}>${st}</option>
                                                     `).join('')}
                                                 </select>
                                             </td>
@@ -1262,7 +1266,7 @@ const Admin = {
     async openDeliveryModal(orderId) {
         try {
             const orders = await API.getAdminOrders();
-            const order = orders.find(o => o.id === orderId);
+            const order = orders.find(o => String(o.id) === String(orderId) || String(o.orderNumber) === String(orderId));
             if (!order) return;
 
             const modalWrap = document.getElementById('admin-delivery-modal-wrap') || document.body;
@@ -1276,7 +1280,7 @@ const Admin = {
                             <button type="button" class="modal-close" onclick="Admin.closeDeliveryModal()">✕</button>
                         </div>
                         <div class="modal-body delivery-modal-body">
-                            <form id="form-delivery-manage" onsubmit="Admin.saveDeliveryModalForm(event, ${order.id})">
+                            <form id="form-delivery-manage" onsubmit="Admin.saveDeliveryModalForm(event, '${order.id}')">
                                 <!-- 1. Delivery Method -->
                                 <div class="form-group">
                                     <label class="form-label" style="font-weight: 800; color: #000000;">Delivery Method *</label>
@@ -1524,7 +1528,7 @@ const Admin = {
             const isActive = this.activeChatConvId === c.id;
             const timeStr = c.lastMessageTime ? new Date(c.lastMessageTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
             return `
-                <div class="admin-conv-item ${isActive ? 'active' : ''}" onclick="Admin.selectChatConversation(${c.id})">
+                <div class="admin-conv-item ${isActive ? 'active' : ''}" onclick="Admin.selectChatConversation('${c.id}')">
                     <div class="top-row">
                         <span class="customer-name">${c.customerName || 'Customer'}</span>
                         <span class="msg-time">${timeStr}</span>
@@ -1554,7 +1558,7 @@ const Admin = {
         const listElem = document.getElementById('admin-conv-list-items');
         if (listElem) listElem.innerHTML = this.renderConversationListHtml();
 
-        const conv = this.chatConversations.find(c => c.id === convId);
+        const conv = this.chatConversations.find(c => String(c.id) === String(convId));
         if (!conv) return;
 
         // Load conversation messages and customer profile
@@ -1652,7 +1656,7 @@ const Admin = {
                         </div>
                         <div>
                             ${conv.orderId ? `
-                                <button class="btn btn-secondary btn-sm" style="font-size: 0.75rem; font-weight: 800; border: 1px solid #000000;" onclick="Admin.openDeliveryModal(${conv.orderId})">
+                                <button class="btn btn-secondary btn-sm" style="font-size: 0.75rem; font-weight: 800; border: 1px solid #000000;" onclick="Admin.openDeliveryModal('${conv.orderId}')">
                                     🚚 Manage Delivery
                                 </button>
                             ` : ''}
@@ -1719,7 +1723,7 @@ const Admin = {
         if (conv.orderId) {
             try {
                 const orders = await API.getAdminOrders();
-                order = orders.find(o => o.id === conv.orderId);
+                order = orders.find(o => String(o.id) === String(conv.orderId) || String(o.orderNumber) === String(conv.orderId));
             } catch (ignored) {}
         }
 
@@ -1774,7 +1778,7 @@ const Admin = {
                     <div class="label">Order Total</div>
                     <div class="val" style="font-size: 1.05rem; font-weight: 900;">${formatMoney(order.total)}</div>
                 </div>
-                <button class="btn btn-secondary btn-block btn-sm" style="margin-top: 12px; font-weight: 800; border: 1.5px solid #000000;" onclick="Admin.openDeliveryModal(${order.id})">
+                <button class="btn btn-secondary btn-block btn-sm" style="margin-top: 12px; font-weight: 800; border: 1.5px solid #000000;" onclick="Admin.openDeliveryModal('${order.id}')">
                     🚚 Edit Delivery / Fee
                 </button>
             ` : `
@@ -2408,7 +2412,7 @@ const Admin = {
 
         try {
             const settings = await API.getAdminSettings();
-            const u = Auth.currentUser || {};
+            const u = AdminAuth.getAdmin() || Auth.currentUser || {};
 
             container.innerHTML = `
                 <div class="admin-header">
@@ -2622,6 +2626,13 @@ const Admin = {
             const updated = await API.updateAdminProfile({ name, email, phone, password });
             Auth.currentUser = updated;
             localStorage.setItem('lazaroph_user', JSON.stringify(updated));
+            if (typeof AdminAuth !== 'undefined') {
+                AdminAuth.setAdmin(updated);
+            }
+            const nameEl = document.getElementById('admin-sidebar-user-name');
+            if (nameEl && updated.name) {
+                nameEl.textContent = updated.name;
+            }
             showToast('Admin contact number and profile updated successfully!', 'success');
         } catch (err) {
             showToast(err.message, 'error');
@@ -2793,15 +2804,15 @@ const Admin = {
                     </span>
                 </td>
                 <td style="text-align: center;">
-                    <span class="badge ${b.status === 'ACTIVE' ? 'badge-legit' : 'badge-danger'}" style="cursor: pointer;" onclick="Admin.toggleBrandStatus(${b.id}, '${b.status}')" title="Click to toggle status">
+                    <span class="badge ${b.status === 'ACTIVE' ? 'badge-legit' : 'badge-danger'}" style="cursor: pointer;" onclick="Admin.toggleBrandStatus('${b.id}', '${b.status}')" title="Click to toggle status">
                         ${b.status === 'ACTIVE' ? '🟢 ACTIVE' : '⚪ INACTIVE'}
                     </span>
                 </td>
                 <td style="text-align: right; white-space: nowrap;">
-                    <button class="btn btn-secondary btn-sm" onclick="Admin.openBrandModalById(${b.id})" title="Edit Brand">
+                    <button class="btn btn-secondary btn-sm" onclick="Admin.openBrandModalById('${b.id}')" title="Edit Brand">
                         ✏️ Edit
                     </button>
-                    <button class="btn btn-secondary btn-sm" style="color: ${b.status === 'ACTIVE' ? '#eab308' : '#22c55e'};" onclick="Admin.toggleBrandStatus(${b.id}, '${b.status}')" title="Toggle Active / Inactive">
+                    <button class="btn btn-secondary btn-sm" style="color: ${b.status === 'ACTIVE' ? '#eab308' : '#22c55e'};" onclick="Admin.toggleBrandStatus('${b.id}', '${b.status}')" title="Toggle Active / Inactive">
                         ${b.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
                     </button>
                     <button class="btn btn-danger btn-sm" onclick="Admin.handleDeleteBrand('${b.id}', this)" title="Delete Brand">
@@ -2898,7 +2909,7 @@ const Admin = {
     },
 
     openBrandModalById(id, fromProductForm = false) {
-        const brand = (this.brands || []).find(b => b.id === id);
+        const brand = (this.brands || []).find(b => String(b.id) === String(id));
         this.openBrandModal(brand, fromProductForm);
     },
 
@@ -3272,7 +3283,7 @@ const Admin = {
                                             </td>
                                             <td style="text-align: right; white-space: nowrap;">
                                                 <div style="display: inline-flex; gap: 6px;">
-                                                    <button class="btn btn-sm btn-secondary" style="font-size: 0.78rem; padding: 4px 10px;" onclick="Admin.openResetAdminModal(${a.id}, '${escapeHtml(a.name)}')">
+                                                    <button class="btn btn-sm btn-secondary" style="font-size: 0.78rem; padding: 4px 10px;" onclick="Admin.openResetAdminModal('${a.id}', '${escapeHtml(a.name)}')">
                                                         🔑 Reset Credentials
                                                     </button>
                                                     ${!isSelf ? `
@@ -3519,7 +3530,7 @@ const Admin = {
                 </div>
                 <div style="padding: 24px;">
                     <div id="reset-admin-alert" class="auth-alert" style="display: none; margin-bottom: 16px;"></div>
-                    <form onsubmit="Admin.handleResetAdmin(event, ${adminId})">
+                    <form onsubmit="Admin.handleResetAdmin(event, '${adminId}')">
                         <div class="form-group" style="margin-bottom: 16px;">
                             <label class="form-label" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 6px; display: block;">NEW LOGIN PASSWORD</label>
                             <input type="password" class="form-control" id="reset-admin-pass" placeholder="Leave blank to keep unchanged" style="background: #090d16; border: 1px solid #334155; color: #ffffff; border-radius: 6px; padding: 10px 14px; font-size: 0.95rem; width: 100%; box-sizing: border-box;">

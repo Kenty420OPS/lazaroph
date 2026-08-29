@@ -1486,9 +1486,16 @@ const API = {
     },
 
     adminVerifyStep2(preAuthToken, securityPassword) {
+        const email = (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('lazaroph_admin_pre_email') : '') || '';
         return this.request('/api/auth/admin/verify-step2', {
             method: 'POST',
-            body: JSON.stringify({ preAuthToken, securityPassword })
+            body: JSON.stringify({
+                preAuthToken,
+                securityPassword,
+                securityPin: securityPassword,
+                pin: securityPassword,
+                email
+            })
         });
     },
 

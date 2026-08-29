@@ -2,6 +2,8 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "rewrites": [
+    { "source": "/api/auth/:path*", "destination": "/api/auth?route=:path*" },
+    { "source": "/api/admin/:path*", "destination": "/api/auth?route=:path*" },
     { "source": "/api/products/:id", "destination": "/api/products?id=:id" },
     { "source": "/api/orders/:id", "destination": "/api/orders?id=:id" },
     { "source": "/api/orders/track/:trackingNumber", "destination": "/api/orders?trackingNumber=:trackingNumber" },
