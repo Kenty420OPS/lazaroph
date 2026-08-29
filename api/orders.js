@@ -85,7 +85,7 @@ let ordersStore = [
 function sendJson(res, statusCode, data) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Session-Key');
     res.status(statusCode).json(data);
 }
@@ -93,13 +93,19 @@ function sendJson(res, statusCode, data) {
 module.exports = async (req, res) => {
     if (req.method === 'OPTIONS') {
         res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Session-Key');
         return res.status(204).end();
     }
 
-    const { query, method, body } = req;
-    const id = query.id ? parseInt(query.id, 10) : null;
+    const { query = {}, method, body } = req;
+    const url = req.url || '';
+    const route = query.route || '';
+    const deleteMatch = url.match(/\/delete\/([^/?]+)/) || route.match(/^delete\/([^/?]+)/);
+    let id = query.id ? query.id : (deleteMatch ? deleteMatch[1] : null);
+    if (id && !isNaN(id)) {
+        id = parseInt(id, 10);
+    }
 
     try {
         if (method === 'GET') {

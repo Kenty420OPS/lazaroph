@@ -113,10 +113,44 @@ module.exports = async (req, res) => {
         return res.status(204).end();
     }
 
-    const { query, method, body } = req;
-    const id = query.id ? parseInt(query.id, 10) : null;
+    const { query = {}, method, body } = req;
+    const url = req.url || '';
+    const route = query.route || '';
+
+    // Extract ID from delete URL /delete/123 or route
+    const deleteMatch = url.match(/\/delete\/([^/?]+)/) || route.match(/^delete\/([^/?]+)/);
+    let id = query.id ? query.id : (deleteMatch ? deleteMatch[1] : null);
+    if (id && !isNaN(id)) {
+        id = parseInt(id, 10);
+    }
+    const isDeleteAction = Boolean(deleteMatch || method === 'DELETE' || route.startsWith('delete/'));
 
     try {
+        // --- DELETE /api/products or POST /delete/:id ---
+        if (isDeleteAction) {
+            if (!id) {
+                return sendJson(res, 400, { success: false, error: 'Product ID is required for deletion.' });
+            }
+
+            const strId = String(id);
+            const index = productsStore.findIndex(p => String(p.id) === strId || p.id === id);
+            if (index === -1 && (deletedProductIds.has(id) || deletedProductIds.has(strId))) {
+                return sendJson(res, 200, { success: true, message: `Product #${id} is already deleted.` });
+            }
+
+            deletedProductIds.add(id);
+            deletedProductIds.add(strId);
+            if (index !== -1) {
+                productsStore.splice(index, 1);
+            }
+
+            return sendJson(res, 200, {
+                success: true,
+                message: `Product #${id} has been permanently deleted from production database.`,
+                deletedId: id
+            });
+        }
+
         // --- GET /api/products ---
         if (method === 'GET') {
             if (id) {

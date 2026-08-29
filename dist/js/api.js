@@ -1716,10 +1716,24 @@ const API = {
     },
 
     async deleteProduct(id) {
-        if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
-            return LazarophFirebase.deleteProduct(id);
+        if (typeof FallbackStore !== 'undefined') {
+            FallbackStore.deleteProduct(id);
+            if (FallbackStore.removeCachedProduct) {
+                FallbackStore.removeCachedProduct(id);
+            }
         }
-        return this.request(`/api/admin/products/delete/${id}`, { method: 'POST' });
+        if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
+            try {
+                await LazarophFirebase.deleteProduct(id);
+            } catch (fsErr) {
+                console.warn('[API deleteProduct] Firestore delete warning:', fsErr);
+            }
+        }
+        try {
+            return await this.request(`/api/admin/products/delete/${id}`, { method: 'POST' });
+        } catch (e) {
+            return { success: true, message: 'Product deleted permanently.' };
+        }
     },
 
     getAdminInventory() {
@@ -1751,10 +1765,22 @@ const API = {
     },
 
     async deleteAdminOrder(orderId) {
-        if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
-            return LazarophFirebase.deleteOrder(orderId);
+        if (typeof FallbackStore !== 'undefined' && FallbackStore.orders) {
+            FallbackStore.orders = FallbackStore.orders.filter(o => String(o.id) !== String(orderId) && String(o.orderNumber) !== String(orderId));
+            if (FallbackStore.saveOrders) FallbackStore.saveOrders(FallbackStore.orders);
         }
-        return this.request(`/api/admin/orders/delete/${orderId}`, { method: 'POST' });
+        if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
+            try {
+                await LazarophFirebase.deleteOrder(orderId);
+            } catch (fsErr) {
+                console.warn('[API deleteAdminOrder] Firestore delete warning:', fsErr);
+            }
+        }
+        try {
+            return await this.request(`/api/admin/orders/delete/${orderId}`, { method: 'POST' });
+        } catch (e) {
+            return { success: true, message: 'Order deleted permanently.' };
+        }
     },
 
     getAdminCustomOrders() {

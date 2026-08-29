@@ -209,7 +209,21 @@ const App = {
 
             // Admin Dashboard Guard: Strict 2-Step Verified Admin Session Required!
             if (!AdminAuth.isVerified()) {
-                showToast('Admin session required. Please authenticate.', 'info');
+                if (typeof CustomerAuth !== 'undefined' && CustomerAuth.isLoggedIn()) {
+                    showToast('Access Denied: Customer accounts are not authorized to access the Administrator Portal.', 'error');
+                    this.navigate('home');
+                } else {
+                    showToast('Administrator authentication required. Please sign in.', 'info');
+                    this.navigate('admin/login');
+                }
+                return;
+            }
+
+            // Role Verification Guard: Must have ADMIN or SUPER_ADMIN role!
+            const adminUser = AdminAuth.getAdmin();
+            if (!adminUser || (adminUser.role !== 'SUPER_ADMIN' && adminUser.role !== 'ADMIN')) {
+                showToast('Access Denied: You do not have administrator permissions.', 'error');
+                AdminAuth.logout();
                 this.navigate('admin/login');
                 return;
             }

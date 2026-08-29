@@ -617,7 +617,9 @@ const AdminAuth = {
     },
 
     isVerified() {
-        return !!this.getToken() && !!this.getAdmin();
+        const token = this.getToken();
+        const admin = this.getAdmin();
+        return !!token && !!admin && (admin.role === 'SUPER_ADMIN' || admin.role === 'ADMIN');
     },
 
     async init() {
