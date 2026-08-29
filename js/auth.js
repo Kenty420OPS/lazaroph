@@ -153,11 +153,10 @@ const CustomerAuth = {
             this.setCustomer(res.customer);
 
             showToast(`Welcome back, ${res.customer.name}!`, 'success');
-            if (window.location.hash === '#login' || window.location.hash.startsWith('#login')) {
-                App.navigate('account');
-            } else {
-                App.navigate('home');
+            if (typeof Auth !== 'undefined' && typeof Auth.closeAuthModal === 'function') {
+                Auth.closeAuthModal();
             }
+            App.navigate('account');
         } catch (err) {
             if (alertEl) {
                 alertEl.style.display = 'block';
