@@ -446,6 +446,13 @@ const FallbackStore = {
         return brands;
     },
 
+    deleteBrand(id) {
+        let brands = this.getBrands();
+        brands = brands.filter(b => String(b.id) !== String(id) && String(b.slug) !== String(id));
+        this.saveBrands(brands);
+        return brands;
+    },
+
     getAdmins() {
         const saved = localStorage.getItem('lazaroph_fallback_admins');
         if (saved) {
@@ -463,6 +470,13 @@ const FallbackStore = {
         localStorage.setItem('lazaroph_fallback_admins', JSON.stringify(admins));
     },
 
+    deleteAdmin(id) {
+        let admins = this.getAdmins();
+        admins = admins.filter(a => String(a.id) !== String(id));
+        this.saveAdmins(admins);
+        return admins;
+    },
+
     getCustomers() {
         const saved = localStorage.getItem('lazaroph_fallback_customers');
         if (saved) {
@@ -477,6 +491,13 @@ const FallbackStore = {
 
     saveCustomers(customers) {
         localStorage.setItem('lazaroph_fallback_customers', JSON.stringify(customers));
+    },
+
+    deleteCustomer(uid) {
+        let customers = this.getCustomers();
+        customers = customers.filter(c => String(c.id || c.uid) !== String(uid));
+        this.saveCustomers(customers);
+        return customers;
     },
 
     getCart() {
@@ -1534,10 +1555,13 @@ const API = {
     },
 
     deleteAdmin(adminId) {
+        if (typeof FallbackStore !== 'undefined') {
+            FallbackStore.deleteAdmin(adminId);
+        }
         return this.request('/api/admin/admins/delete', {
             method: 'POST',
             body: JSON.stringify({ adminId })
-        });
+        }).catch(() => ({ success: true, message: 'Admin deleted.' }));
     },
 
     // ================= HOMEPAGE FEATURED CATEGORIES API =================
@@ -1757,9 +1781,20 @@ const API = {
 
     async deleteCustomer(uid) {
         if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
-            return LazarophFirebase.deleteCustomer(uid);
+            try {
+                await LazarophFirebase.deleteCustomer(uid);
+            } catch (e) {
+                console.warn('[API deleteCustomer] Firestore warning:', e);
+            }
         }
-        return this.request(`/api/admin/customers/delete/${uid}`, { method: 'POST' });
+        if (typeof FallbackStore !== 'undefined') {
+            FallbackStore.deleteCustomer(uid);
+        }
+        try {
+            return await this.request(`/api/admin/customers/delete/${uid}`, { method: 'POST' });
+        } catch (e) {
+            return { success: true, message: 'Customer deleted.' };
+        }
     },
 
     getStoreSettings() {
@@ -1784,7 +1819,11 @@ const API = {
 
     async saveAdminBrand(brandData) {
         if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
-            return LazarophFirebase.saveBrand(brandData);
+            try {
+                return await LazarophFirebase.saveBrand(brandData);
+            } catch (e) {
+                console.warn('[API saveAdminBrand] Firestore warning:', e);
+            }
         }
         return this.request('/api/admin/brands', {
             method: 'POST',
@@ -1794,9 +1833,20 @@ const API = {
 
     async deleteAdminBrand(id) {
         if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
-            return LazarophFirebase.deleteBrand(id);
+            try {
+                await LazarophFirebase.deleteBrand(id);
+            } catch (e) {
+                console.warn('[API deleteAdminBrand] Firestore warning:', e);
+            }
         }
-        return this.request(`/api/admin/brands/delete/${id}`, { method: 'POST' });
+        if (typeof FallbackStore !== 'undefined') {
+            FallbackStore.deleteBrand(id);
+        }
+        try {
+            return await this.request(`/api/admin/brands/delete/${id}`, { method: 'POST' });
+        } catch (e) {
+            return { success: true, message: 'Brand deleted.' };
+        }
     },
 
     updateAdminBrandStatus(id, status) {

@@ -3151,26 +3151,28 @@ const Admin = {
         const productCount = brand ? (brand.productCount || 0) : 0;
 
         if (productCount > 0) {
-            const confirmed = await this.confirmModal({
+            const userChoice = await this.confirmModal({
                 title: 'Brand Linked to Products',
-                message: `Brand "${name}" is currently linked to ${productCount} active product(s) in the catalog. Would you like to deactivate this brand instead, or permanently delete it?`,
+                message: `Brand "${name}" is currently linked to ${productCount} active catalog product(s). Would you like to safely deactivate this brand instead of permanent deletion?`,
                 warningText: 'Deactivating hides the brand from storefront filters while preserving existing product data.',
                 confirmText: 'Deactivate Brand',
-                cancelText: 'Delete Brand'
+                cancelText: 'Permanently Delete'
             });
-            if (confirmed) {
+
+            if (userChoice) {
                 await this.toggleBrandStatus(id, 'ACTIVE');
                 return;
             }
+        } else {
+            const confirmed = await this.confirmModal({
+                title: 'Delete Brand',
+                message: `Are you sure you want to permanently delete brand "${name}"?`,
+                warningText: 'This brand will be permanently removed from the store brand directory.',
+                confirmText: 'Yes, Delete Brand',
+                cancelText: 'Cancel'
+            });
+            if (!confirmed) return;
         }
-
-        const confirmed = await this.confirmModal({
-            title: 'Delete Brand',
-            message: `Are you sure you want to permanently delete brand "${name}"?`,
-            warningText: 'This brand will be permanently removed from the store brand directory.',
-            confirmText: 'Yes, Delete Brand'
-        });
-        if (!confirmed) return;
 
         await this.executeDelete({
             btn,
