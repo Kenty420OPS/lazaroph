@@ -1166,7 +1166,7 @@ const LazarophFirebase = {
         this.init();
         if (!this.db) {
             if (typeof FallbackStore !== 'undefined' && FallbackStore.updateCachedProduct) {
-                FallbackStore.updateCachedProduct(product);
+                product = FallbackStore.updateCachedProduct(product) || product;
             }
             return { success: true, product };
         }

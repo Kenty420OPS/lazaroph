@@ -386,13 +386,21 @@ const FallbackStore = {
 
     updateCachedProduct(product) {
         let products = this.getProducts();
-        const idx = products.findIndex(p => p.id === product.id);
+        if (!product.id) {
+            const maxId = products.reduce((max, p) => {
+                const num = parseInt(p.id, 10);
+                return (!isNaN(num) && num > max) ? num : max;
+            }, 0);
+            product.id = maxId + 1;
+        }
+        const idx = products.findIndex(p => String(p.id) === String(product.id));
         if (idx !== -1) {
             products[idx] = { ...products[idx], ...product };
         } else {
             products.unshift(product);
         }
         this.saveProducts(products);
+        return product;
     },
 
     removeCachedProduct(id) {
@@ -448,7 +456,14 @@ const FallbackStore = {
 
     saveBrand(brand) {
         let brands = this.getBrands();
-        const idx = brands.findIndex(b => b.id === brand.id);
+        if (!brand.id) {
+            const maxId = brands.reduce((max, b) => {
+                const num = parseInt(b.id, 10);
+                return (!isNaN(num) && num > max) ? num : max;
+            }, 0);
+            brand.id = maxId + 1;
+        }
+        const idx = brands.findIndex(b => String(b.id) === String(brand.id));
         if (idx !== -1) {
             brands[idx] = { ...brands[idx], ...brand };
         } else {
@@ -1892,7 +1907,7 @@ const API = {
             }
         }
         if (typeof FallbackStore !== 'undefined') {
-            FallbackStore.saveBrand(brandData);
+            brandData = FallbackStore.saveBrand(brandData) || brandData;
         }
         return this.request('/api/admin/brands', {
             method: 'POST',
