@@ -750,14 +750,31 @@ const FallbackStore = {
         }
 
         if (cleanPath === '/api/admin/stats' || cleanPath === '/api/admin/overview') {
+            const orders = this.getOrders();
+            const products = this.getProducts();
+            
+            let totalSales = 0;
+            let pendingOrdersCount = 0;
+            
+            orders.forEach(o => {
+                if (o.paymentStatus === 'PAID' || o.status === 'CONFIRMED' || o.status === 'DELIVERED') {
+                    totalSales += (parseFloat(o.totalAmount) || 0);
+                }
+                if (o.status === 'PENDING') {
+                    pendingOrdersCount++;
+                }
+            });
+            
+            const lowStockCount = products.filter(p => (p.variants || []).some(v => v.stock < 10)).length;
+
             return {
-                totalSales: 18450.00,
-                totalOrders: 6,
-                totalCustomers: 4,
-                totalProducts: this.getProducts().length,
-                lowStockCount: 2,
-                pendingOrdersCount: 1,
-                recentOrders: this.getOrders().slice(0, 5)
+                totalSales: totalSales,
+                totalOrders: orders.length,
+                totalCustomers: 0, // Fetch from DB in production
+                totalProducts: products.length,
+                lowStockCount: lowStockCount,
+                pendingOrdersCount: pendingOrdersCount,
+                recentOrders: orders.slice(0, 5)
             };
         }
 
@@ -783,27 +800,11 @@ const FallbackStore = {
         }
 
         if (cleanPath === '/api/admin/custom-orders') {
-            return [
-                {
-                    id: 1,
-                    orderNumber: 'LZPH-20260825-0001',
-                    customerName: 'Juan Dela Cruz',
-                    teamName: 'MANILA KINGS',
-                    playerName: 'DELA CRUZ',
-                    playerNumber: '24',
-                    size: 'L',
-                    designStyle: 'pro-elite',
-                    productionStatus: 'DESIGN_APPROVED',
-                    createdAt: '2026-08-25T10:00:00'
-                }
-            ];
+            return [];
         }
 
         if (cleanPath === '/api/admin/customers') {
-            return [
-                { id: 1, name: 'LAZAROPH Administrator', email: 'admin@lazaroph.com', role: 'ADMIN', phone: '282948572', ordersCount: 0 },
-                { id: 2, name: 'Juan Dela Cruz', email: 'customer@example.com', role: 'CUSTOMER', phone: '09171234567', ordersCount: 3 }
-            ];
+            return [];
         }
 
         if (cleanPath === '/api/chat/unread-count') {
