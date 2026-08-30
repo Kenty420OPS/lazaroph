@@ -1076,19 +1076,22 @@ const LazarophFirebase = {
     // =========================================================================
     async getProducts(filters = {}) {
         this.init();
-        if (!this.db) {
-            if (typeof FallbackStore !== 'undefined') {
-                return FallbackStore.getProducts();
-            }
-            return [];
+        const config = this.getConfig();
+        if (!this.db || !config || !config.apiKey || config.apiKey.includes('Placeholder') || config.apiKey.includes('AIzaSyD')) {
+            throw new Error('Firebase API Key is missing or invalid. Please configure it in Admin Settings.');
         }
 
         try {
             // Check initialization metadata
-            const metaDoc = await this.db.collection('_metadata').doc('store_init').get().catch(() => null);
+            const metaGet = this.db.collection('_metadata').doc('store_init').get().catch(() => null);
+            const timeoutMeta = new Promise(resolve => setTimeout(() => resolve(null), 3000));
+            const metaDoc = await Promise.race([metaGet, timeoutMeta]);
             const isInitialized = metaDoc && metaDoc.exists && metaDoc.data().initialized;
 
-            const snapshot = await this.db.collection('products').get();
+            const productsGet = this.db.collection('products').get();
+            const timeoutProducts = new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore request timed out (possible missing API key or network error).')), 4000));
+            const snapshot = await Promise.race([productsGet, timeoutProducts]);
+            
             let products = [];
             snapshot.forEach(doc => {
                 const data = doc.data();

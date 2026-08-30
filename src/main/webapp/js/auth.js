@@ -625,12 +625,10 @@ const AdminAuth = {
     async init() {
         const token = this.getToken();
         if (token) {
-            try {
-                API.setToken(token);
-                const admin = await API.adminGetMe();
-                this.setAdmin(admin);
-            } catch (err) {
-                console.warn('[AdminAuth] Admin session expired:', err.message);
+            API.setToken(token);
+            const admin = this.getAdmin();
+            if (!admin || !admin.role) {
+                console.warn('[AdminAuth] Admin session invalid.');
                 this.setToken(null);
                 this.setAdmin(null);
             }

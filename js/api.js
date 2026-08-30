@@ -1608,20 +1608,31 @@ const API = {
     },
 
     // Catalog & Products
-    async getProducts(params = {}) {
+    async getProducts(query = new URLSearchParams()) {
         if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
-            return LazarophFirebase.getProducts(params);
-        }
-        const query = new URLSearchParams();
-        for (const [k, v] of Object.entries(params)) {
-            if (v !== undefined && v !== null && v !== '') {
-                query.append(k, v);
+            try {
+                const filters = {};
+                for (const [k, v] of query.entries()) {
+                    filters[k] = v;
+                }
+                return await LazarophFirebase.getProducts(filters);
+            } catch (err) {
+                console.warn('[API] Firebase getProducts failed, falling back to serverless:', err);
             }
         }
         return this.request(`/api/products?${query.toString()}`);
     },
 
-    getProductById(id) {
+    async getProductById(id) {
+        if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
+            try {
+                const products = await LazarophFirebase.getProducts();
+                const p = products.find(p => String(p.id) === String(id));
+                if (p) return p;
+            } catch (err) {
+                console.warn('[API] Firebase getProductById failed:', err);
+            }
+        }
         return this.request(`/api/products/${id}`);
     },
 
@@ -1707,7 +1718,14 @@ const API = {
         return this.request('/api/admin/stats');
     },
 
-    getAdminProducts() {
+    async getAdminProducts() {
+        if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
+            try {
+                return await LazarophFirebase.getProducts();
+            } catch (err) {
+                console.warn('[API] Firebase getAdminProducts failed:', err);
+            }
+        }
         return this.request('/api/admin/products');
     },
 
