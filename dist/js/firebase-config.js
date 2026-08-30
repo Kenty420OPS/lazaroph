@@ -76,7 +76,7 @@ const LazarophFirebase = {
                 <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; max-width: 520px; width: 100%; padding: 24px; color: #f8fafc; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #1e293b; padding-bottom: 12px;">
                         <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 8px;">
-                            🔥 Connect Live Firebase Project
+                             Connect Live Firebase Project
                         </h3>
                         <button onclick="document.getElementById('firebase-config-modal').style.display='none'" style="background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</button>
                     </div>

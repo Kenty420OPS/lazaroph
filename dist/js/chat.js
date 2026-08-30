@@ -67,7 +67,7 @@ const Chat = {
                         </div>
                     </div>
                 </div>
-                <button class="close-btn" onclick="Chat.toggle()" title="Close chat">✕</button>
+                <button class="close-btn" onclick="Chat.toggle()" title="Close chat"></button>
             </div>
 
             <div class="chat-order-bar" id="chat-order-bar" style="display: none;">
@@ -76,10 +76,10 @@ const Chat = {
             </div>
 
             <div class="chat-quick-chips">
-                <span class="chat-chip" onclick="Chat.sendQuick('Hi, can I know how much is the Lalamove delivery fee?')">🚚 Delivery Fee</span>
-                <span class="chat-chip" onclick="Chat.triggerPaymentUpload()">💳 Payment Confirmation</span>
-                <span class="chat-chip" onclick="Chat.sendQuick('Can I get an update on my order status?')">⏱️ Order Status</span>
-                <span class="chat-chip" onclick="Chat.sendQuick('May I ask for the LBC tracking number?')">📦 LBC Tracking</span>
+                <span class="chat-chip" onclick="Chat.sendQuick('Hi, can I know how much is the Lalamove delivery fee?')"> Delivery Fee</span>
+                <span class="chat-chip" onclick="Chat.triggerPaymentUpload()"> Payment Confirmation</span>
+                <span class="chat-chip" onclick="Chat.sendQuick('Can I get an update on my order status?')">⏱ Order Status</span>
+                <span class="chat-chip" onclick="Chat.sendQuick('May I ask for the LBC tracking number?')"> LBC Tracking</span>
             </div>
 
             <div class="chat-messages-feed" id="chat-messages-feed">
@@ -208,7 +208,7 @@ const Chat = {
         if (messages.length === 0) {
             feed.innerHTML = `
                 <div style="text-align: center; color: #6b7280; font-size: 0.82rem; margin: auto; padding: 20px;">
-                    👋 Hello! How can LAZAROPH assist you with your order today?
+                     Hello! How can LAZAROPH assist you with your order today?
                 </div>
             `;
             return;
@@ -219,7 +219,7 @@ const Chat = {
         feed.innerHTML = messages.map(m => {
             const role = (m.senderRole || 'CUSTOMER').toLowerCase();
             const timeStr = m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-            const readStatus = m.isRead ? '✓✓ Read' : '✓ Sent';
+            const readStatus = m.isRead ? ' Read' : ' Sent';
             const isPaymentProof = m.messageType === 'PAYMENT_PROOF';
             const isPaymentVerified = m.messageType === 'PAYMENT_VERIFIED';
 
@@ -238,7 +238,7 @@ const Chat = {
                 return `
                     <div class="chat-bubble-row system">
                         <div class="chat-bubble">
-                            <strong>📢 LAZAROPH UPDATE:</strong><br>${escapeChatHtml(m.message)}
+                            <strong> LAZAROPH UPDATE:</strong><br>${escapeChatHtml(m.message)}
                         </div>
                         <div class="chat-meta">${timeStr}</div>
                     </div>
@@ -249,13 +249,13 @@ const Chat = {
 
             let bubbleContent = '';
             if (isPaymentProof) {
-                bubbleContent += '<div class="payment-proof-badge pending">💳 PROOF OF PAYMENT • PENDING VERIFICATION</div>';
+                bubbleContent += '<div class="payment-proof-badge pending"> PROOF OF PAYMENT • PENDING VERIFICATION</div>';
             }
             if (m.message && m.message.trim() !== '') {
                 bubbleContent += `<div class="chat-text">${escapeChatHtml(m.message.trim())}</div>`;
             }
             if (hasImage) {
-                bubbleContent += `<div class="chat-image-attachment" onclick="Chat.openLightbox('${escapeChatHtml(m.imageUrl)}')"><img src="${escapeChatHtml(m.imageUrl)}" alt="Payment Proof / Attachment" loading="lazy"><div style="padding: 3px 6px; font-size: 0.65rem; color: #cbd5e1; display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.85);"><span>🔍 Click to view receipt</span><span style="color: #67e8f9; font-weight: 700;">ENLARGE</span></div></div>`;
+                bubbleContent += `<div class="chat-image-attachment" onclick="Chat.openLightbox('${escapeChatHtml(m.imageUrl)}')"><img src="${escapeChatHtml(m.imageUrl)}" alt="Payment Proof / Attachment" loading="lazy"><div style="padding: 3px 6px; font-size: 0.65rem; color: #cbd5e1; display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.85);"><span> Click to view receipt</span><span style="color: #67e8f9; font-weight: 700;">ENLARGE</span></div></div>`;
             }
 
             return `<div class="chat-bubble-row ${role}"><div class="chat-bubble">${bubbleContent}</div><div class="chat-meta"><span>${timeStr}</span>${role === 'customer' ? `<span>• ${readStatus}</span>` : ''}</div></div>`;
@@ -412,8 +412,8 @@ const Chat = {
         modal.innerHTML = `
             <div class="chat-confirm-modal-card">
                 <div class="chat-confirm-modal-header">
-                    <h3><span>💳</span> Double Confirmation: Submit Payment Proof</h3>
-                    <button type="button" style="background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;" onclick="Chat.closePaymentConfirmModal()">✕</button>
+                    <h3><span></span> Double Confirmation: Submit Payment Proof</h3>
+                    <button type="button" style="background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;" onclick="Chat.closePaymentConfirmModal()"></button>
                 </div>
                 <div class="chat-confirm-modal-body">
                     <div style="font-size: 0.82rem; color: #374151; margin-bottom: 10px; line-height: 1.4;">
@@ -447,7 +447,7 @@ const Chat = {
                 <div class="chat-confirm-modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="Chat.closePaymentConfirmModal()">Cancel / Change</button>
                     <button type="button" id="btn-submit-payment-confirm" class="btn btn-sm" style="background: #000000; color: #ffffff; font-weight: 800; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;" onclick="Chat.submitPaymentProof()">
-                        ✓ Yes, Confirm & Send Proof
+                         Yes, Confirm & Send Proof
                     </button>
                 </div>
             </div>
@@ -470,7 +470,7 @@ const Chat = {
         const refNo = refInput ? refInput.value.trim() : '';
         const amount = amountInput ? amountInput.value.trim() : '';
 
-        let caption = '💳 [PROOF OF PAYMENT] Payment receipt submitted for order verification.';
+        let caption = ' [PROOF OF PAYMENT] Payment receipt submitted for order verification.';
         if (refNo || amount) {
             caption += ` (${[amount ? 'Amount: ' + amount : '', refNo ? 'Ref: ' + refNo : ''].filter(Boolean).join(' • ')})`;
         }
@@ -496,7 +496,7 @@ const Chat = {
             showToast(err.message || 'Failed to upload payment proof.', 'error');
             if (btn) {
                 btn.disabled = false;
-                btn.innerHTML = `✓ Yes, Confirm & Send Proof`;
+                btn.innerHTML = ` Yes, Confirm & Send Proof`;
             }
         }
     },
@@ -515,7 +515,7 @@ const Chat = {
 
         lightbox.innerHTML = `
             <div style="position: relative; max-width: 90vw; max-height: 90vh; display: flex; flex-direction: column; align-items: center;">
-                <button type="button" style="position: absolute; top: -38px; right: 0; background: none; border: none; color: #fff; font-size: 1.8rem; cursor: pointer;" onclick="Chat.closeLightbox()">✕</button>
+                <button type="button" style="position: absolute; top: -38px; right: 0; background: none; border: none; color: #fff; font-size: 1.8rem; cursor: pointer;" onclick="Chat.closeLightbox()"></button>
                 <img src="${imageUrl}" style="max-width: 90vw; max-height: 85vh; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); object-fit: contain; background: #000;" alt="Full Receipt">
                 <a href="${imageUrl}" download="payment_receipt" target="_blank" style="margin-top: 10px; color: #67e8f9; font-size: 0.82rem; font-weight: 700; text-decoration: underline;">Open Full Resolution / Download ↗</a>
             </div>

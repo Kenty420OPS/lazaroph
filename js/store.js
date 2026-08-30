@@ -108,7 +108,7 @@ const Store = {
                             <h2 style="font-size: 1.35rem; font-weight: 900; color: #000; text-transform: uppercase; margin: 2px 0 0 0;">${this.currentFilters.brand}</h2>
                         </div>
                         <button class="btn btn-secondary btn-sm" onclick="Store.setFilter('brand', 'all'); const rb = document.querySelector('input[name=filter_brand][value=all]'); if(rb) rb.checked=true;">
-                            ✕ Clear Brand Filter
+                             Clear Brand Filter
                         </button>
                     </div>
                 `;
@@ -147,10 +147,10 @@ const Store = {
         } catch (err) {
             grid.innerHTML = `
                 <div style="grid-column: 1/-1; text-align: center; color: #dc2626; padding: 40px; background: #ffffff; border-radius: var(--radius-lg); border: 1px solid #fee2e2;">
-                    <div style="font-size: 2rem; margin-bottom: 8px;">⚠️</div>
+                    <div style="font-size: 2rem; margin-bottom: 8px;"></div>
                     <div style="font-weight: 700; margin-bottom: 6px;">Failed to load products: ${err.message}</div>
                     <p style="color: #6b7280; font-size: 0.85rem; margin-bottom: 16px;">Make sure the Java server is running or retry.</p>
-                    <button class="btn btn-secondary btn-sm" onclick="Store.loadCatalog()">🔄 Retry</button>
+                    <button class="btn btn-secondary btn-sm" onclick="Store.loadCatalog()"> Retry</button>
                 </div>
             `;
         }
@@ -207,7 +207,7 @@ const Store = {
                         <span class="badge badge-legit">100% LEGIT</span>
                     </div>
                     <button class="product-wishlist-btn" onclick="event.stopPropagation(); Store.toggleWishlist(${product.id})" title="Add to Wishlist">
-                        ♥
+                        
                     </button>
                 </div>
                 <div class="product-card-body">

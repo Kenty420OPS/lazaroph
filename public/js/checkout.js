@@ -162,7 +162,7 @@ const Checkout = {
                                          onclick="Checkout.selectCourier('LALAMOVE')">
                                         <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
                                             <div style="display: flex; gap: 12px; align-items: flex-start;">
-                                                <div class="courier-icon-box" style="font-size: 1.5rem;">🚚</div>
+                                                <div class="courier-icon-box" style="font-size: 1.5rem;"></div>
                                                 <div>
                                                     <div style="display: flex; gap: 8px; align-items: center;">
                                                         <strong style="color: #000000; font-size: 1.05rem;">Lalamove</strong>
@@ -187,7 +187,7 @@ const Checkout = {
                                          onclick="Checkout.selectCourier('LBC')">
                                         <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
                                             <div style="display: flex; gap: 12px; align-items: flex-start;">
-                                                <div class="courier-icon-box" style="font-size: 1.5rem;">📦</div>
+                                                <div class="courier-icon-box" style="font-size: 1.5rem;"></div>
                                                 <div>
                                                     <div style="display: flex; gap: 8px; align-items: center;">
                                                         <strong style="color: #000000; font-size: 1.05rem;">LBC Express</strong>
@@ -212,7 +212,7 @@ const Checkout = {
                                          onclick="Checkout.selectCourier('STORE_PICKUP')">
                                         <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
                                             <div style="display: flex; gap: 12px; align-items: flex-start;">
-                                                <div class="courier-icon-box" style="font-size: 1.5rem;">🏪</div>
+                                                <div class="courier-icon-box" style="font-size: 1.5rem;"></div>
                                                 <div>
                                                     <div style="display: flex; gap: 8px; align-items: center;">
                                                         <strong style="color: #000000; font-size: 1.05rem;">Store Pickup</strong>
@@ -236,7 +236,7 @@ const Checkout = {
                                 <!-- Delivery Address Fields (Shown for Lalamove & LBC) -->
                                 <div id="shipping-address-container" style="display: ${this.selectedCourier === 'STORE_PICKUP' ? 'none' : 'block'}; background: #ffffff; border: 1.5px solid #e5e7eb; border-radius: var(--radius-md); padding: 18px; margin-top: 10px;">
                                     <h4 style="font-size: 0.95rem; font-weight: 800; text-transform: uppercase; margin-bottom: 14px; color: #000000;">
-                                        📍 Shipping / Delivery Destination
+                                         Shipping / Delivery Destination
                                     </h4>
 
                                     <div class="form-grid-3">
@@ -268,7 +268,7 @@ const Checkout = {
                                 <!-- Marikina Branch Selection (Shown only for Store Pickup) -->
                                 <div id="pickup-branch-container" style="display: ${this.selectedCourier === 'STORE_PICKUP' ? 'block' : 'none'}; background: #f8fafc; border: 1.5px solid #cbd5e1; border-left: 4px solid #000000; border-radius: var(--radius-md); padding: 18px; margin-top: 10px;">
                                     <h4 style="font-size: 0.95rem; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; color: #000000;">
-                                        🏪 Select Preferred Marikina Claiming Hub
+                                         Select Preferred Marikina Claiming Hub
                                     </h4>
                                     <div class="form-group" style="margin-bottom: 8px;">
                                         <label class="form-label" style="color: #000000; font-weight: 700;">Pickup Hub Location *</label>
@@ -296,28 +296,28 @@ const Checkout = {
                                     <label class="payment-option-card active" onclick="Checkout.selectPayment('GCash', this)">
                                         <input type="radio" name="payment_method" value="GCash" checked>
                                         <div class="payment-option-info">
-                                            <div class="name">📱 GCash</div>
+                                            <div class="name"> GCash</div>
                                             <div class="desc">Scan or send to 0917-282-9485</div>
                                         </div>
                                     </label>
                                     <label class="payment-option-card" onclick="Checkout.selectPayment('Maya', this)">
                                         <input type="radio" name="payment_method" value="Maya">
                                         <div class="payment-option-info">
-                                            <div class="name">💳 Maya / QR Ph</div>
+                                            <div class="name"> Maya / QR Ph</div>
                                             <div class="desc">Send to 0917-282-9485</div>
                                         </div>
                                     </label>
                                     <label class="payment-option-card" onclick="Checkout.selectPayment('Bank Transfer', this)">
                                         <input type="radio" name="payment_method" value="Bank Transfer">
                                         <div class="payment-option-info">
-                                            <div class="name">🏦 Bank Transfer</div>
+                                            <div class="name"> Bank Transfer</div>
                                             <div class="desc">BDO or BPI Online / QR Ph</div>
                                         </div>
                                     </label>
                                     <label class="payment-option-card" onclick="Checkout.selectPayment('Store Pickup', this)">
                                         <input type="radio" name="payment_method" value="Store Pickup">
                                         <div class="payment-option-info">
-                                            <div class="name">🏪 Cash on Store Pickup</div>
+                                            <div class="name"> Cash on Store Pickup</div>
                                             <div class="desc">Pay at physical branch cashier</div>
                                         </div>
                                     </label>
@@ -326,7 +326,7 @@ const Checkout = {
                                 <!-- Payment Account Details & Reference Entry Box -->
                                 <div id="payment-instructions-box" style="margin-top: 20px; padding: 18px; background: #f9fafb; border: 1.5px solid #e5e7eb; border-radius: var(--radius-md);">
                                     <div style="font-weight: 800; color: #000000; font-size: 1rem; margin-bottom: 8px;" id="pay-instruction-title">
-                                        📱 GCash Payment Instructions
+                                         GCash Payment Instructions
                                     </div>
                                     <div style="font-size: 0.88rem; color: #374151; line-height: 1.6; margin-bottom: 16px;" id="pay-instruction-text">
                                         Please transfer order amount to:<br>
@@ -384,7 +384,7 @@ const Checkout = {
                                     </button>
 
                                     <div style="margin-top: 14px; text-align: center; font-size: 0.75rem; color: #6b7280; line-height: 1.4;">
-                                        💬 You can chat directly with LAZAROPH admin anytime after submitting your order to confirm delivery and rider details.
+                                         You can chat directly with LAZAROPH admin anytime after submitting your order to confirm delivery and rider details.
                                     </div>
                                 </div>
                             </div>
@@ -420,7 +420,7 @@ const Checkout = {
         const mayaQr = s.mayaQrUrl || 'images/qr-maya-demo.png';
 
         if (method === 'GCash') {
-            title.textContent = '📱 GCash QR & Mobile Payment';
+            title.textContent = ' GCash QR & Mobile Payment';
             text.innerHTML = `
                 <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
                     <img src="${gcashQr}" style="width: 120px; height: 120px; object-fit: contain; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 6px; padding: 4px;" onerror="this.style.display='none'">
@@ -435,7 +435,7 @@ const Checkout = {
             refInp.placeholder = 'e.g. GCash Ref # 100293847291';
             refInp.required = true;
         } else if (method === 'Maya') {
-            title.textContent = '💳 Maya / QR Ph Payment';
+            title.textContent = ' Maya / QR Ph Payment';
             text.innerHTML = `
                 <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
                     <img src="${mayaQr}" style="width: 120px; height: 120px; object-fit: contain; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 6px; padding: 4px;" onerror="this.style.display='none'">
@@ -450,12 +450,12 @@ const Checkout = {
             refInp.placeholder = 'e.g. Maya Ref # MAYA-99201948';
             refInp.required = true;
         } else if (method === 'Bank Transfer') {
-            title.textContent = '🏦 Direct Bank Transfer (BDO & BPI QR Ph)';
+            title.textContent = ' Direct Bank Transfer (BDO & BPI QR Ph)';
             text.innerHTML = `
                 <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 4px;">
                     <!-- BDO Card -->
                     <div style="display: flex; gap: 14px; align-items: center; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 6px; padding: 10px;">
-                        ${s.bdoQrUrl ? `<img src="${s.bdoQrUrl}" style="width: 65px; height: 65px; object-fit: contain; background: #ffffff; border: 1px solid #d1d5db; border-radius: 4px; padding: 2px;" alt="BDO QR">` : '<div style="font-size: 1.5rem; width: 44px; text-align: center;">🏦</div>'}
+                        ${s.bdoQrUrl ? `<img src="${s.bdoQrUrl}" style="width: 65px; height: 65px; object-fit: contain; background: #ffffff; border: 1px solid #d1d5db; border-radius: 4px; padding: 2px;" alt="BDO QR">` : '<div style="font-size: 1.5rem; width: 44px; text-align: center;"></div>'}
                         <div>
                             <div style="font-weight: 800; color: #003882; font-size: 0.92rem;">BDO Unibank (Scan / Transfer)</div>
                             <div style="font-size: 1rem; font-weight: 900; color: #000000; letter-spacing: 0.02em;">${s.bdoAccount || '0012-3456-7890 (Lazaro PH)'}</div>
@@ -465,7 +465,7 @@ const Checkout = {
 
                     <!-- BPI Card -->
                     <div style="display: flex; gap: 14px; align-items: center; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 6px; padding: 10px;">
-                        ${s.bpiQrUrl ? `<img src="${s.bpiQrUrl}" style="width: 65px; height: 65px; object-fit: contain; background: #ffffff; border: 1px solid #d1d5db; border-radius: 4px; padding: 2px;" alt="BPI QR">` : '<div style="font-size: 1.5rem; width: 44px; text-align: center;">🏦</div>'}
+                        ${s.bpiQrUrl ? `<img src="${s.bpiQrUrl}" style="width: 65px; height: 65px; object-fit: contain; background: #ffffff; border: 1px solid #d1d5db; border-radius: 4px; padding: 2px;" alt="BPI QR">` : '<div style="font-size: 1.5rem; width: 44px; text-align: center;"></div>'}
                         <div>
                             <div style="font-weight: 800; color: #b11116; font-size: 0.92rem;">BPI — Bank of the Philippine Islands</div>
                             <div style="font-size: 1rem; font-weight: 900; color: #000000; letter-spacing: 0.02em;">${s.bpiAccount || '9876-5432-10 (Lazaro PH)'}</div>
@@ -477,7 +477,7 @@ const Checkout = {
             refInp.placeholder = 'e.g. BDO/BPI Confirmation # or Deposit Ref';
             refInp.required = true;
         } else if (method === 'Store Pickup') {
-            title.textContent = '🏪 Store Pickup & Pay at Branch';
+            title.textContent = ' Store Pickup & Pay at Branch';
             text.innerHTML = `
                 <div style="color: #374151;">
                     Pickup at LAZAROPH Store in <strong style="color: #000000;">Concepcion Uno</strong> (911 J.P. Rizal St., Marikina).<br>

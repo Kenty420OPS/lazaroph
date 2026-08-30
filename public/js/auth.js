@@ -161,7 +161,7 @@ const CustomerAuth = {
             if (alertEl) {
                 alertEl.style.display = 'block';
                 alertEl.className = 'auth-alert auth-alert-error';
-                alertEl.innerHTML = `<span>❌ ${escapeHtml(err.message || 'Invalid email or password.')}</span>`;
+                alertEl.innerHTML = `<span> ${escapeHtml(err.message || 'Invalid email or password.')}</span>`;
             } else {
                 showToast(err.message, 'error');
             }
@@ -190,7 +190,7 @@ const CustomerAuth = {
         if (alertEl) {
             alertEl.style.display = 'block';
             alertEl.className = 'auth-alert auth-alert-error';
-            alertEl.innerHTML = `<span>❌ ${escapeHtml(msg)}</span>`;
+            alertEl.innerHTML = `<span> ${escapeHtml(msg)}</span>`;
         } else {
             showToast(msg, 'error');
         }
@@ -333,7 +333,7 @@ const CustomerAuth = {
                 if (alertEl) {
                     alertEl.style.display = 'block';
                     alertEl.className = 'auth-alert auth-alert-error';
-                    alertEl.innerHTML = `<span>❌ ${escapeHtml(err.message || 'Google authentication failed. Please try again.')}</span>`;
+                    alertEl.innerHTML = `<span> ${escapeHtml(err.message || 'Google authentication failed. Please try again.')}</span>`;
                 } else {
                     showToast(err.message || 'Google authentication failed.', 'error');
                 }
@@ -375,7 +375,7 @@ const CustomerAuth = {
                 if (alertPending) {
                     alertPending.style.display = 'block';
                     alertPending.className = 'auth-alert auth-alert-warning';
-                    alertPending.innerHTML = `<span>⚠️ Your email <strong>${escapeHtml(res.email)}</strong> is not verified yet. Please open your inbox (or spam folder) and click the verification link, then click "Check Verification Status" again.</span>`;
+                    alertPending.innerHTML = `<span> Your email <strong>${escapeHtml(res.email)}</strong> is not verified yet. Please open your inbox (or spam folder) and click the verification link, then click "Check Verification Status" again.</span>`;
                 }
             }
         } catch (err) {
@@ -470,7 +470,7 @@ const CustomerAuth = {
                 alertEl.style.display = 'block';
                 alertEl.className = 'auth-alert auth-alert-success';
                 alertEl.innerHTML = `
-                    <div style="font-weight: 700; margin-bottom: 4px;">✅ Check Your Email</div>
+                    <div style="font-weight: 700; margin-bottom: 4px;"> Check Your Email</div>
                     <div>${escapeHtml(res.message)}</div>
                 `;
             }
@@ -479,7 +479,7 @@ const CustomerAuth = {
             if (alertEl) {
                 alertEl.style.display = 'block';
                 alertEl.className = 'auth-alert auth-alert-error';
-                alertEl.innerHTML = `<span>❌ ${escapeHtml(err.message)}</span>`;
+                alertEl.innerHTML = `<span> ${escapeHtml(err.message)}</span>`;
             } else {
                 showToast(err.message, 'error');
             }
@@ -507,7 +507,7 @@ const CustomerAuth = {
             if (alertEl) {
                 alertEl.style.display = 'block';
                 alertEl.className = 'auth-alert auth-alert-error';
-                alertEl.innerHTML = '<span>❌ Passwords do not match. Please re-enter your password.</span>';
+                alertEl.innerHTML = '<span> Passwords do not match. Please re-enter your password.</span>';
             }
             return;
         }
@@ -532,7 +532,7 @@ const CustomerAuth = {
             if (alertEl) {
                 alertEl.style.display = 'block';
                 alertEl.className = 'auth-alert auth-alert-error';
-                alertEl.innerHTML = `<span>❌ ${escapeHtml(err.message)}</span>`;
+                alertEl.innerHTML = `<span> ${escapeHtml(err.message)}</span>`;
             } else {
                 showToast(err.message, 'error');
             }
@@ -683,7 +683,7 @@ const AdminAuth = {
             if (alertEl) {
                 alertEl.style.display = 'block';
                 alertEl.className = 'auth-alert auth-alert-error';
-                alertEl.innerHTML = `<span>❌ ${escapeHtml(err.message || 'Invalid administrator credentials.')}</span>`;
+                alertEl.innerHTML = `<span> ${escapeHtml(err.message || 'Invalid administrator credentials.')}</span>`;
             } else {
                 showToast(err.message, 'error');
             }
@@ -746,7 +746,7 @@ const AdminAuth = {
             if (alertEl) {
                 alertEl.style.display = 'block';
                 alertEl.className = 'auth-alert auth-alert-error';
-                alertEl.innerHTML = `<span>❌ ${escapeHtml(err.message || 'Incorrect security password.')}</span>`;
+                alertEl.innerHTML = `<span> ${escapeHtml(err.message || 'Incorrect security password.')}</span>`;
             } else {
                 showToast(err.message, 'error');
             }
@@ -817,7 +817,7 @@ const EmailSimulator = {
         toast.style.cssText = 'background: #0f172a; border: 1px solid #00c853; box-shadow: 0 10px 25px rgba(0,200,83,0.3); padding: 14px 18px; border-radius: 8px; margin-bottom: 10px; max-width: 420px;';
         toast.innerHTML = `
             <div style="display: flex; align-items: flex-start; gap: 12px;">
-                <span style="font-size: 1.5rem;">📬</span>
+                <span style="font-size: 1.5rem;"></span>
                 <div style="flex: 1;">
                     <div style="font-size: 0.75rem; color: #00c853; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
                         Simulated Email Delivered
@@ -863,7 +863,7 @@ const EmailSimulator = {
             modal.innerHTML = `
                 <div class="modal-backdrop" onclick="EmailSimulator.closeModal()"></div>
                 <div class="modal-content" style="max-width: 520px; text-align: center; padding: 30px;">
-                    <div style="font-size: 3rem; margin-bottom: 12px;">📭</div>
+                    <div style="font-size: 3rem; margin-bottom: 12px;"></div>
                     <h3 style="margin-bottom: 8px;">No Emails Sent Yet</h3>
                     <p style="color: var(--color-text-muted); font-size: 0.9rem;">
                         Register a customer account or request a password reset to see simulated emails here.
@@ -884,7 +884,7 @@ const EmailSimulator = {
             <div class="modal-content" style="max-width: 560px; padding: 0; overflow: hidden; border: 1px solid var(--color-border); background: #0f172a;">
                 <div style="background: #1e293b; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #334155;">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 1.2rem;">📬</span>
+                        <span style="font-size: 1.2rem;"></span>
                         <strong style="color: #fff; font-size: 0.95rem;">LAZAROPH Email Simulator</strong>
                     </div>
                     <button type="button" style="background: none; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer;" onclick="EmailSimulator.closeModal()">&times;</button>

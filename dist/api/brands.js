@@ -8,16 +8,7 @@
  * - POST /api/admin/brands/delete/:id or DELETE /api/brands/:id (delete brand)
  */
 
-let brandsStore = [
-    { id: 1, name: 'Nike', slug: 'nike', logoUrl: 'images/brand-nike.png', description: 'Just Do It. Premium athletic performance footwear and streetwear apparel.', status: 'ACTIVE', productCount: 4 },
-    { id: 2, name: 'Jordan', slug: 'jordan', logoUrl: 'images/brand-jordan.png', description: 'Iconic basketball legacy footwear and exclusive retro hype silhouettes.', status: 'ACTIVE', productCount: 2 },
-    { id: 3, name: 'Adidas', slug: 'adidas', logoUrl: 'images/brand-adidas.png', description: 'Three Stripes innovation, Originals lifestyle classics, and boost running tech.', status: 'ACTIVE', productCount: 3 },
-    { id: 4, name: 'New Balance', slug: 'new-balance', logoUrl: 'images/brand-nb.png', description: 'Fearlessly Independent heritage runners, dad shoes, and elite daily comfort.', status: 'ACTIVE', productCount: 1 },
-    { id: 5, name: 'Puma', slug: 'puma', logoUrl: 'images/brand-puma.png', description: 'Forever Faster athletic sneakers, motorsport footwear, and retro lifestyle.', status: 'ACTIVE', productCount: 0 },
-    { id: 6, name: 'Vans', slug: 'vans', logoUrl: 'images/brand-vans.png', description: 'Off The Wall authentic skate classics, Old Skools, and canvas slip-ons.', status: 'ACTIVE', productCount: 0 },
-    { id: 7, name: 'Under Armour', slug: 'under-armour', logoUrl: 'images/brand-ua.png', description: 'High performance training gear, Curry Brand basketball, and compression wear.', status: 'ACTIVE', productCount: 0 },
-    { id: 8, name: 'Asics', slug: 'asics', logoUrl: 'images/brand-asics.png', description: 'Sound Mind, Sound Body. GEL cushioning technology and Japanese running precision.', status: 'ACTIVE', productCount: 0 }
-];
+let brandsStore = [];
 
 function sendJson(res, statusCode, data) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');

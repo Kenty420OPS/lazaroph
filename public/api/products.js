@@ -12,41 +12,6 @@
 const https = require('https');
 
 // Persistent in-memory & Firestore-synced product store
-let productsStore = [
-    {
-        id: 1,
-        name: 'LAZAROPH Runner X1',
-        sku: 'LZPH-SH-RUN01',
-        description: "High-performance men's running shoes engineered for explosive responsiveness, breathability, and all-day pavement endurance. Crafted with authentic premium components.",
-        features: "Responsive CloudFoam midsole\nEngineered dual-layer mesh upper\nReinforced heel stabilizer\nHigh-traction rubber outsole",
-        materials: 'Breathable knit mesh, EVA foam midsole, High-density carbon rubber sole',
-        careInstructions: 'Wipe with damp cloth and gentle soap. Air dry away from direct heat.',
-        price: 2499.00,
-        discountPrice: 2199.00,
-        categoryId: 1,
-        categoryName: 'Shoes',
-        subcategory: 'Running Shoes',
-        brandId: 1,
-        brandName: 'Nike',
-        gender: 'MEN',
-        sizeType: 'US_MEN_SHOES',
-        status: 'ACTIVE',
-        featured: true,
-        newArrival: true,
-        sale: true,
-        mainImageUrl: 'images/runner-x1-black-main.png',
-        totalStock: 110,
-        images: [
-            { imageUrl: 'images/runner-x1-black-main.png', isMain: true, sortOrder: 1 }
-        ],
-        variants: [
-            { id: 101, size: 'US 7', color: 'Triple Black', colorHex: '#111111', stock: 5, price: 2499.00, sku: 'LZPH-SH-RUN01-7-BLK' },
-            { id: 102, size: 'US 7.5', color: 'Triple Black', colorHex: '#111111', stock: 8, price: 2499.00, sku: 'LZPH-SH-RUN01-7.5-BLK' },
-            { id: 103, size: 'US 8', color: 'Triple Black', colorHex: '#111111', stock: 12, price: 2499.00, sku: 'LZPH-SH-RUN01-8-BLK' },
-            { id: 104, size: 'US 8.5', color: 'Triple Black', colorHex: '#111111', stock: 10, price: 2499.00, sku: 'LZPH-SH-RUN01-8.5-BLK' },
-            { id: 105, size: 'US 9', color: 'Triple Black', colorHex: '#111111', stock: 15, price: 2499.00, sku: 'LZPH-SH-RUN01-9-BLK' },
-            { id: 106, size: 'US 9.5', color: 'Triple Black', colorHex: '#111111', stock: 7, price: 2499.00, sku: 'LZPH-SH-RUN01-9.5-BLK' },
-            { id: 107, size: 'US 10', color: 'Triple Black', colorHex: '#111111', stock: 20, price: 2499.00, sku: 'LZPH-SH-RUN01-10-BLK' },
             { id: 108, size: 'US 10.5', color: 'Triple Black', colorHex: '#111111', stock: 9, price: 2499.00, sku: 'LZPH-SH-RUN01-10.5-BLK' },
             { id: 109, size: 'US 11', color: 'Triple Black', colorHex: '#111111', stock: 6, price: 2499.00, sku: 'LZPH-SH-RUN01-11-BLK' },
             { id: 110, size: 'US 8', color: 'Ghost White', colorHex: '#f0f0f0', stock: 8, price: 2499.00, sku: 'LZPH-SH-RUN01-8-WHT' },

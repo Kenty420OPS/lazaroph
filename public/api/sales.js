@@ -36,66 +36,7 @@ module.exports = async (req, res) => {
         // Fetch all orders dynamically from shared serverless orders store
         let allOrders = (ordersHandler && Array.isArray(ordersHandler.ordersStore) && ordersHandler.ordersStore.length > 0)
             ? ordersHandler.ordersStore
-            : [
-            {
-                id: 1,
-                orderNumber: 'LZPH-20260825-0001',
-                customerName: 'Juan Dela Cruz',
-                customerEmail: 'customer@example.com',
-                customerPhone: '09171234567',
-                shippingAddress: '32 F. E. Mendoza Street, Malanday, Marikina, 1805 Metro Manila',
-                status: 'CONFIRMED',
-                paymentMethod: 'GCash',
-                paymentStatus: 'PAID',
-                courier: 'LALAMOVE',
-                subtotal: 2199.00,
-                shippingFee: 150.00,
-                totalAmount: 2349.00,
-                createdAt: '2026-08-25T10:30:00.000Z',
-                items: [
-                    { id: 1, productName: 'LAZAROPH Runner X1', size: 'US 10', color: 'Triple Black', quantity: 1, price: 2199.00 }
-                ]
-            },
-            {
-                id: 2,
-                orderNumber: 'LZPH-20260826-0002',
-                customerName: 'Roselyn Bagacina',
-                customerEmail: 'bagacinaroselyn18@gmail.com',
-                customerPhone: '09634354784',
-                shippingAddress: 'Patio Rosario Executive Homes, Marikina City',
-                status: 'DELIVERED',
-                paymentMethod: 'Salmon Financing',
-                paymentStatus: 'PAID',
-                courier: 'J&T Express',
-                subtotal: 2299.00,
-                shippingFee: 150.00,
-                totalAmount: 2449.00,
-                createdAt: '2026-08-26T14:15:00.000Z',
-                items: [
-                    { id: 2, productName: 'LAZAROPH Street Classic', size: 'US 7', color: 'Pure White', quantity: 1, price: 2299.00 }
-                ]
-            },
-            {
-                id: 3,
-                orderNumber: 'LZPH-20260828-0003',
-                customerName: 'Clark Montoya',
-                customerEmail: 'montoyaclark8@gmail.com',
-                customerPhone: '09060727757',
-                shippingAddress: 'Patio Rosario Townhomes, Sumulong Hwy, Marikina',
-                status: 'CONFIRMED',
-                paymentMethod: 'GCash',
-                paymentStatus: 'PAID',
-                courier: 'Grab Express',
-                subtotal: 4498.00,
-                shippingFee: 150.00,
-                totalAmount: 4648.00,
-                createdAt: '2026-08-28T09:00:00.000Z',
-                items: [
-                    { id: 1, productName: 'LAZAROPH Runner X1', size: 'US 9.5', color: 'Ghost White', quantity: 1, price: 2199.00 },
-                    { id: 2, productName: 'LAZAROPH Street Classic', size: 'US 8', color: 'Pure White', quantity: 1, price: 2299.00 }
-                ]
-            }
-        ];
+            : [];
 
         const { query } = req;
         const now = new Date();

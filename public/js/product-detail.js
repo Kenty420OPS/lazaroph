@@ -42,7 +42,7 @@ const ProductDetail = {
         } catch (err) {
             container.innerHTML = `
                 <div class="container" style="text-align: center; padding: 80px 20px;">
-                    <div style="font-size: 3rem; margin-bottom: 12px;">👟</div>
+                    <div style="font-size: 3rem; margin-bottom: 12px;"></div>
                     <h2 style="color: #000000; margin-bottom: 12px;">Product Not Found</h2>
                     <p style="color: #707072; margin-bottom: 24px;">The requested footwear or apparel item is currently unavailable.</p>
                     <button class="btn btn-primary" onclick="App.navigate('shop')">Back to Catalog</button>
@@ -174,7 +174,7 @@ const ProductDetail = {
                             <div class="size-header-row">
                                 <span class="size-header-title">Select Size</span>
                                 <button type="button" class="size-guide-btn" onclick="ProductDetail.openSizeGuide()">
-                                    📏 Size Guide
+                                     Size Guide
                                 </button>
                             </div>
 
@@ -184,7 +184,7 @@ const ProductDetail = {
 
                             <div class="size-stock-feedback-msg" id="size-feedback-msg">
                                 ${this.selectedVariant && this.selectedVariant.stock > 0 
-                                  ? `✓ Available: ${this.selectedVariant.stock} unit${this.selectedVariant.stock === 1 ? '' : 's'} in stock` 
+                                  ? ` Available: ${this.selectedVariant.stock} unit${this.selectedVariant.stock === 1 ? '' : 's'} in stock` 
                                   : (this.selectedVariant ? 'Selected size is out of stock' : 'Please select a size')}
                             </div>
                         </div>
@@ -195,7 +195,7 @@ const ProductDetail = {
                                 Add to Bag
                             </button>
                             <button type="button" class="btn-favourite" onclick="Store.toggleWishlist(${p.id})">
-                                Favourite ♡
+                                Favourite 
                             </button>
                         </div>
 
@@ -251,9 +251,9 @@ const ProductDetail = {
                                 <div class="product-accordion-body">
                                     <p>Fast Philippine fulfillment dispatched directly from our Marikina distribution store:</p>
                                     <ul class="accordion-bullets">
-                                        <li><strong>🛵 Lalamove Express:</strong> Same-day motorcycle dispatch for Metro Manila &amp; Rizal (Within 2-3 hours).</li>
-                                        <li><strong>📦 LBC Express:</strong> Nationwide air &amp; sea cargo (1-3 business days) with 12-digit barcode tracking.</li>
-                                        <li><strong>🏬 In-Store Pickup:</strong> Free claiming at our physical branches in Marikina City.</li>
+                                        <li><strong> Lalamove Express:</strong> Same-day motorcycle dispatch for Metro Manila &amp; Rizal (Within 2-3 hours).</li>
+                                        <li><strong> LBC Express:</strong> Nationwide air &amp; sea cargo (1-3 business days) with 12-digit barcode tracking.</li>
+                                        <li><strong> In-Store Pickup:</strong> Free claiming at our physical branches in Marikina City.</li>
                                     </ul>
                                 </div>
                             </div>
@@ -289,7 +289,7 @@ const ProductDetail = {
                 <div class="size-guide-modal">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                         <h3 style="font-size: 1.25rem; font-weight: 800; color: #000; text-transform: uppercase;">US Shoe Size Chart & Measurements</h3>
-                        <button onclick="ProductDetail.closeSizeGuide()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #000;">✕</button>
+                        <button onclick="ProductDetail.closeSizeGuide()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #000;"></button>
                     </div>
                     <p style="font-size: 0.85rem; color: #707072;">Standard US to EU / CM conversions for athletic footwear.</p>
                     <table class="size-guide-table">
@@ -363,7 +363,7 @@ const ProductDetail = {
 
         const feedback = document.getElementById('size-feedback-msg');
         if (feedback) {
-            feedback.textContent = `✓ Available: ${v.stock} unit${v.stock === 1 ? '' : 's'} in stock`;
+            feedback.textContent = ` Available: ${v.stock} unit${v.stock === 1 ? '' : 's'} in stock`;
         }
     },
 

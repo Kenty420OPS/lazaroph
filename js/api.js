@@ -50,319 +50,7 @@ const FallbackStore = {
         defaultDispatchBranch: 'Concepcion Uno, Marikina'
     },
 
-    getInitialProducts() {
-        return [
-            {
-                id: 1,
-                name: 'LAZAROPH Runner X1',
-                sku: 'LZPH-SH-RUN01',
-                description: "High-performance men's running shoes engineered for explosive responsiveness, breathability, and all-day pavement endurance. Crafted with authentic premium components.",
-                features: 'Responsive CloudFoam midsole\nEngineered dual-layer mesh upper\nReinforced heel stabilizer\nHigh-traction rubber outsole',
-                materials: 'Breathable knit mesh, EVA foam midsole, High-density carbon rubber sole',
-                careInstructions: 'Wipe with damp cloth and gentle soap. Air dry away from direct heat.',
-                price: 2499.00,
-                discountPrice: 2199.00,
-                categoryId: 1,
-                categoryName: 'Shoes',
-                subcategory: 'Running Shoes',
-                brandId: 1,
-                brandName: 'Nike',
-                gender: 'MEN',
-                sizeType: 'US_MEN_SHOES',
-                status: 'ACTIVE',
-                featured: true,
-                newArrival: true,
-                sale: true,
-                mainImageUrl: 'images/runner-x1-black-main.png',
-                totalStock: 110,
-                images: [
-                    { imageUrl: 'images/runner-x1-black-main.png', isMain: true, sortOrder: 1 }
-                ],
-                variants: [
-                    { id: 101, size: 'US 7', color: 'Triple Black', colorHex: '#111111', stock: 5, price: 2499.00, sku: 'LZPH-SH-RUN01-7-BLK' },
-                    { id: 102, size: 'US 7.5', color: 'Triple Black', colorHex: '#111111', stock: 8, price: 2499.00, sku: 'LZPH-SH-RUN01-7.5-BLK' },
-                    { id: 103, size: 'US 8', color: 'Triple Black', colorHex: '#111111', stock: 12, price: 2499.00, sku: 'LZPH-SH-RUN01-8-BLK' },
-                    { id: 104, size: 'US 8.5', color: 'Triple Black', colorHex: '#111111', stock: 10, price: 2499.00, sku: 'LZPH-SH-RUN01-8.5-BLK' },
-                    { id: 105, size: 'US 9', color: 'Triple Black', colorHex: '#111111', stock: 15, price: 2499.00, sku: 'LZPH-SH-RUN01-9-BLK' },
-                    { id: 106, size: 'US 9.5', color: 'Triple Black', colorHex: '#111111', stock: 7, price: 2499.00, sku: 'LZPH-SH-RUN01-9.5-BLK' },
-                    { id: 107, size: 'US 10', color: 'Triple Black', colorHex: '#111111', stock: 20, price: 2499.00, sku: 'LZPH-SH-RUN01-10-BLK' },
-                    { id: 108, size: 'US 10.5', color: 'Triple Black', colorHex: '#111111', stock: 9, price: 2499.00, sku: 'LZPH-SH-RUN01-10.5-BLK' },
-                    { id: 109, size: 'US 11', color: 'Triple Black', colorHex: '#111111', stock: 6, price: 2499.00, sku: 'LZPH-SH-RUN01-11-BLK' },
-                    { id: 110, size: 'US 8', color: 'Ghost White', colorHex: '#f0f0f0', stock: 8, price: 2499.00, sku: 'LZPH-SH-RUN01-8-WHT' },
-                    { id: 111, size: 'US 8.5', color: 'Ghost White', colorHex: '#f0f0f0', stock: 10, price: 2499.00, sku: 'LZPH-SH-RUN01-8.5-WHT' },
-                    { id: 112, size: 'US 9', color: 'Ghost White', colorHex: '#f0f0f0', stock: 12, price: 2499.00, sku: 'LZPH-SH-RUN01-9-WHT' },
-                    { id: 113, size: 'US 9.5', color: 'Ghost White', colorHex: '#f0f0f0', stock: 5, price: 2499.00, sku: 'LZPH-SH-RUN01-9.5-WHT' },
-                    { id: 114, size: 'US 10', color: 'Ghost White', colorHex: '#f0f0f0', stock: 14, price: 2499.00, sku: 'LZPH-SH-RUN01-10-WHT' }
-                ]
-            },
-            {
-                id: 2,
-                name: 'LAZAROPH Street Classic',
-                sku: 'LZPH-SH-STR01',
-                description: 'Iconic minimalist street sneaker built with supple vegan leather, timeless silhouette, and padded memory foam collar for modern everyday aesthetics.',
-                features: 'Minimalist silhouette\nPadded ankle collar\nShock-absorbing cushioned footbed\nNon-marking cupsole',
-                materials: 'Premium synthetic leather, Recycled textile lining, Vulcanized rubber sole',
-                careInstructions: 'Clean with soft brush or leather wipes. Do not machine wash.',
-                price: 2299.00,
-                discountPrice: null,
-                categoryId: 1,
-                categoryName: 'Shoes',
-                subcategory: 'Sneakers',
-                brandId: 3,
-                brandName: 'Adidas',
-                gender: 'WOMEN',
-                sizeType: 'US_WOMEN_SHOES',
-                status: 'ACTIVE',
-                featured: true,
-                newArrival: true,
-                sale: false,
-                mainImageUrl: 'images/street-classic-white-main.png',
-                totalStock: 66,
-                images: [
-                    { imageUrl: 'images/street-classic-white-main.png', isMain: true, sortOrder: 1 }
-                ],
-                variants: [
-                    { id: 120, size: 'US 5', color: 'Pure White', colorHex: '#ffffff', stock: 4, price: 2299.00, sku: 'LZPH-SH-STR01-5-WHT' },
-                    { id: 121, size: 'US 5.5', color: 'Pure White', colorHex: '#ffffff', stock: 6, price: 2299.00, sku: 'LZPH-SH-STR01-5.5-WHT' },
-                    { id: 122, size: 'US 6', color: 'Pure White', colorHex: '#ffffff', stock: 10, price: 2299.00, sku: 'LZPH-SH-STR01-6-WHT' },
-                    { id: 123, size: 'US 6.5', color: 'Pure White', colorHex: '#ffffff', stock: 8, price: 2299.00, sku: 'LZPH-SH-STR01-6.5-WHT' },
-                    { id: 124, size: 'US 7', color: 'Pure White', colorHex: '#ffffff', stock: 14, price: 2299.00, sku: 'LZPH-SH-STR01-7-WHT' },
-                    { id: 125, size: 'US 7.5', color: 'Pure White', colorHex: '#ffffff', stock: 9, price: 2299.00, sku: 'LZPH-SH-STR01-7.5-WHT' },
-                    { id: 126, size: 'US 8', color: 'Pure White', colorHex: '#ffffff', stock: 11, price: 2299.00, sku: 'LZPH-SH-STR01-8-WHT' },
-                    { id: 127, size: 'US 8.5', color: 'Pure White', colorHex: '#ffffff', stock: 5, price: 2299.00, sku: 'LZPH-SH-STR01-8.5-WHT' },
-                    { id: 128, size: 'US 9', color: 'Pure White', colorHex: '#ffffff', stock: 3, price: 2299.00, sku: 'LZPH-SH-STR01-9-WHT' }
-                ]
-            },
-            {
-                id: 3,
-                name: 'LAZAROPH Junior Sprint',
-                sku: 'LZPH-SH-JNR01',
-                description: 'Lightweight, durable athletic footwear crafted for active kids, featuring secure lock-down strap and flex-groove sole for high agility.',
-                features: 'Easy lock-down velcro strap\nFlexible outsole with multi-directional grip\nReinforced toe bumper for durability\nUltra-lightweight mesh',
-                materials: 'Air-flow synthetic mesh, Phylon lightweight midsole, Rubber traction pods',
-                careInstructions: 'Hand wash cold with mild detergent. Remove insole before washing.',
-                price: 1799.00,
-                discountPrice: 1499.00,
-                categoryId: 1,
-                categoryName: 'Shoes',
-                subcategory: 'Kids Shoes',
-                brandId: 1,
-                brandName: 'Nike',
-                gender: 'KIDS',
-                sizeType: 'US_KIDS_SHOES',
-                status: 'ACTIVE',
-                featured: false,
-                newArrival: true,
-                sale: true,
-                mainImageUrl: 'images/junior-sprint-blue-main.png',
-                totalStock: 36,
-                images: [
-                    { imageUrl: 'images/junior-sprint-blue-main.png', isMain: true, sortOrder: 1 }
-                ],
-                variants: [
-                    { id: 130, size: 'US 1Y', color: 'Electric Blue', colorHex: '#0070f3', stock: 6, price: 1799.00, sku: 'LZPH-SH-JNR01-1Y-BLU' },
-                    { id: 131, size: 'US 2Y', color: 'Electric Blue', colorHex: '#0070f3', stock: 8, price: 1799.00, sku: 'LZPH-SH-JNR01-2Y-BLU' },
-                    { id: 132, size: 'US 3Y', color: 'Electric Blue', colorHex: '#0070f3', stock: 10, price: 1799.00, sku: 'LZPH-SH-JNR01-3Y-BLU' },
-                    { id: 133, size: 'US 4Y', color: 'Electric Blue', colorHex: '#0070f3', stock: 7, price: 1799.00, sku: 'LZPH-SH-JNR01-4Y-BLU' },
-                    { id: 134, size: 'US 5Y', color: 'Electric Blue', colorHex: '#0070f3', stock: 5, price: 1799.00, sku: 'LZPH-SH-JNR01-5Y-BLU' }
-                ]
-            },
-            {
-                id: 4,
-                name: 'LAZAROPH Performance Tee',
-                sku: 'LZPH-AP-TEE01',
-                description: 'Signature moisture-wicking athletic tee built with 4-way stretch fabric for intense workouts, basketball training, and lifestyle comfort.',
-                features: 'DryVent moisture-wicking technology\n4-way stretch ergonomic fit\nAnti-odor antimicrobial finish\nTagless comfort collar',
-                materials: '88% Polyester, 12% Spandex Quick-Dry Blend',
-                careInstructions: 'Machine wash cold inside out. Do not bleach or iron graphics.',
-                price: 899.00,
-                discountPrice: null,
-                categoryId: 2,
-                categoryName: 'Apparel',
-                subcategory: 'Shirts',
-                brandId: 1,
-                brandName: 'Nike',
-                gender: 'MEN',
-                sizeType: 'APPAREL_SIZE',
-                status: 'ACTIVE',
-                featured: true,
-                newArrival: false,
-                sale: false,
-                mainImageUrl: 'images/perf-tee-black-main.png',
-                totalStock: 75,
-                images: [
-                    { imageUrl: 'images/perf-tee-black-main.png', isMain: true, sortOrder: 1 }
-                ],
-                variants: [
-                    { id: 140, size: 'S', color: 'Matte Black', colorHex: '#18181b', stock: 12, price: 899.00, sku: 'LZPH-AP-TEE01-S-BLK' },
-                    { id: 141, size: 'M', color: 'Matte Black', colorHex: '#18181b', stock: 20, price: 899.00, sku: 'LZPH-AP-TEE01-M-BLK' },
-                    { id: 142, size: 'L', color: 'Matte Black', colorHex: '#18181b', stock: 25, price: 899.00, sku: 'LZPH-AP-TEE01-L-BLK' },
-                    { id: 143, size: 'XL', color: 'Matte Black', colorHex: '#18181b', stock: 18, price: 899.00, sku: 'LZPH-AP-TEE01-XL-BLK' }
-                ]
-            },
-            {
-                id: 5,
-                name: 'LAZAROPH Pro Training Shorts',
-                sku: 'LZPH-AP-SHT01',
-                description: 'Breathable lightweight performance training shorts featuring deep zippered phone pockets, supportive interior liner, and elastic drawcord waistband.',
-                features: 'Deep zippered anti-drop pockets\nBuilt-in compression liner option\nReflective night logos\nSweat-repelling micro-weave',
-                materials: '100% Breathable Micro-Ripstop Polyester',
-                careInstructions: 'Tumble dry low. Do not dry clean.',
-                price: 999.00,
-                discountPrice: 799.00,
-                categoryId: 2,
-                categoryName: 'Apparel',
-                subcategory: 'Shorts',
-                brandId: 3,
-                brandName: 'Adidas',
-                gender: 'MEN',
-                sizeType: 'APPAREL_SIZE',
-                status: 'ACTIVE',
-                featured: false,
-                newArrival: true,
-                sale: true,
-                mainImageUrl: 'images/train-shorts-gray-main.png',
-                totalStock: 65,
-                images: [
-                    { imageUrl: 'images/train-shorts-gray-main.png', isMain: true, sortOrder: 1 }
-                ],
-                variants: [
-                    { id: 150, size: 'S', color: 'Charcoal Heather', colorHex: '#374151', stock: 10, price: 999.00, sku: 'LZPH-AP-SHT01-S-GRY' },
-                    { id: 151, size: 'M', color: 'Charcoal Heather', colorHex: '#374151', stock: 20, price: 999.00, sku: 'LZPH-AP-SHT01-M-GRY' },
-                    { id: 152, size: 'L', color: 'Charcoal Heather', colorHex: '#374151', stock: 25, price: 999.00, sku: 'LZPH-AP-SHT01-L-GRY' },
-                    { id: 153, size: 'XL', color: 'Charcoal Heather', colorHex: '#374151', stock: 10, price: 999.00, sku: 'LZPH-AP-SHT01-XL-GRY' }
-                ]
-            },
-            {
-                id: 6,
-                name: 'LAZAROPH Slide Comfort X1',
-                sku: 'LZPH-SL-X01',
-                description: 'Ultra-cushioned recovery athletic slides designed with contoured ergonomic footbed, waterproof textured strap, and anti-slip traction outsole.',
-                features: 'Molded dual-density CloudEVA footbed\nPadded synthetic leather upper strap\nDeep flex grooves for natural movement\nQuick-drying and waterproof',
-                materials: 'Hydrophobic EVA foam, Synthetic leather strap',
-                careInstructions: 'Rinse with fresh water. Avoid prolonged exposure to extreme heat/sun.',
-                price: 1399.00,
-                discountPrice: 1199.00,
-                categoryId: 3,
-                categoryName: 'Slides',
-                subcategory: 'Comfort Slides',
-                brandId: 1,
-                brandName: 'Nike',
-                gender: 'MEN',
-                sizeType: 'US_MEN_SHOES',
-                status: 'ACTIVE',
-                featured: true,
-                newArrival: true,
-                sale: true,
-                mainImageUrl: 'images/slide-comfort-x1.png',
-                totalStock: 50,
-                images: [
-                    { imageUrl: 'images/slide-comfort-x1.png', isMain: true, sortOrder: 1 }
-                ],
-                variants: [
-                    { id: 160, size: 'US 7', color: 'Onyx Black', colorHex: '#18181b', stock: 8, price: 1399.00, sku: 'LZPH-SL-X01-7-BLK' },
-                    { id: 161, size: 'US 8', color: 'Onyx Black', colorHex: '#18181b', stock: 10, price: 1399.00, sku: 'LZPH-SL-X01-8-BLK' },
-                    { id: 162, size: 'US 9', color: 'Onyx Black', colorHex: '#18181b', stock: 14, price: 1399.00, sku: 'LZPH-SL-X01-9-BLK' },
-                    { id: 163, size: 'US 10', color: 'Onyx Black', colorHex: '#18181b', stock: 12, price: 1399.00, sku: 'LZPH-SL-X01-10-BLK' },
-                    { id: 164, size: 'US 11', color: 'Onyx Black', colorHex: '#18181b', stock: 6, price: 1399.00, sku: 'LZPH-SL-X01-11-BLK' }
-                ]
-            },
-            {
-                id: 7,
-                name: 'LAZAROPH Sport Digital Stealth',
-                sku: 'LZPH-WT-DIG01',
-                description: 'Rugged military-grade sports digital watch with 50M water resistance, shock-proof resin armor, LED backlight, and multi-alarm chronograph.',
-                features: '50M Water Resistance\nHigh-luminescence EL backlight\n1/100 second precision stopwatch\nShock-resistant polymer chassis',
-                materials: 'Hardened mineral crystal glass, Resin shock case, Silicone strap',
-                careInstructions: 'Rinse with tap water after saltwater swimming. Do not press buttons underwater.',
-                price: 1899.00,
-                discountPrice: null,
-                categoryId: 4,
-                categoryName: 'Watches',
-                subcategory: 'Digital Watches',
-                brandId: 1,
-                brandName: 'Nike',
-                gender: 'MEN',
-                sizeType: 'STANDARD',
-                status: 'ACTIVE',
-                featured: false,
-                newArrival: true,
-                sale: false,
-                mainImageUrl: 'images/sport-digital-stealth-main.png',
-                totalStock: 30,
-                images: [
-                    { imageUrl: 'images/sport-digital-stealth-main.png', isMain: true, sortOrder: 1 }
-                ],
-                variants: [
-                    { id: 170, size: 'One Size', color: 'Stealth Black', colorHex: '#09090b', stock: 30, price: 1899.00, sku: 'LZPH-WT-DIG01-OS' }
-                ]
-            },
-            {
-                id: 8,
-                name: 'LAZAROPH Classic Timepiece',
-                sku: 'LZPH-WT-CLS01',
-                description: 'Refined minimalist stainless steel chronograph watch with date display, Japanese quartz movement, and premium sapphire-coated crystal glass.',
-                features: 'Precision Japanese Quartz Movement\n316L Surgical-Grade Stainless Steel\nScratch-resistant sapphire coating\nWater resistant to 3 ATM',
-                materials: 'Solid 316L stainless steel, Sapphire crystal glass',
-                careInstructions: 'Wipe with microfiber jewelry cloth. Keep away from strong magnetic fields.',
-                price: 3499.00,
-                discountPrice: null,
-                categoryId: 4,
-                categoryName: 'Watches',
-                subcategory: 'Chronograph',
-                brandId: 1,
-                brandName: 'Nike',
-                gender: 'MEN',
-                sizeType: 'STANDARD',
-                status: 'ACTIVE',
-                featured: true,
-                newArrival: false,
-                sale: false,
-                mainImageUrl: 'images/classic-time-black-main.png',
-                totalStock: 15,
-                images: [
-                    { imageUrl: 'images/classic-time-black-main.png', isMain: true, sortOrder: 1 }
-                ],
-                variants: [
-                    { id: 180, size: 'One Size', color: 'Silver / Black Dial', colorHex: '#d4d4d8', stock: 15, price: 3499.00, sku: 'LZPH-WT-CLS01-OS' }
-                ]
-            },
-            {
-                id: 9,
-                name: 'LAZAROPH Pro Elite Custom Jersey',
-                sku: 'LZPH-CS-JER01',
-                description: 'Professional custom sublimated basketball jersey. Personalize with your Team Name, Player Name, and Number with breathable diamond-mesh fabric.',
-                features: 'HD Full-Sublimation non-fading print\nDiamond-mesh moisture management\nReinforced neck and armhole ribbing\nFull 2D Live Studio Preview',
-                materials: '100% Pro Sublimation Micro-Mesh Polyester (220 GSM)',
-                careInstructions: 'Machine wash warm inside-out. Do not iron directly on print.',
-                price: 1199.00,
-                discountPrice: null,
-                categoryId: 5,
-                categoryName: 'Customized',
-                subcategory: 'Custom Uniforms',
-                brandId: 1,
-                brandName: 'Nike',
-                gender: 'MEN',
-                sizeType: 'APPAREL_SIZE',
-                status: 'ACTIVE',
-                featured: true,
-                newArrival: true,
-                sale: false,
-                mainImageUrl: 'images/perf-jersey-black-main.png',
-                totalStock: 999,
-                images: [
-                    { imageUrl: 'images/perf-jersey-black-main.png', isMain: true, sortOrder: 1 }
-                ],
-                variants: [
-                    { id: 190, size: 'S', color: 'Custom Print', colorHex: '#ffb800', stock: 100, price: 1199.00, sku: 'LZPH-CS-JER01-S' },
-                    { id: 191, size: 'M', color: 'Custom Print', colorHex: '#ffb800', stock: 150, price: 1199.00, sku: 'LZPH-CS-JER01-M' },
-                    { id: 192, size: 'L', color: 'Custom Print', colorHex: '#ffb800', stock: 200, price: 1199.00, sku: 'LZPH-CS-JER01-L' },
-                    { id: 193, size: 'XL', color: 'Custom Print', colorHex: '#ffb800', stock: 150, price: 1199.00, sku: 'LZPH-CS-JER01-XL' },
-                    { id: 194, size: '2XL', color: 'Custom Print', colorHex: '#ffb800', stock: 100, price: 1199.00, sku: 'LZPH-CS-JER01-2XL' }
-                ]
-            }
-        ];
-    },
+    getInitialProducts() { return []; },
 
     getProducts() {
         const saved = localStorage.getItem('lazaroph_offline_products');
@@ -409,21 +97,7 @@ const FallbackStore = {
         this.saveProducts(products);
     },
 
-    getInitialBrands() {
-        return [
-            { id: 1, name: 'Nike', slug: 'nike', logoUrl: 'images/brand-nike.png', description: 'World-renowned athletic sportswear, signature sneakers, and performance apparel.', status: 'ACTIVE', productCount: 4 },
-            { id: 2, name: 'Jordan', slug: 'jordan', logoUrl: 'images/brand-jordan.png', description: 'Signature basketball legacy, retro high-tops, and iconic Jumpman apparel.', status: 'ACTIVE', productCount: 2 },
-            { id: 3, name: 'Adidas', slug: 'adidas', logoUrl: 'images/brand-adidas.png', description: 'Iconic 3-stripes sportswear, Originals lifestyle kicks, and boost comfort.', status: 'ACTIVE', productCount: 3 },
-            { id: 4, name: 'New Balance', slug: 'new-balance', logoUrl: 'images/brand-nb.png', description: 'Heritage running lifestyle, dad shoes, and superior arch support footwear.', status: 'ACTIVE', productCount: 1 },
-            { id: 5, name: 'HOKA', slug: 'hoka', logoUrl: 'images/brand-hoka.png', description: 'Maximalist cushioned road running shoes, trail runners, and recovery slides.', status: 'ACTIVE', productCount: 1 },
-            { id: 6, name: 'On', slug: 'on', logoUrl: 'images/brand-on.png', description: 'Swiss-engineered CloudTec running shoes, ultralight performance footwear, and apparel.', status: 'ACTIVE', productCount: 1 },
-            { id: 7, name: 'Puma', slug: 'puma', logoUrl: 'images/brand-puma.png', description: 'Forever faster athletic footwear, football gear, and casual street trainers.', status: 'ACTIVE', productCount: 1 },
-            { id: 8, name: 'Asics', slug: 'asics', logoUrl: 'images/brand-asics.png', description: 'Japanese performance running shoes, GEL cushioning, and ergonomic trainers.', status: 'ACTIVE', productCount: 1 },
-            { id: 9, name: 'Birkenstock', slug: 'birkenstock', logoUrl: 'images/brand-birkenstock.png', description: 'Iconic German anatomical cork footbed sandals, Boston clogs, and slides.', status: 'ACTIVE', productCount: 1 },
-            { id: 10, name: 'Crocs', slug: 'crocs', logoUrl: 'images/brand-crocs.png', description: 'Croslite comfort clogs, all-terrain sandals, and custom Jibbitz accessories.', status: 'ACTIVE', productCount: 1 },
-            { id: 11, name: 'Converse', slug: 'converse', logoUrl: 'images/brand-converse.png', description: 'Timeless Chuck Taylor All Stars, canvas skate shoes, and street culture.', status: 'ACTIVE', productCount: 1 }
-        ];
-    },
+    getInitialBrands() { return []; },
 
     getBrands() {
         const saved = localStorage.getItem('lazaroph_offline_brands');
@@ -1171,7 +845,7 @@ const FallbackStore = {
                 senderId: 2,
                 senderName: 'Customer',
                 senderRole: 'CUSTOMER',
-                message: req.message || '💳 [PROOF OF PAYMENT] Receipt submitted for order verification.',
+                message: req.message || ' [PROOF OF PAYMENT] Receipt submitted for order verification.',
                 imageUrl: req.imageData,
                 messageType: req.messageType || 'PAYMENT_PROOF',
                 createdAt: new Date().toISOString()
@@ -1182,7 +856,7 @@ const FallbackStore = {
             return {
                 id: Date.now(),
                 senderRole: 'ADMIN',
-                message: '✅ PAYMENT VERIFIED & CONFIRMED: Payment receipt has been verified by Administrator.',
+                message: ' PAYMENT VERIFIED & CONFIRMED: Payment receipt has been verified by Administrator.',
                 messageType: 'PAYMENT_VERIFIED',
                 createdAt: new Date().toISOString()
             };
@@ -1446,7 +1120,7 @@ const API = {
                     <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #f59e0b;"></span>
                     <span><strong>Local Preview Mode:</strong> Backend server (port 8080) is offline. Showing authentic cached catalog.</span>
                     <button class="btn btn-secondary btn-sm" style="padding: 2px 8px; font-size: 0.75rem; background: #1e293b; color: #ffffff; border: 1px solid #334155; cursor: pointer; border-radius: 4px;" onclick="API.retryConnection()">
-                        🔄 Reconnect Server
+                         Reconnect Server
                     </button>
                 </div>
             `;
@@ -2055,7 +1729,7 @@ function showToast(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     
-    let iconSvg = type === 'success' ? '✓' : (type === 'error' ? '✕' : 'ℹ');
+    let iconSvg = type === 'success' ? '' : (type === 'error' ? '' : 'ℹ');
     toast.innerHTML = `<strong>${iconSvg}</strong> <span>${message}</span>`;
     container.appendChild(toast);
 

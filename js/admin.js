@@ -77,14 +77,14 @@ const Admin = {
             modal.innerHTML = `
                 <div class="admin-delete-modal-card">
                     <div class="admin-delete-modal-header">
-                        <div class="admin-delete-modal-icon">🗑️</div>
+                        <div class="admin-delete-modal-icon"></div>
                         <h3 class="admin-delete-modal-title">${safeTitle}</h3>
                     </div>
                     <div class="admin-delete-modal-body">
                         <p style="margin: 0; font-size: 0.95rem; color: #ffffff; font-weight: 600;">${safeMessage}</p>
                         ${safeWarning ? `
                             <div class="admin-delete-modal-warning-tag">
-                                <span>⚠️</span>
+                                <span></span>
                                 <span>${safeWarning}</span>
                             </div>
                         ` : ''}
@@ -296,13 +296,13 @@ const Admin = {
                             <div class="kpi-icon">₱</div>
                         </div>
                         <div class="kpi-value" style="color: #10b981;">${formatMoney(stats.totalSales)}</div>
-                        <div class="kpi-footer-hint">📊 View itemized sales breakdown →</div>
+                        <div class="kpi-footer-hint"> View itemized sales breakdown →</div>
                     </div>
 
                     <div class="kpi-card kpi-card-clickable kpi-orders" onclick="Admin.switchTab('orders')" title="Click to view Customer Orders">
                         <div class="kpi-header">
                             <span class="kpi-title">Total Orders</span>
-                            <div class="kpi-icon">📦</div>
+                            <div class="kpi-icon"></div>
                         </div>
                         <div class="kpi-value">${stats.totalOrders}</div>
                         <div class="kpi-footer-hint">Manage all orders →</div>
@@ -311,7 +311,7 @@ const Admin = {
                     <div class="kpi-card kpi-card-clickable kpi-customers" onclick="Admin.switchTab('customers')" title="Click to view Registered Customers">
                         <div class="kpi-header">
                             <span class="kpi-title">Registered Customers</span>
-                            <div class="kpi-icon">👥</div>
+                            <div class="kpi-icon"></div>
                         </div>
                         <div class="kpi-value">${stats.totalCustomers}</div>
                         <div class="kpi-footer-hint">View customer directory →</div>
@@ -320,7 +320,7 @@ const Admin = {
                     <div class="kpi-card kpi-card-clickable" onclick="Admin.switchTab('products')" title="Click to view Live Products">
                         <div class="kpi-header">
                             <span class="kpi-title">Live Products</span>
-                            <div class="kpi-icon">👟</div>
+                            <div class="kpi-icon"></div>
                         </div>
                         <div class="kpi-value">${stats.totalProducts}</div>
                         <div class="kpi-footer-hint">Manage catalog items →</div>
@@ -479,9 +479,9 @@ const Admin = {
         } catch (err) {
             container.innerHTML = `
                 <div style="color: var(--color-danger); padding: 40px; text-align: center;">
-                    <div style="font-size: 1.8rem; margin-bottom: 8px;">⚠️</div>
+                    <div style="font-size: 1.8rem; margin-bottom: 8px;"></div>
                     <div style="font-weight: 700; margin-bottom: 8px;">Failed to load products: ${err.message}</div>
-                    <button class="btn btn-secondary btn-sm" onclick="Admin.loadProducts(document.getElementById('admin-content-area'))">🔄 Retry</button>
+                    <button class="btn btn-secondary btn-sm" onclick="Admin.loadProducts(document.getElementById('admin-content-area'))"> Retry</button>
                 </div>
             `;
         }
@@ -607,7 +607,7 @@ const Admin = {
                                         + Add Brand
                                     </button>
                                     <button type="button" class="btn btn-danger btn-sm" style="font-size: 0.72rem; padding: 2px 8px; font-weight: 800; text-transform: uppercase;" onclick="Admin.deleteCurrentProductBrand()" title="Delete currently selected brand">
-                                        🗑️ Delete
+                                         Delete
                                     </button>
                                 </div>
                             </div>
@@ -615,8 +615,8 @@ const Admin = {
                                 ${(this.brands || []).filter(b => b.status === 'ACTIVE' || b.id == p.brandId).map(b => `
                                     <option value="${b.id}" ${p.brandId == b.id ? 'selected' : ''}>${b.name}</option>
                                 `).join('')}
-                                <option value="__ADD_NEW__" style="font-weight: 800; color: #000000; background: #f3f4f6;">➕ + Add Brand...</option>
-                                <option value="__DELETE_CURRENT__" style="font-weight: 800; color: #dc2626; background: #fee2e2;">🗑️ - Delete Selected Brand</option>
+                                <option value="__ADD_NEW__" style="font-weight: 800; color: #000000; background: #f3f4f6;"> + Add Brand...</option>
+                                <option value="__DELETE_CURRENT__" style="font-weight: 800; color: #dc2626; background: #fee2e2;"> - Delete Selected Brand</option>
                             </select>
                         </div>
                     </div>
@@ -671,7 +671,7 @@ const Admin = {
                         <div style="display: flex; gap: 8px;">
                             <input type="file" id="prod-file-upload-input" accept="image/*" multiple style="display: none;" onchange="Admin.handleProductMultipleFileUpload(this)">
                             <button type="button" class="btn btn-primary btn-sm" style="font-size: 0.75rem; font-weight: 800;" onclick="document.getElementById('prod-file-upload-input').click()">
-                                📁 Browse Device Photos
+                                 Browse Device Photos
                             </button>
                             <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; font-weight: 800;" onclick="Admin.addImageUrlPrompt()">
                                 + Add Image URL
@@ -688,7 +688,7 @@ const Admin = {
                          ondragover="event.preventDefault(); this.classList.add('dragover')"
                          ondragleave="this.classList.remove('dragover')"
                          ondrop="event.preventDefault(); this.classList.remove('dragover'); Admin.handleDropFiles(event.dataTransfer.files)">
-                        <div class="dropzone-icon">📷</div>
+                        <div class="dropzone-icon"></div>
                         <div class="dropzone-title">Click to upload photos or drag &amp; drop here</div>
                         <div class="dropzone-sub">Supports PNG, JPG, WebP, SVG files from your device</div>
                     </div>
@@ -699,7 +699,7 @@ const Admin = {
                     </div>
 
                     <div style="margin-top: 10px; font-size: 0.8rem; color: #9ca3af;">
-                        💡 <em>Tip: The first image with the black "★ MAIN COVER" badge will be the primary catalog display photo. Click "Set Main" on any image to switch.</em>
+                         <em>Tip: The first image with the black " MAIN COVER" badge will be the primary catalog display photo. Click "Set Main" on any image to switch.</em>
                     </div>
                 </div>
 
@@ -745,7 +745,7 @@ const Admin = {
                 <!-- Submit Button -->
                 <div style="margin-top: 30px; display: flex; gap: 16px;">
                     <button type="submit" class="btn btn-primary btn-lg" id="btn-save-product">
-                        💾 SAVE PRODUCT TO STORE
+                         SAVE PRODUCT TO STORE
                     </button>
                     <button type="button" class="btn btn-secondary btn-lg" onclick="Admin.switchTab('products')">
                         Cancel
@@ -777,7 +777,7 @@ const Admin = {
 
             return `
                 <div class="admin-image-card ${isMain ? 'is-main' : ''}">
-                    ${isMain ? `<span class="admin-image-main-badge">★ MAIN COVER</span>` : ''}
+                    ${isMain ? `<span class="admin-image-main-badge"> MAIN COVER</span>` : ''}
                     <div class="admin-image-card-thumb">
                         <img src="${url}" alt="Product Photo ${i + 1}" onerror="this.src='images/placeholder-product.png'">
                     </div>
@@ -788,7 +788,7 @@ const Admin = {
                             </button>
                         ` : '<span style="font-weight: 800; font-size: 0.68rem; color: #000;">Primary</span>'}
                         <button type="button" class="btn btn-danger btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.removeImageCard(${i})" title="Delete image">
-                            🗑️
+                            
                         </button>
                     </div>
                 </div>
@@ -1004,7 +1004,7 @@ const Admin = {
             showToast(err.message, 'error');
             if (btn) {
                 btn.disabled = false;
-                btn.textContent = '💾 SAVE PRODUCT TO STORE';
+                btn.textContent = ' SAVE PRODUCT TO STORE';
             }
         }
     },
@@ -1168,7 +1168,7 @@ const Admin = {
                                             </td>
                                             <td>
                                                 <strong style="color: #000000;">${o.customerName}</strong>
-                                                <div style="font-size: 0.8rem; color: #4b5563;">📞 ${o.customerPhone}</div>
+                                                <div style="font-size: 0.8rem; color: #4b5563;"> ${o.customerPhone}</div>
                                                 <div style="font-size: 0.75rem; color: #6b7280;">${o.shippingCity || 'Marikina'}</div>
                                             </td>
                                             <td>
@@ -1200,13 +1200,13 @@ const Admin = {
                                             <td>
                                                 <div style="display: flex; flex-direction: column; gap: 4px; min-width: 120px;">
                                                     <button class="btn btn-secondary btn-sm" style="font-size: 0.75rem; font-weight: 800; border: 1.5px solid #000000; background: #ffffff; color: #000000; padding: 4px 8px;" onclick="Admin.openDeliveryModal('${o.id}')">
-                                                        🚚 Delivery Info
+                                                         Delivery Info
                                                     </button>
                                                     <button class="btn btn-primary btn-sm" style="font-size: 0.75rem; font-weight: 800; background: #000000; color: #ffffff; padding: 4px 8px;" onclick="Admin.openCustomerChat('${o.id}', '${o.orderNumber}')">
-                                                        💬 Chat
+                                                         Chat
                                                     </button>
                                                     <button class="btn btn-sm" style="font-size: 0.75rem; font-weight: 800; background: rgba(220,38,38,0.1); color: #dc2626; border: 1px solid rgba(220,38,38,0.3); padding: 4px 8px;" onclick="Admin.handleDeleteOrder('${o.id}', this)">
-                                                        🗑️ Delete
+                                                         Delete
                                                     </button>
                                                 </div>
                                             </td>
@@ -1276,8 +1276,8 @@ const Admin = {
                 <div class="modal-overlay" id="modal-delivery-manage" style="display: flex;" onclick="if(event.target === this) Admin.closeDeliveryModal()">
                     <div class="modal-container" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
                         <div class="modal-header">
-                            <h3 class="modal-title">🚚 Delivery Management — #${order.orderNumber}</h3>
-                            <button type="button" class="modal-close" onclick="Admin.closeDeliveryModal()">✕</button>
+                            <h3 class="modal-title"> Delivery Management — #${order.orderNumber}</h3>
+                            <button type="button" class="modal-close" onclick="Admin.closeDeliveryModal()"></button>
                         </div>
                         <div class="modal-body delivery-modal-body">
                             <form id="form-delivery-manage" onsubmit="Admin.saveDeliveryModalForm(event, '${order.id}')">
@@ -1285,9 +1285,9 @@ const Admin = {
                                 <div class="form-group">
                                     <label class="form-label" style="font-weight: 800; color: #000000;">Delivery Method *</label>
                                     <select class="form-control" id="adm-del-courier" onchange="Admin.toggleDeliveryModalFields(this.value)">
-                                        <option value="LALAMOVE" ${courier === 'LALAMOVE' ? 'selected' : ''}>🚚 Lalamove (Same-Day / On-Demand)</option>
-                                        <option value="LBC" ${courier === 'LBC' ? 'selected' : ''}>📦 LBC Express (Nationwide Shipping)</option>
-                                        <option value="STORE_PICKUP" ${courier === 'STORE_PICKUP' ? 'selected' : ''}>🏪 Store Pickup (Marikina Hub)</option>
+                                        <option value="LALAMOVE" ${courier === 'LALAMOVE' ? 'selected' : ''}> Lalamove (Same-Day / On-Demand)</option>
+                                        <option value="LBC" ${courier === 'LBC' ? 'selected' : ''}> LBC Express (Nationwide Shipping)</option>
+                                        <option value="STORE_PICKUP" ${courier === 'STORE_PICKUP' ? 'selected' : ''}> Store Pickup (Marikina Hub)</option>
                                     </select>
                                 </div>
 
@@ -1308,7 +1308,7 @@ const Admin = {
                                 <!-- 3. Lalamove Rider Details -->
                                 <div id="adm-del-lalamove-box" style="display: ${courier === 'LALAMOVE' ? 'block' : 'none'}; background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 6px; padding: 14px; margin-bottom: 16px;">
                                     <div style="font-size: 0.82rem; font-weight: 800; color: #b45309; text-transform: uppercase; margin-bottom: 10px;">
-                                        🚚 Lalamove Rider Assignment
+                                         Lalamove Rider Assignment
                                     </div>
                                     <div class="form-grid-2">
                                         <div class="form-group">
@@ -1329,7 +1329,7 @@ const Admin = {
                                 <!-- 4. LBC Details -->
                                 <div id="adm-del-lbc-box" style="display: ${courier === 'LBC' ? 'block' : 'none'}; background: #fff5f5; border: 1.5px solid #fecaca; border-radius: 6px; padding: 14px; margin-bottom: 16px;">
                                     <div style="font-size: 0.82rem; font-weight: 800; color: #991b1b; text-transform: uppercase; margin-bottom: 10px;">
-                                        📦 LBC Shipping &amp; Tracking
+                                         LBC Shipping &amp; Tracking
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label">LBC Tracking Number (AWB)</label>
@@ -1371,7 +1371,7 @@ const Admin = {
 
                                 <div style="display: flex; gap: 10px; margin-top: 20px;">
                                     <button type="submit" class="btn btn-primary btn-block" style="flex: 2; padding: 12px; font-weight: 800;">
-                                        💾 SAVE DELIVERY &amp; NOTIFY CUSTOMER
+                                         SAVE DELIVERY &amp; NOTIFY CUSTOMER
                                     </button>
                                     <button type="button" class="btn btn-secondary" style="flex: 1; padding: 12px; font-weight: 700;" onclick="Admin.closeDeliveryModal()">
                                         Cancel
@@ -1473,7 +1473,7 @@ const Admin = {
                     <!-- Column 1: Conversations List -->
                     <div class="admin-chat-sidebar">
                         <div class="admin-chat-search">
-                            <input type="text" class="form-control" placeholder="🔍 Search customer or order #..." oninput="Admin.handleChatSearch(this.value)" style="font-size: 0.85rem; padding: 8px 12px; border-radius: 4px;">
+                            <input type="text" class="form-control" placeholder=" Search customer or order #..." oninput="Admin.handleChatSearch(this.value)" style="font-size: 0.85rem; padding: 8px 12px; border-radius: 4px;">
                         </div>
                         <div class="admin-conv-list" id="admin-conv-list-items">
                             ${this.renderConversationListHtml()}
@@ -1483,7 +1483,7 @@ const Admin = {
                     <!-- Column 2: Active Chat Feed -->
                     <div class="admin-chat-main" id="admin-chat-main-area">
                         <div style="margin: auto; text-align: center; color: #6b7280; padding: 40px;">
-                            <div style="font-size: 2.5rem; margin-bottom: 8px;">💬</div>
+                            <div style="font-size: 2.5rem; margin-bottom: 8px;"></div>
                             <h3 style="color: #000000; font-size: 1.1rem; margin-bottom: 4px;">Select a Conversation</h3>
                             <p style="font-size: 0.85rem;">Click any customer on the left to review messages, send delivery fees, and dispatch notifications.</p>
                         </div>
@@ -1585,7 +1585,7 @@ const Admin = {
                 return `
                     <div class="chat-bubble-row system">
                         <div class="chat-bubble">
-                            <strong>📢 SYSTEM NOTIFICATION:</strong><br>${esc(m.message)}
+                            <strong> SYSTEM NOTIFICATION:</strong><br>${esc(m.message)}
                         </div>
                         <div class="chat-meta">${timeStr}</div>
                     </div>
@@ -1612,15 +1612,15 @@ const Admin = {
 
             let bubbleContent = '';
             if (isPaymentProof) {
-                bubbleContent += '<div style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 0.68rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-bottom: 4px; display: inline-flex; align-items: center; gap: 4px;">💳 PROOF OF PAYMENT</div>';
+                bubbleContent += '<div style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 0.68rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-bottom: 4px; display: inline-flex; align-items: center; gap: 4px;"> PROOF OF PAYMENT</div>';
             }
             if (m.message && m.message.trim() !== '') {
                 bubbleContent += `<div class="chat-text">${esc(m.message.trim())}</div>`;
             }
             if (hasImage) {
-                bubbleContent += `<div class="admin-chat-image-preview" onclick="Chat ? Chat.openLightbox('${esc(m.imageUrl)}') : window.open('${esc(m.imageUrl)}', '_blank')"><img src="${esc(m.imageUrl)}" alt="Attachment / Receipt" loading="lazy"><div style="padding: 3px 6px; font-size: 0.65rem; color: #cbd5e1; display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.85);"><span>🔍 Inspect</span><span style="color: #38bdf8; font-weight: 700;">ENLARGE</span></div></div>`;
+                bubbleContent += `<div class="admin-chat-image-preview" onclick="Chat ? Chat.openLightbox('${esc(m.imageUrl)}') : window.open('${esc(m.imageUrl)}', '_blank')"><img src="${esc(m.imageUrl)}" alt="Attachment / Receipt" loading="lazy"><div style="padding: 3px 6px; font-size: 0.65rem; color: #cbd5e1; display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.85);"><span> Inspect</span><span style="color: #38bdf8; font-weight: 700;">ENLARGE</span></div></div>`;
                 if (isPaymentProof) {
-                    bubbleContent += '<button type="button" class="btn-verify-payment-chip" onclick="Admin.openAdminPaymentVerifyModal()">💳 Double Confirm: Verify Payment</button>';
+                    bubbleContent += '<button type="button" class="btn-verify-payment-chip" onclick="Admin.openAdminPaymentVerifyModal()"> Double Confirm: Verify Payment</button>';
                 }
             }
 
@@ -1657,7 +1657,7 @@ const Admin = {
                         <div>
                             ${conv.orderId ? `
                                 <button class="btn btn-secondary btn-sm" style="font-size: 0.75rem; font-weight: 800; border: 1px solid #000000;" onclick="Admin.openDeliveryModal('${conv.orderId}')">
-                                    🚚 Manage Delivery
+                                     Manage Delivery
                                 </button>
                             ` : ''}
                         </div>
@@ -1669,11 +1669,11 @@ const Admin = {
 
                     <!-- Quick Action Chips for Admin -->
                     <div class="admin-quick-actions">
-                        <span class="admin-action-chip" onclick="Admin.sendQuickAdminReply('Your delivery fee is confirmed at ₱150. Please confirm to proceed with dispatch.')">🚚 Confirm Fee ₱150</span>
-                        <span class="admin-action-chip" onclick="Admin.openAdminPaymentVerifyModal()">💳 Payment Verified</span>
-                        <span class="admin-action-chip" onclick="Admin.sendQuickAdminReply('Your Lalamove rider has been assigned and is on the way with your order.')">🏍️ Rider Dispatched</span>
-                        <span class="admin-action-chip" onclick="Admin.sendQuickAdminReply('Your package has been handed over to LBC Express. Tracking number will be active shortly.')">📦 LBC Handed Over</span>
-                        <span class="admin-action-chip" onclick="Admin.sendQuickAdminReply('Your order is now ready for pickup at our Marikina branch!')">🏪 Ready for Pickup</span>
+                        <span class="admin-action-chip" onclick="Admin.sendQuickAdminReply('Your delivery fee is confirmed at ₱150. Please confirm to proceed with dispatch.')"> Confirm Fee ₱150</span>
+                        <span class="admin-action-chip" onclick="Admin.openAdminPaymentVerifyModal()"> Payment Verified</span>
+                        <span class="admin-action-chip" onclick="Admin.sendQuickAdminReply('Your Lalamove rider has been assigned and is on the way with your order.')"> Rider Dispatched</span>
+                        <span class="admin-action-chip" onclick="Admin.sendQuickAdminReply('Your package has been handed over to LBC Express. Tracking number will be active shortly.')"> LBC Handed Over</span>
+                        <span class="admin-action-chip" onclick="Admin.sendQuickAdminReply('Your order is now ready for pickup at our Marikina branch!')"> Ready for Pickup</span>
                     </div>
 
                     <div class="admin-chat-footer">
@@ -1779,7 +1779,7 @@ const Admin = {
                     <div class="val" style="font-size: 1.05rem; font-weight: 900;">${formatMoney(order.total)}</div>
                 </div>
                 <button class="btn btn-secondary btn-block btn-sm" style="margin-top: 12px; font-weight: 800; border: 1.5px solid #000000;" onclick="Admin.openDeliveryModal('${order.id}')">
-                    🚚 Edit Delivery / Fee
+                     Edit Delivery / Fee
                 </button>
             ` : `
                 <div style="font-size: 0.82rem; color: #9ca3af;">No specific order tied to this conversation.</div>
@@ -1853,8 +1853,8 @@ const Admin = {
         modal.innerHTML = `
             <div class="chat-confirm-modal-card">
                 <div class="chat-confirm-modal-header" style="background: #0f172a;">
-                    <h3><span>💳</span> Double Confirmation: Verify Payment</h3>
-                    <button type="button" style="background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;" onclick="Admin.closeAdminPaymentVerifyModal()">✕</button>
+                    <h3><span></span> Double Confirmation: Verify Payment</h3>
+                    <button type="button" style="background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;" onclick="Admin.closeAdminPaymentVerifyModal()"></button>
                 </div>
                 <div class="chat-confirm-modal-body">
                     <div style="background: #ecfdf5; border: 1.5px solid #a7f3d0; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px;">
@@ -1874,7 +1874,7 @@ const Admin = {
                     </div>
 
                     <div style="background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 8px; padding: 10px 12px; font-size: 0.78rem; color: #92400e; line-height: 1.45;">
-                        <strong>⚠️ What happens next:</strong>
+                        <strong> What happens next:</strong>
                         <ul style="margin: 4px 0 0 16px; padding: 0;">
                             <li>Updates Order status to <strong style="color: #15803d;">PAID</strong></li>
                             <li>Sends official verified announcement into this chat</li>
@@ -1885,7 +1885,7 @@ const Admin = {
                 <div class="chat-confirm-modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="Admin.closeAdminPaymentVerifyModal()">Cancel</button>
                     <button type="button" id="btn-admin-verify-confirm" class="btn btn-sm" style="background: #10b981; color: #ffffff; font-weight: 800; padding: 8px 18px; border: none; border-radius: 6px; cursor: pointer;" onclick="Admin.executePaymentVerification()">
-                        ✓ Yes, Confirm & Mark Paid
+                         Yes, Confirm & Mark Paid
                     </button>
                 </div>
             </div>
@@ -1922,7 +1922,7 @@ const Admin = {
             showToast(err.message || 'Failed to verify payment', 'error');
             if (btn) {
                 btn.disabled = false;
-                btn.innerHTML = `✓ Yes, Confirm & Mark Paid`;
+                btn.innerHTML = ` Yes, Confirm & Mark Paid`;
             }
         }
     },
@@ -1983,8 +1983,8 @@ const Admin = {
         modal.innerHTML = `
             <div class="chat-confirm-modal-card">
                 <div class="chat-confirm-modal-header">
-                    <h3><span>📎</span> Double Confirmation: Send Image Attachment</h3>
-                    <button type="button" style="background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;" onclick="Admin.closeAdminUploadConfirmModal()">✕</button>
+                    <h3><span></span> Double Confirmation: Send Image Attachment</h3>
+                    <button type="button" style="background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;" onclick="Admin.closeAdminUploadConfirmModal()"></button>
                 </div>
                 <div class="chat-confirm-modal-body">
                     <div style="font-size: 0.82rem; color: #374151; margin-bottom: 10px;">
@@ -2001,7 +2001,7 @@ const Admin = {
                 <div class="chat-confirm-modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="Admin.closeAdminUploadConfirmModal()">Cancel</button>
                     <button type="button" id="btn-admin-confirm-upload" class="btn btn-sm" style="background: #000000; color: #ffffff; font-weight: 800; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;" onclick="Admin.submitAdminChatAttachment()">
-                        ✓ Confirm & Send Image
+                         Confirm & Send Image
                     </button>
                 </div>
             </div>
@@ -2046,7 +2046,7 @@ const Admin = {
             showToast(err.message || 'Failed to send image attachment', 'error');
             if (btn) {
                 btn.disabled = false;
-                btn.innerHTML = `✓ Confirm & Send Image`;
+                btn.innerHTML = ` Confirm & Send Image`;
             }
         }
     },
@@ -2135,7 +2135,7 @@ const Admin = {
                 </head>
                 <body>
                     <div class="no-print" style="text-align: center; margin-bottom: 15px;">
-                        <button onclick="window.print()" style="padding: 10px 20px; font-weight: bold; background: #dc2626; color: #fff; border: none; border-radius: 4px; cursor: pointer;">🖨️ PRINT THERMAL WAYBILL (AWB)</button>
+                        <button onclick="window.print()" style="padding: 10px 20px; font-weight: bold; background: #dc2626; color: #fff; border: none; border-radius: 4px; cursor: pointer;"> PRINT THERMAL WAYBILL (AWB)</button>
                     </div>
                     <div class="waybill-box">
                         <div class="header">
@@ -2269,7 +2269,7 @@ const Admin = {
                                                     <option value="COMPLETED" ${co.status === 'COMPLETED' ? 'selected' : ''}>Completed</option>
                                                 </select>
                                                 <button type="button" class="btn btn-sm" style="font-size: 0.75rem; padding: 4px 8px; background: rgba(220,38,38,0.1); color: #dc2626; border: 1px solid rgba(220,38,38,0.3);" onclick="Admin.handleDeleteCustomOrder('${co.id}', this)" title="Delete custom order">
-                                                    🗑️
+                                                    
                                                 </button>
                                             </div>
                                         </td>
@@ -2364,7 +2364,7 @@ const Admin = {
                                         <td>${new Date(u.createdAt || Date.now()).toLocaleDateString()}</td>
                                         <td style="text-align: right;">
                                             <button class="btn btn-secondary btn-sm" style="color: var(--color-danger); font-weight: 700;" onclick="Admin.handleDeleteCustomer('${u.id || u.uid}', this)" title="Delete Customer Account">
-                                                🗑️ Delete
+                                                 Delete
                                             </button>
                                         </td>
                                     </tr>
@@ -2449,7 +2449,7 @@ const Admin = {
                                 <input type="password" class="form-control" id="settings-admin-password" placeholder="Leave blank to keep current password">
                             </div>
                             <button type="submit" class="btn btn-primary btn-block" id="btn-save-admin-profile" style="margin-top: 10px;">
-                                💾 UPDATE ADMIN PROFILE &amp; NUMBER
+                                 UPDATE ADMIN PROFILE &amp; NUMBER
                             </button>
                         </form>
                     </div>
@@ -2477,7 +2477,7 @@ const Admin = {
                                     <label class="form-label" style="margin-bottom: 0;">GCash QR Code Image</label>
                                     <input type="file" id="upload-gcash-qr-input" accept="image/*" style="display: none;" onchange="Admin.handleQrUpload(this, 'settings-gcash-qr', 'prev-gcash-qr')">
                                     <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; font-weight: 800;" onclick="document.getElementById('upload-gcash-qr-input').click()">
-                                        📁 Upload GCash QR Image
+                                         Upload GCash QR Image
                                     </button>
                                 </div>
                                 <div style="display: flex; gap: 12px; align-items: center;">
@@ -2509,7 +2509,7 @@ const Admin = {
                                     <label class="form-label" style="margin-bottom: 0;">Maya / QR Ph Image</label>
                                     <input type="file" id="upload-maya-qr-input" accept="image/*" style="display: none;" onchange="Admin.handleQrUpload(this, 'settings-maya-qr', 'prev-maya-qr')">
                                     <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; font-weight: 800;" onclick="document.getElementById('upload-maya-qr-input').click()">
-                                        📁 Upload Maya QR Image
+                                         Upload Maya QR Image
                                     </button>
                                 </div>
                                 <div style="display: flex; gap: 12px; align-items: center;">
@@ -2530,7 +2530,7 @@ const Admin = {
                                     <label class="form-label" style="margin-bottom: 0;">BDO Bank Account &amp; QR Ph</label>
                                     <input type="file" id="upload-bdo-qr-input" accept="image/*" style="display: none;" onchange="Admin.handleQrUpload(this, 'settings-bdo-qr', 'prev-bdo-qr')">
                                     <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; font-weight: 800;" onclick="document.getElementById('upload-bdo-qr-input').click()">
-                                        📁 Upload BDO QR Image
+                                         Upload BDO QR Image
                                     </button>
                                 </div>
                                 <div class="form-grid-2" style="margin-bottom: 8px;">
@@ -2552,7 +2552,7 @@ const Admin = {
                                     <label class="form-label" style="margin-bottom: 0;">BPI Bank Account &amp; QR Ph</label>
                                     <input type="file" id="upload-bpi-qr-input" accept="image/*" style="display: none;" onchange="Admin.handleQrUpload(this, 'settings-bpi-qr', 'prev-bpi-qr')">
                                     <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; font-weight: 800;" onclick="document.getElementById('upload-bpi-qr-input').click()">
-                                        📁 Upload BPI QR Image
+                                         Upload BPI QR Image
                                     </button>
                                 </div>
                                 <div class="form-grid-2" style="margin-bottom: 8px;">
@@ -2580,7 +2580,7 @@ const Admin = {
                                 <span style="font-size: 0.75rem; color: #6b7280; display: block; margin-top: 4px;">Official store contact phone shown on customer receipts, invoices, and tracking pages.</span>
                             </div>
                             <button type="submit" class="btn btn-primary btn-block" id="btn-save-store-settings" style="margin-top: 14px; background: #000000; color: #ffffff; font-weight: 800;">
-                                💾 SAVE PAYMENT, QR CODES &amp; HOTLINE
+                                 SAVE PAYMENT, QR CODES &amp; HOTLINE
                             </button>
                         </form>
                     </div>
@@ -2639,7 +2639,7 @@ const Admin = {
         } finally {
             if (btn) {
                 btn.disabled = false;
-                btn.textContent = '💾 UPDATE ADMIN PROFILE & NUMBER';
+                btn.textContent = ' UPDATE ADMIN PROFILE & NUMBER';
             }
         }
     },
@@ -2685,7 +2685,7 @@ const Admin = {
         } finally {
             if (btn) {
                 btn.disabled = false;
-                btn.textContent = '💾 SAVE PAYMENT, QR CODES & HOTLINE';
+                btn.textContent = ' SAVE PAYMENT, QR CODES & HOTLINE';
             }
         }
     },
@@ -2721,19 +2721,19 @@ const Admin = {
                 <!-- Brand KPI Summary -->
                 <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 24px;">
                     <div class="kpi-card">
-                        <div class="kpi-header"><span class="kpi-title">Total Brands</span><div class="kpi-icon">🏷️</div></div>
+                        <div class="kpi-header"><span class="kpi-title">Total Brands</span><div class="kpi-icon"></div></div>
                         <div class="kpi-value">${brands.length}</div>
                     </div>
                     <div class="kpi-card">
-                        <div class="kpi-header"><span class="kpi-title">Active Brands</span><div class="kpi-icon">🟢</div></div>
+                        <div class="kpi-header"><span class="kpi-title">Active Brands</span><div class="kpi-icon"></div></div>
                         <div class="kpi-value">${activeCount}</div>
                     </div>
                     <div class="kpi-card">
-                        <div class="kpi-header"><span class="kpi-title">Inactive Brands</span><div class="kpi-icon">⚪</div></div>
+                        <div class="kpi-header"><span class="kpi-title">Inactive Brands</span><div class="kpi-icon"></div></div>
                         <div class="kpi-value">${inactiveCount}</div>
                     </div>
                     <div class="kpi-card">
-                        <div class="kpi-header"><span class="kpi-title">Catalog Products Linked</span><div class="kpi-icon">📦</div></div>
+                        <div class="kpi-header"><span class="kpi-title">Catalog Products Linked</span><div class="kpi-icon"></div></div>
                         <div class="kpi-value">${totalProducts}</div>
                     </div>
                 </div>
@@ -2805,18 +2805,18 @@ const Admin = {
                 </td>
                 <td style="text-align: center;">
                     <span class="badge ${b.status === 'ACTIVE' ? 'badge-legit' : 'badge-danger'}" style="cursor: pointer;" onclick="Admin.toggleBrandStatus('${b.id}', '${b.status}')" title="Click to toggle status">
-                        ${b.status === 'ACTIVE' ? '🟢 ACTIVE' : '⚪ INACTIVE'}
+                        ${b.status === 'ACTIVE' ? ' ACTIVE' : ' INACTIVE'}
                     </span>
                 </td>
                 <td style="text-align: right; white-space: nowrap;">
                     <button class="btn btn-secondary btn-sm" onclick="Admin.openBrandModalById('${b.id}')" title="Edit Brand">
-                        ✏️ Edit
+                         Edit
                     </button>
                     <button class="btn btn-secondary btn-sm" style="color: ${b.status === 'ACTIVE' ? '#eab308' : '#22c55e'};" onclick="Admin.toggleBrandStatus('${b.id}', '${b.status}')" title="Toggle Active / Inactive">
                         ${b.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
                     </button>
                     <button class="btn btn-danger btn-sm" onclick="Admin.handleDeleteBrand('${b.id}', this)" title="Delete Brand">
-                        🗑️
+                        
                     </button>
                 </td>
             </tr>
@@ -2892,8 +2892,8 @@ const Admin = {
             brandSelect.innerHTML = activeBrands.map(b => `
                 <option value="${b.id}">${b.name}</option>
             `).join('') + `
-                <option value="__ADD_NEW__" style="font-weight: 800; color: #000000; background: #f3f4f6;">➕ + Add Brand...</option>
-                <option value="__DELETE_CURRENT__" style="font-weight: 800; color: #dc2626; background: #fee2e2;">🗑️ - Delete Selected Brand</option>
+                <option value="__ADD_NEW__" style="font-weight: 800; color: #000000; background: #f3f4f6;"> + Add Brand...</option>
+                <option value="__DELETE_CURRENT__" style="font-weight: 800; color: #dc2626; background: #fee2e2;"> - Delete Selected Brand</option>
             `;
 
             if (activeBrands.length > 0) {
@@ -2941,8 +2941,8 @@ const Admin = {
         modal.innerHTML = `
             <div class="modal-container" style="max-width: 580px;">
                 <div class="modal-header">
-                    <h3 class="modal-title">${isEdit ? `EDIT BRAND: ${b.name}` : '➕ ADD NEW BRAND'}</h3>
-                    <button type="button" class="modal-close" onclick="Admin.closeBrandModal()">✕</button>
+                    <h3 class="modal-title">${isEdit ? `EDIT BRAND: ${b.name}` : ' ADD NEW BRAND'}</h3>
+                    <button type="button" class="modal-close" onclick="Admin.closeBrandModal()"></button>
                 </div>
                 <div class="modal-body">
                     <form id="form-admin-brand" onsubmit="Admin.saveBrandModal(event)">
@@ -2966,7 +2966,7 @@ const Admin = {
                             <div style="display: flex; gap: 10px; align-items: center; margin-top: 8px;">
                                 <input type="file" id="brand-file-input" accept="image/*" style="display: none;" onchange="Admin.handleBrandFileUpload(this)">
                                 <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; font-weight: 800; padding: 4px 12px; display: flex; align-items: center; gap: 6px;" onclick="document.getElementById('brand-file-input').click()">
-                                    📁 Upload Photo / Image File
+                                     Upload Photo / Image File
                                 </button>
                                 <span style="font-size: 0.72rem; color: #6b7280;">Supports PNG, JPG, SVG, WebP</span>
                             </div>
@@ -3000,8 +3000,8 @@ const Admin = {
                         <div class="form-group">
                             <label class="form-label">Brand Status *</label>
                             <select class="form-control" id="brand-form-status">
-                                <option value="ACTIVE" ${b.status === 'ACTIVE' ? 'selected' : ''}>🟢 ACTIVE (Available in Product creation & Customer store)</option>
-                                <option value="INACTIVE" ${b.status === 'INACTIVE' ? 'selected' : ''}>⚪ INACTIVE (Hidden from new product dropdown)</option>
+                                <option value="ACTIVE" ${b.status === 'ACTIVE' ? 'selected' : ''}> ACTIVE (Available in Product creation & Customer store)</option>
+                                <option value="INACTIVE" ${b.status === 'INACTIVE' ? 'selected' : ''}> INACTIVE (Hidden from new product dropdown)</option>
                             </select>
                         </div>
 
@@ -3010,7 +3010,7 @@ const Admin = {
                                 Cancel
                             </button>
                             <button type="submit" class="btn btn-primary btn-block" id="btn-save-brand-modal">
-                                💾 ${isEdit ? 'Update Brand' : 'Save Brand'}
+                                 ${isEdit ? 'Update Brand' : 'Save Brand'}
                             </button>
                         </div>
                     </form>
@@ -3095,8 +3095,8 @@ const Admin = {
                     brandSelect.innerHTML = activeBrands.map(b => `
                         <option value="${b.id}">${b.name}</option>
                     `).join('') + `
-                        <option value="__ADD_NEW__" style="font-weight: 800; color: #000000; background: #f3f4f6;">➕ + Add Brand...</option>
-                        <option value="__DELETE_CURRENT__" style="font-weight: 800; color: #dc2626; background: #fee2e2;">🗑️ - Delete Selected Brand</option>
+                        <option value="__ADD_NEW__" style="font-weight: 800; color: #000000; background: #f3f4f6;"> + Add Brand...</option>
+                        <option value="__DELETE_CURRENT__" style="font-weight: 800; color: #dc2626; background: #fee2e2;"> - Delete Selected Brand</option>
                     `;
 
                     const newBrand = (this.brands || []).find(b => b.name.toLowerCase() === name.toLowerCase()) || activeBrands[activeBrands.length - 1];
@@ -3120,7 +3120,7 @@ const Admin = {
         } finally {
             if (btn) {
                 btn.disabled = false;
-                btn.textContent = '💾 Save Brand';
+                btn.textContent = ' Save Brand';
             }
         }
     },
@@ -3219,7 +3219,7 @@ const Admin = {
                 <!-- Super Admin Overview Banner -->
                 <div style="background: rgba(225, 29, 72, 0.08); border: 1px solid rgba(225, 29, 72, 0.25); border-radius: 8px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <span style="font-size: 1.8rem;">🛡️</span>
+                        <span style="font-size: 1.8rem;"></span>
                         <div>
                             <div style="font-weight: 700; color: #fff; font-size: 0.95rem;">Two-Step Super Admin Security Active</div>
                             <div style="color: #94a3b8; font-size: 0.82rem;">
@@ -3280,20 +3280,20 @@ const Admin = {
                                             </td>
                                             <td>
                                                 ${isLocked ? 
-                                                    '<span style="color: #ef4444; font-weight: 700; font-size: 0.8rem;">🔒 Locked (Failed PINs)</span>' : 
-                                                    '<span style="color: #10b981; font-weight: 600; font-size: 0.8rem;">✓ 2FA Configured</span>'}
+                                                    '<span style="color: #ef4444; font-weight: 700; font-size: 0.8rem;"> Locked (Failed PINs)</span>' : 
+                                                    '<span style="color: #10b981; font-weight: 600; font-size: 0.8rem;"> 2FA Configured</span>'}
                                             </td>
                                             <td style="text-align: right; white-space: nowrap;">
                                                 <div style="display: inline-flex; gap: 6px;">
                                                     <button class="btn btn-sm btn-secondary" style="font-size: 0.78rem; padding: 4px 10px;" onclick="Admin.openResetAdminModal('${a.id}', '${escapeHtml(a.name)}')">
-                                                        🔑 Reset Credentials
+                                                         Reset Credentials
                                                     </button>
                                                     ${!isSelf ? `
                                                         <button class="btn btn-sm" style="font-size: 0.78rem; padding: 4px 10px; background: ${isActive ? '#f59e0b' : '#10b981'}; color: #000; font-weight: 700;" onclick="Admin.toggleAdminStatus('${a.id}', '${a.status}')">
                                                             ${isActive ? 'Disable' : 'Enable'}
                                                         </button>
                                                         <button class="btn btn-sm" style="font-size: 0.78rem; padding: 4px 8px; background: rgba(220,38,38,0.2); color: #f87171; border: 1px solid rgba(220,38,38,0.4);" onclick="Admin.handleDeleteAdminUser('${a.id}', this)" title="Delete Administrator">
-                                                            ✕
+                                                            
                                                         </button>
                                                     ` : ''}
                                                 </div>
@@ -3349,7 +3349,7 @@ const Admin = {
             <div class="modal-content" style="position: relative; z-index: 1000000; width: 100%; max-width: 520px; padding: 0; background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; box-shadow: 0 25px 70px rgba(0, 0, 0, 0.95); overflow: hidden; max-height: 92vh; overflow-y: auto;">
                 <div style="background: #1e293b; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #334155;">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 1.2rem;">🛡️</span>
+                        <span style="font-size: 1.2rem;"></span>
                         <strong style="color: #fff; font-size: 1rem;">Create Super Administrator</strong>
                     </div>
                     <button type="button" style="background: none; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer;" onclick="Admin.closeCreateAdminModal()">&times;</button>
@@ -3424,7 +3424,7 @@ const Admin = {
             if (alertEl) {
                 alertEl.style.display = 'block';
                 alertEl.className = 'auth-alert auth-alert-error';
-                alertEl.innerHTML = `<span>❌ ${escapeHtml(msg)}</span>`;
+                alertEl.innerHTML = `<span> ${escapeHtml(msg)}</span>`;
             } else {
                 showToast(msg, 'error');
             }
@@ -3525,7 +3525,7 @@ const Admin = {
             <div class="modal-content" style="position: relative; z-index: 1000000; width: 100%; max-width: 480px; padding: 0; background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; box-shadow: 0 25px 70px rgba(0, 0, 0, 0.95); overflow: hidden; max-height: 92vh; overflow-y: auto;">
                 <div style="background: #1e293b; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #334155;">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 1.2rem;">🔑</span>
+                        <span style="font-size: 1.2rem;"></span>
                         <strong style="color: #fff; font-size: 1rem;">Reset Credentials: ${escapeHtml(adminName)}</strong>
                     </div>
                     <button type="button" style="background: none; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer;" onclick="Admin.closeResetAdminModal()">&times;</button>
@@ -3682,7 +3682,7 @@ const Admin = {
                 </div>
 
                 <div style="background: #ffffff; border: 1.5px solid #e5e7eb; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
-                    <div style="font-size: 1.5rem;">📷</div>
+                    <div style="font-size: 1.5rem;"></div>
                     <div style="font-size: 0.84rem; color: #4b5563; line-height: 1.5;">
                         <strong style="color: #000000;">Super Admin Image Uploader:</strong> Click <strong>Choose Image</strong> to select a photo (JPG, PNG, or WEBP up to 10MB) directly from your computer. You'll see an instant preview of how it looks on the homepage card. Click <strong>Upload / Save</strong> to apply it to the live store.
                     </div>
@@ -3840,7 +3840,7 @@ const Admin = {
             if (saveBtn) {
                 saveBtn.disabled = false;
                 saveBtn.style.background = '#e11d48';
-                saveBtn.innerHTML = `✓ Click to Save & Apply`;
+                saveBtn.innerHTML = ` Click to Save & Apply`;
             }
         };
 
@@ -3921,7 +3921,7 @@ const Admin = {
             }
             if (saveBtn) {
                 saveBtn.disabled = false;
-                saveBtn.innerHTML = `✓ Click to Save & Apply`;
+                saveBtn.innerHTML = ` Click to Save & Apply`;
             }
             showToast(err.message || 'Failed to upload image.', 'error');
         }
@@ -4001,7 +4001,7 @@ const Admin = {
                 </div>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <button class="btn btn-secondary" onclick="Admin.switchTab('dashboard')">← Back to Overview</button>
-                    <button class="btn btn-primary" onclick="window.print()">🖨️ Print Sales Report</button>
+                    <button class="btn btn-primary" onclick="window.print()"> Print Sales Report</button>
                 </div>
             </div>
 
@@ -4119,7 +4119,7 @@ const Admin = {
             <div class="admin-card" style="margin-bottom: 24px; padding: 18px 24px;">
                 <div style="font-size: 0.8rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
                     <span>Filter Sales Period</span>
-                    <span style="font-size: 0.75rem; font-weight: 600; color: #10b981;">✓ Real-time Dynamic Recalculation</span>
+                    <span style="font-size: 0.75rem; font-weight: 600; color: #10b981;"> Real-time Dynamic Recalculation</span>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="sales-period-pill-group">
                     <button type="button" class="btn btn-sm ${activeFilter === 'all' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.renderGrossSalesLedger('all')">All Time</button>
@@ -4127,7 +4127,7 @@ const Admin = {
                     <button type="button" class="btn btn-sm ${activeFilter === 'week' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.renderGrossSalesLedger('week')">This Week</button>
                     <button type="button" class="btn btn-sm ${activeFilter === 'month' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.renderGrossSalesLedger('month')">This Month</button>
                     <button type="button" class="btn btn-sm ${activeFilter === 'year' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.renderGrossSalesLedger('year')">This Year</button>
-                    <button type="button" class="btn btn-sm ${activeFilter === 'custom' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.toggleSalesCustomDateRange()">Custom Date Range 📅</button>
+                    <button type="button" class="btn btn-sm ${activeFilter === 'custom' ? 'btn-primary' : 'btn-secondary'}" style="font-weight: 700; border-radius: 20px; padding: 6px 14px;" onclick="Admin.toggleSalesCustomDateRange()">Custom Date Range </button>
                 </div>
 
                 <!-- Custom Date Range Picker Container -->
@@ -4162,7 +4162,7 @@ const Admin = {
 
                 ${ordersList.length === 0 ? `
                     <div style="text-align: center; padding: 50px 20px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px dashed #334155; color: #94a3b8;">
-                        <div style="font-size: 2.2rem; margin-bottom: 10px;">📭</div>
+                        <div style="font-size: 2.2rem; margin-bottom: 10px;"></div>
                         <h4 style="color: #ffffff; margin-bottom: 6px; font-weight: 700;">No Sales Records Found for this Period</h4>
                         <p style="font-size: 0.88rem; max-width: 460px; margin: 0 auto;">Try selecting "All Time" or adjusting your date range filter to inspect contributing customer orders.</p>
                     </div>

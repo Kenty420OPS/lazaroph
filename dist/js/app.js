@@ -392,7 +392,7 @@ const App = {
                             <div>Contact Number: <strong style="color: #ffffff;">${escapeHtml(u.phone || '09171234567')}</strong></div>
                             <div>Shipping Address: <strong style="color: #ffffff;">${escapeHtml(u.address || '32 F. E. Mendoza Street, Malanday')}, ${escapeHtml(u.city || 'Marikina')}, ${escapeHtml(u.province || 'Metro Manila')} ${escapeHtml(u.zipCode || '1805')}</strong></div>
                             <div style="margin-top: 10px;">
-                                Account Status: <span class="status-badge active">✓ VERIFIED CUSTOMER</span>
+                                Account Status: <span class="status-badge active"> VERIFIED CUSTOMER</span>
                             </div>
                         </div>
                     </div>
