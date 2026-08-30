@@ -1731,7 +1731,11 @@ const API = {
 
     async saveProduct(productData) {
         if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
-            return LazarophFirebase.saveProduct(productData);
+            try {
+                return await LazarophFirebase.saveProduct(productData);
+            } catch (err) {
+                console.warn('[API saveProduct] Firebase save failed:', err);
+            }
         }
         return this.request('/api/admin/products/save', {
             method: 'POST',
@@ -1740,11 +1744,8 @@ const API = {
     },
 
     async deleteProduct(id) {
-        if (typeof FallbackStore !== 'undefined') {
-            FallbackStore.deleteProduct(id);
-            if (FallbackStore.removeCachedProduct) {
-                FallbackStore.removeCachedProduct(id);
-            }
+        if (typeof FallbackStore !== 'undefined' && FallbackStore.removeCachedProduct) {
+            FallbackStore.removeCachedProduct(id);
         }
         if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
             try {

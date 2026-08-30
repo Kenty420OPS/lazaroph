@@ -1165,8 +1165,8 @@ const LazarophFirebase = {
     async saveProduct(product) {
         this.init();
         if (!this.db) {
-            if (typeof FallbackStore !== 'undefined') {
-                return FallbackStore.saveProduct(product);
+            if (typeof FallbackStore !== 'undefined' && FallbackStore.updateCachedProduct) {
+                FallbackStore.updateCachedProduct(product);
             }
             return { success: true, product };
         }
@@ -1174,7 +1174,9 @@ const LazarophFirebase = {
         try {
             let id = product.id;
             if (!id) {
-                const snapshot = await this.db.collection('products').get();
+                const snapshotGet = this.db.collection('products').get();
+                const timeoutGet = new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore request timed out.')), 4000));
+                const snapshot = await Promise.race([snapshotGet, timeoutGet]);
                 let maxId = 0;
                 snapshot.forEach(d => {
                     const num = parseInt(d.id, 10);
@@ -1192,11 +1194,13 @@ const LazarophFirebase = {
                 updatedAt: new Date().toISOString()
             };
 
-            await this.db.collection('products').doc(String(id)).set(cleanProduct, { merge: true });
+            const setPromise = this.db.collection('products').doc(String(id)).set(cleanProduct, { merge: true });
+            const timeoutSet = new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore save timed out.')), 4000));
+            await Promise.race([setPromise, timeoutSet]);
             console.log('[LazarophFirebase] Product saved to Firestore:', id, cleanProduct.name);
 
             // Update FallbackStore cache
-            if (typeof FallbackStore !== 'undefined') {
+            if (typeof FallbackStore !== 'undefined' && FallbackStore.updateCachedProduct) {
                 FallbackStore.updateCachedProduct(cleanProduct);
             }
 
@@ -1212,19 +1216,21 @@ const LazarophFirebase = {
         const strId = String(id);
 
         if (!this.db) {
-            if (typeof FallbackStore !== 'undefined') {
-                return FallbackStore.deleteProduct(id);
+            if (typeof FallbackStore !== 'undefined' && FallbackStore.removeCachedProduct) {
+                FallbackStore.removeCachedProduct(id);
             }
             return { success: true };
         }
 
         try {
             // Delete document permanently from Firestore
-            await this.db.collection('products').doc(strId).delete();
+            const deletePromise = this.db.collection('products').doc(strId).delete();
+            const timeoutDelete = new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore delete timed out.')), 4000));
+            await Promise.race([deletePromise, timeoutDelete]);
             console.log('[LazarophFirebase] Product permanently deleted from Firestore:', strId);
 
             // Ensure FallbackStore removes it permanently so refresh never restores it
-            if (typeof FallbackStore !== 'undefined') {
+            if (typeof FallbackStore !== 'undefined' && FallbackStore.removeCachedProduct) {
                 FallbackStore.removeCachedProduct(id);
             }
 
