@@ -302,7 +302,7 @@ const Admin = {
                     <div class="kpi-card kpi-card-clickable kpi-orders" onclick="Admin.switchTab('orders')" title="Click to view Customer Orders">
                         <div class="kpi-header">
                             <span class="kpi-title">Total Orders</span>
-                            <div class="kpi-icon"></div>
+                            
                         </div>
                         <div class="kpi-value">${stats.totalOrders}</div>
                         <div class="kpi-footer-hint">Manage all orders →</div>
@@ -311,7 +311,7 @@ const Admin = {
                     <div class="kpi-card kpi-card-clickable kpi-customers" onclick="Admin.switchTab('customers')" title="Click to view Registered Customers">
                         <div class="kpi-header">
                             <span class="kpi-title">Registered Customers</span>
-                            <div class="kpi-icon"></div>
+                            
                         </div>
                         <div class="kpi-value">${stats.totalCustomers}</div>
                         <div class="kpi-footer-hint">View customer directory →</div>
@@ -320,7 +320,7 @@ const Admin = {
                     <div class="kpi-card kpi-card-clickable" onclick="Admin.switchTab('products')" title="Click to view Live Products">
                         <div class="kpi-header">
                             <span class="kpi-title">Live Products</span>
-                            <div class="kpi-icon"></div>
+                            
                         </div>
                         <div class="kpi-value">${stats.totalProducts}</div>
                         <div class="kpi-footer-hint">Manage catalog items →</div>
@@ -2721,19 +2721,19 @@ const Admin = {
                 <!-- Brand KPI Summary -->
                 <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 24px;">
                     <div class="kpi-card">
-                        <div class="kpi-header"><span class="kpi-title">Total Brands</span><div class="kpi-icon"></div></div>
+                        <div class="kpi-header"><span class="kpi-title">Total Brands</span></div>
                         <div class="kpi-value">${brands.length}</div>
                     </div>
                     <div class="kpi-card">
-                        <div class="kpi-header"><span class="kpi-title">Active Brands</span><div class="kpi-icon"></div></div>
+                        <div class="kpi-header"><span class="kpi-title">Active Brands</span></div>
                         <div class="kpi-value">${activeCount}</div>
                     </div>
                     <div class="kpi-card">
-                        <div class="kpi-header"><span class="kpi-title">Inactive Brands</span><div class="kpi-icon"></div></div>
+                        <div class="kpi-header"><span class="kpi-title">Inactive Brands</span></div>
                         <div class="kpi-value">${inactiveCount}</div>
                     </div>
                     <div class="kpi-card">
-                        <div class="kpi-header"><span class="kpi-title">Catalog Products Linked</span><div class="kpi-icon"></div></div>
+                        <div class="kpi-header"><span class="kpi-title">Catalog Products Linked</span></div>
                         <div class="kpi-value">${totalProducts}</div>
                     </div>
                 </div>
@@ -2815,8 +2815,8 @@ const Admin = {
                     <button class="btn btn-secondary btn-sm" style="color: ${b.status === 'ACTIVE' ? '#eab308' : '#22c55e'};" onclick="Admin.toggleBrandStatus('${b.id}', '${b.status}')" title="Toggle Active / Inactive">
                         ${b.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
                     </button>
-                    <button class="btn btn-danger btn-sm" onclick="Admin.handleDeleteBrand('${b.id}', this)" title="Delete Brand">
-                        
+                    <button class="btn btn-danger btn-sm" style="font-weight: 700;" onclick="Admin.handleDeleteBrand('${b.id}', this)" title="Delete Brand">
+                        DELETE
                     </button>
                 </td>
             </tr>
