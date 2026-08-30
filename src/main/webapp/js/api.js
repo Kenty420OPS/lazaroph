@@ -446,6 +446,18 @@ const FallbackStore = {
         return brands;
     },
 
+    saveBrand(brand) {
+        let brands = this.getBrands();
+        const idx = brands.findIndex(b => b.id === brand.id);
+        if (idx !== -1) {
+            brands[idx] = { ...brands[idx], ...brand };
+        } else {
+            brands.unshift(brand);
+        }
+        this.saveBrands(brands);
+        return brand;
+    },
+
     deleteBrand(id) {
         let brands = this.getBrands();
         brands = brands.filter(b => String(b.id) !== String(id) && String(b.slug) !== String(id));
@@ -1645,8 +1657,11 @@ const API = {
             try {
                 return await LazarophFirebase.getBrands();
             } catch (err) {
-                console.warn('[API] Firebase getBrands failed, falling back to serverless:', err);
+                console.warn('[API] Firebase getBrands failed, using FallbackStore:', err);
             }
+        }
+        if (typeof FallbackStore !== 'undefined') {
+            return FallbackStore.getBrands();
         }
         return this.request('/api/brands');
     },
@@ -1875,6 +1890,9 @@ const API = {
             } catch (e) {
                 console.warn('[API saveAdminBrand] Firestore warning:', e);
             }
+        }
+        if (typeof FallbackStore !== 'undefined') {
+            FallbackStore.saveBrand(brandData);
         }
         return this.request('/api/admin/brands', {
             method: 'POST',
