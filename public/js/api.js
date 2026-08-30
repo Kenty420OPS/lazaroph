@@ -229,30 +229,7 @@ const FallbackStore = {
         if (saved) {
             try { return JSON.parse(saved); } catch (e) {}
         }
-        return [
-            {
-                id: 1,
-                orderNumber: 'LZPH-20260825-0001',
-                customerName: 'Juan Dela Cruz',
-                customerEmail: 'customer@example.com',
-                customerPhone: '09171234567',
-                shippingAddress: '32 F. E. Mendoza Street, Malanday, Marikina, 1805 Metro Manila',
-                status: 'CONFIRMED',
-                paymentMethod: 'GCash',
-                paymentStatus: 'PAID',
-                courier: 'LALAMOVE',
-                riderName: 'Kuya Mark (Lalamove)',
-                riderPhone: '0918-765-4321',
-                estimatedDeliveryTime: 'Within 2-3 hours today',
-                subtotal: 2199.00,
-                shippingFee: 150.00,
-                totalAmount: 2349.00,
-                deliveryFeeConfirmed: true,
-                items: [
-                    { id: 1, productName: 'LAZAROPH Runner X1', size: 'US 10', color: 'Triple Black', quantity: 1, price: 2199.00, imageUrl: 'images/runner-x1-black-main.png' }
-                ]
-            }
-        ];
+        return [];
     },
 
     handle(path, method = 'GET', body = null, queryParams = {}) {
