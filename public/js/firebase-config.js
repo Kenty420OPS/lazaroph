@@ -1237,11 +1237,15 @@ const LazarophFirebase = {
     // =========================================================================
     async getBrands() {
         this.init();
-        if (!this.db) {
-            return typeof FallbackStore !== 'undefined' ? FallbackStore.brands : [];
+        const config = this.getConfig();
+        if (!this.db || !config || !config.apiKey || config.apiKey.includes('Placeholder') || config.apiKey.includes('AIzaSyD')) {
+            throw new Error('Firebase API Key is missing or invalid. Please configure it in Admin Settings.');
         }
         try {
-            const snapshot = await this.db.collection('brands').get();
+            const getPromise = this.db.collection('brands').get();
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore request timed out (possible missing API key or network error).')), 4000));
+            const snapshot = await Promise.race([getPromise, timeoutPromise]);
+            
             if (snapshot.empty && typeof FallbackStore !== 'undefined') {
                 // Seed initial brands once
                 const batch = this.db.batch();
@@ -1255,7 +1259,8 @@ const LazarophFirebase = {
             snapshot.forEach(d => list.push({ ...d.data(), id: d.data().id || d.id }));
             return list;
         } catch (e) {
-            return typeof FallbackStore !== 'undefined' ? FallbackStore.brands : [];
+            console.error('[LazarophFirebase] getBrands failed:', e);
+            throw e;
         }
     },
 
@@ -1264,14 +1269,18 @@ const LazarophFirebase = {
         if (!this.db) return brand;
         const id = brand.id || Date.now();
         const clean = { ...brand, id };
-        await this.db.collection('brands').doc(String(id)).set(clean, { merge: true });
+        const setPromise = this.db.collection('brands').doc(String(id)).set(clean, { merge: true });
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore save timed out.')), 4000));
+        await Promise.race([setPromise, timeoutPromise]);
         return clean;
     },
 
     async deleteBrand(id) {
         this.init();
         if (!this.db) return { success: true };
-        await this.db.collection('brands').doc(String(id)).delete();
+        const deletePromise = this.db.collection('brands').doc(String(id)).delete();
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore delete timed out.')), 4000));
+        await Promise.race([deletePromise, timeoutPromise]);
         return { success: true };
     },
 

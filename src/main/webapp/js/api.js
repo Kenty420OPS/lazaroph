@@ -1326,6 +1326,8 @@ const API = {
                 headers,
                 signal: controller.signal
             });
+            clearTimeout(timeoutId);
+
             const contentType = res.headers.get('content-type') || '';
             if (!contentType.includes('application/json')) {
                 throw new Error('API returned non-JSON response');
@@ -1629,7 +1631,11 @@ const API = {
 
     async getBrands() {
         if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
-            return LazarophFirebase.getBrands();
+            try {
+                return await LazarophFirebase.getBrands();
+            } catch (err) {
+                console.warn('[API] Firebase getBrands failed, falling back to serverless:', err);
+            }
         }
         return this.request('/api/brands');
     },
