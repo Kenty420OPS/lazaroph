@@ -814,13 +814,17 @@ const Admin = {
         const files = input.files;
         if (!files || files.length === 0) return;
         this.handleDropFiles(files);
-        input.value = ''; // Reset input to allow re-uploading the same file
+        setTimeout(() => { input.value = ''; }, 1000); // Delay reset so file objects aren't destroyed
     },
 
     async handleDropFiles(files) {
         if (!files || files.length === 0) return;
 
-        const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+        const imageFiles = Array.from(files).filter(f => {
+            if (f.type && f.type.startsWith('image/')) return true;
+            const ext = f.name.toLowerCase();
+            return ext.endsWith('.jpg') || ext.endsWith('.jpeg') || ext.endsWith('.png') || ext.endsWith('.webp') || ext.endsWith('.svg');
+        });
         if (imageFiles.length === 0) return;
 
         // Check for HEIC/HEIF
