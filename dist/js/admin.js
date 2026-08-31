@@ -809,7 +809,6 @@ const Admin = {
         }
         this.renderSizeVariantsChecklist(sizeSelect.value);
     },
-
     handleProductMultipleFileUpload(input) {
         const files = input.files;
         if (!files || files.length === 0) return;
@@ -818,33 +817,83 @@ const Admin = {
         });
     },
 
+    async compressImage(file, maxWidth = 1200, quality = 0.75) {
+        if (!file.type.match(/image.*/)) return file;
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    } else if (file.size < 500000) {
+                        // If image is already small (< 500KB) and narrow, skip compression to save CPU
+                        resolve(file);
+                        return;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    canvas.toBlob((blob) => {
+                        if (!blob) {
+                            resolve(file); // Fallback to original if compression fails
+                            return;
+                        }
+                        const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        resolve(compressedFile);
+                    }, 'image/jpeg', quality);
+                };
+                img.onerror = () => resolve(file);
+                img.src = e.target.result;
+            };
+            reader.onerror = () => resolve(file);
+            reader.readAsDataURL(file);
+        });
+    },
+
     async handleDropFiles(files) {
         if (!files || files.length === 0) return;
 
-        const imageFiles = Array.from(files).filter(f => {
+        const rawImageFiles = Array.from(files).filter(f => {
             if (f.type && f.type.startsWith('image/')) return true;
             const ext = f.name ? f.name.toLowerCase() : '';
             return ext.endsWith('.jpg') || ext.endsWith('.jpeg') || ext.endsWith('.png') || ext.endsWith('.webp') || ext.endsWith('.svg') || ext.endsWith('.gif') || ext.endsWith('.avif') || ext.endsWith('.heic') || ext.endsWith('.heif');
         });
         
-        if (imageFiles.length === 0) {
+        if (rawImageFiles.length === 0) {
             showToast('Unsupported file type selected. Please choose a valid image file (JPG, PNG).', 'error');
             return;
         }
 
         // Check for HEIC/HEIF
-        for (const file of imageFiles) {
+        for (const file of rawImageFiles) {
             if (file.name && (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) || file.type === 'image/heic' || file.type === 'image/heif') {
                 showToast(`Unsupported format: ${file.name}. Please convert iPhone HEIC photos to JPG/PNG before uploading.`, 'error');
                 return;
             }
         }
 
-        showToast(`Starting upload for ${imageFiles.length} photo(s)...`, 'info');
+        showToast(`Compressing and uploading ${rawImageFiles.length} photo(s)...`, 'info');
 
         let loadedCount = 0;
-        for (const file of imageFiles) {
+        
+        // Upload in parallel for maximum speed
+        const uploadPromises = rawImageFiles.map(async (rawFile) => {
             try {
+                // Compress file to speed up network upload
+                const file = await this.compressImage(rawFile);
+                
                 let downloadUrl;
                 let previewDataUrl = await new Promise((res, rej) => {
                     const reader = new FileReader();
@@ -854,14 +903,12 @@ const Admin = {
                 });
 
                 if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.uploadProductImage) {
-                    showToast(`Uploading ${file.name} to Firebase...`, 'info');
                     const uploadPromise = LazarophFirebase.uploadProductImage(file);
                     const timeoutPromise = new Promise((_, reject) => 
                         setTimeout(() => reject(new Error("Upload timed out after 15 seconds. Please check your internet connection or try a smaller file.")), 15000)
                     );
                     downloadUrl = await Promise.race([uploadPromise, timeoutPromise]);
                 } else {
-                    showToast(`Processing ${file.name} locally...`, 'info');
                     downloadUrl = previewDataUrl;
                 }
 
