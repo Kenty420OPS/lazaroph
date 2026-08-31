@@ -663,7 +663,7 @@ const FallbackStore = {
                 price: product ? (product.discountPrice || product.price) : 1000,
                 quantity: req.quantity || 1,
                 subtotal: (product ? (product.discountPrice || product.price) : 1000) * (req.quantity || 1),
-                imageUrl: product ? product.mainImageUrl : 'images/placeholder-product.png',
+                imageUrl: product ? (product.mainImageUrl || (product.images && product.images.length > 0 ? product.images[0].imageUrl : '/images/placeholder-product.png')) : '/images/placeholder-product.png',
                 customizationData: req.customizationData ? JSON.stringify(req.customizationData) : null
             };
 
@@ -786,7 +786,7 @@ const FallbackStore = {
                         variantId: v.id,
                         productId: p.id,
                         productName: p.name,
-                        mainImageUrl: p.mainImageUrl,
+                        mainImageUrl: p.mainImageUrl || (p.images && p.images.length > 0 ? p.images[0].imageUrl : '/images/placeholder-product.png'),
                         sku: v.sku || p.sku,
                         size: v.size,
                         color: v.color,

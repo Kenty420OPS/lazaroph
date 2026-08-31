@@ -31,7 +31,7 @@ const ProductDetail = {
             // Collect all gallery images
             this.imagesList = product.images && product.images.length > 0 
                 ? product.images.map(img => img.imageUrl) 
-                : [product.mainImageUrl];
+                : [product.mainImageUrl || '/images/placeholder-product.png'];
 
             // Pick default available variant
             const availableVariants = product.variants ? product.variants.filter(v => v.stock > 0) : [];
@@ -89,7 +89,7 @@ const ProductDetail = {
         // Vertical Gallery Thumbnails (Up to 8 thumbnails)
         const thumbsHtml = this.imagesList.map((url, idx) => `
             <button class="gallery-vertical-thumb-btn ${idx === this.currentImageIndex ? 'active' : ''}" onclick="ProductDetail.switchImageIndex(${idx})">
-                <img src="${url}" alt="${p.name} - View ${idx + 1}" onerror="this.src='images/placeholder-product.png'">
+                <img src="${url}" alt="${p.name} - View ${idx + 1}" onerror="if(!this.dataset.errored){this.dataset.errored='true';this.src='/images/placeholder-product.png';}">
             </button>
         `).join('');
 
@@ -102,14 +102,15 @@ const ProductDetail = {
                         ${colors.map(c => {
                             const vWithColor = p.variants.find(v => v.color === c);
                             const isActive = c === this.selectedColor;
-                            const previewImg = p.mainImageUrl;
+                            const mUrl = p.mainImageUrl || (p.images && p.images.length > 0 ? p.images[0].imageUrl : '/images/placeholder-product.png');
+                            const previewImg = mUrl;
 
                             return `
                                 <button type="button" 
                                     class="colorway-thumb-btn ${isActive ? 'active' : ''}" 
                                     title="${c}" 
                                     onclick="ProductDetail.selectColor('${c}')">
-                                    <img src="${previewImg}" alt="${c}" onerror="this.src='images/placeholder-product.png'">
+                                    <img src="${previewImg}" alt="${c}" onerror="if(!this.dataset.errored){this.dataset.errored='true';this.src='/images/placeholder-product.png';}">
                                 </button>
                             `;
                         }).join('')}
@@ -120,6 +121,7 @@ const ProductDetail = {
 
         // Subtitle category (e.g. "Basketball Shoes" or "Men's Road Running Shoes")
         const subCategoryName = p.subcategory || (p.gender ? `${p.gender === 'MEN' ? "Men's" : (p.gender === 'WOMEN' ? "Women's" : "Unisex")} ${p.categoryName || 'Shoes'}` : 'Basketball Shoes');
+        const mainUrlForHero = p.mainImageUrl || (p.images && p.images.length > 0 ? p.images[0].imageUrl : '/images/placeholder-product.png');
 
         container.innerHTML = `
             <div class="container" style="max-width: 1280px; padding: 20px 24px;">
@@ -134,11 +136,11 @@ const ProductDetail = {
 
                         <!-- Main Hero Showcase -->
                         <div class="gallery-hero-container">
-                            <img src="${this.imagesList[this.currentImageIndex] || p.mainImageUrl}" 
+                            <img src="${this.imagesList[this.currentImageIndex] || mainUrlForHero}" 
                                  id="product-main-display-img" 
                                  alt="${p.name}" 
                                  class="gallery-hero-img" 
-                                 onerror="this.src='images/placeholder-product.png'">
+                                 onerror="if(!this.dataset.errored){this.dataset.errored='true';this.src='/images/placeholder-product.png';}">
                             
                             <!-- Floating Prev / Next Arrow Controls -->
                             <div class="gallery-nav-arrows">

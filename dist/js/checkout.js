@@ -355,7 +355,7 @@ const Checkout = {
                                 <div style="display: flex; flex-direction: column; gap: 14px; max-height: 280px; overflow-y: auto; margin-bottom: 18px; padding-right: 4px;">
                                     ${items.map(item => `
                                         <div style="display: flex; gap: 12px; align-items: center;">
-                                            <img src="${item.imageUrl}" style="width: 48px; height: 48px; object-fit: contain; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 4px; padding: 2px;" onerror="this.src='images/placeholder-product.png'">
+                                            <img src="${item.imageUrl}" style="width: 48px; height: 48px; object-fit: contain; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 4px; padding: 2px;" onerror="if(!this.dataset.errored){this.dataset.errored='true';this.src='/images/placeholder-product.png';}">
                                             <div style="flex-grow: 1;">
                                                 <div style="font-size: 0.88rem; font-weight: 700; color: #000000;">${item.productName}</div>
                                                 <div style="font-size: 0.75rem; color: #4b5563;">Size: ${item.size} • Qty: ${item.quantity}</div>

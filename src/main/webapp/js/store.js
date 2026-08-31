@@ -196,11 +196,13 @@ const Store = {
                 sizesHtml += `<span class="size-pill-preview">+${product.variants.length - 5}</span>`;
             }
         }
+        // Calculate main image url in case older products don't have it natively
+        const mUrl = product.mainImageUrl || (product.images && product.images.length > 0 ? product.images[0].imageUrl : '/images/placeholder-product.png');
 
         return `
             <div class="product-card" data-product-id="${product.id}">
                 <div class="product-card-media" onclick="App.navigate('product', { id: ${product.id} })" style="cursor: pointer;">
-                    <img src="${product.mainImageUrl}" alt="${product.name}" class="product-card-img" onerror="this.src='images/placeholder-product.png'">
+                    <img src="${mUrl}" alt="${product.name}" class="product-card-img" onerror="if(!this.dataset.errored){this.dataset.errored='true';this.src='/images/placeholder-product.png';}">
                     <div class="product-card-badges">
                         ${hasDiscount ? '<span class="badge badge-sale">SALE</span>' : ''}
                         ${product.isNewArrival ? '<span class="badge badge-new">NEW</span>' : ''}
