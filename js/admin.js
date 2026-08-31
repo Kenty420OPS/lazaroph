@@ -903,11 +903,17 @@ const Admin = {
                 });
 
                 if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.uploadProductImage) {
-                    const uploadPromise = LazarophFirebase.uploadProductImage(file);
-                    const timeoutPromise = new Promise((_, reject) => 
-                        setTimeout(() => reject(new Error("Upload timed out after 15 seconds. Please check your internet connection or try a smaller file.")), 15000)
-                    );
-                    downloadUrl = await Promise.race([uploadPromise, timeoutPromise]);
+                    try {
+                        const uploadPromise = LazarophFirebase.uploadProductImage(file);
+                        const timeoutPromise = new Promise((_, reject) => 
+                            setTimeout(() => reject(new Error("TIMEOUT")), 15000)
+                        );
+                        downloadUrl = await Promise.race([uploadPromise, timeoutPromise]);
+                    } catch (e) {
+                        console.warn('Firebase upload failed or timed out. Falling back to local data URL.', e);
+                        showToast(`Upload to cloud failed, using local offline mode for ${rawFile.name}`, 'warning');
+                        downloadUrl = previewDataUrl;
+                    }
                 } else {
                     downloadUrl = previewDataUrl;
                 }
