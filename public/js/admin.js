@@ -773,7 +773,7 @@ const Admin = {
 
         grid.innerHTML = this.productImages.map((img, i) => {
             const isMain = i === 0 || img.isMain;
-            const url = img.imageUrl || '/images/placeholder-product.png';
+            const url = img.previewUrl || img.imageUrl || '/images/placeholder-product.png';
 
             return `
                 <div class="admin-image-card ${isMain ? 'is-main' : ''}">
@@ -846,23 +846,23 @@ const Admin = {
         for (const file of imageFiles) {
             try {
                 let downloadUrl;
+                let previewDataUrl = await new Promise((res, rej) => {
+                    const reader = new FileReader();
+                    reader.onload = e => res(e.target.result);
+                    reader.onerror = rej;
+                    reader.readAsDataURL(file);
+                });
+
                 if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.uploadProductImage) {
                     showToast(`Uploading ${file.name} to Firebase...`, 'info');
-                    
                     const uploadPromise = LazarophFirebase.uploadProductImage(file);
                     const timeoutPromise = new Promise((_, reject) => 
                         setTimeout(() => reject(new Error("Upload timed out after 15 seconds. Please check your internet connection or try a smaller file.")), 15000)
                     );
-                    
                     downloadUrl = await Promise.race([uploadPromise, timeoutPromise]);
                 } else {
                     showToast(`Processing ${file.name} locally...`, 'info');
-                    downloadUrl = await new Promise((res, rej) => {
-                        const reader = new FileReader();
-                        reader.onload = e => res(e.target.result);
-                        reader.onerror = rej;
-                        reader.readAsDataURL(file);
-                    });
+                    downloadUrl = previewDataUrl;
                 }
 
                 if (!downloadUrl) {
@@ -871,6 +871,7 @@ const Admin = {
 
                 this.productImages.push({
                     imageUrl: downloadUrl,
+                    previewUrl: previewDataUrl,
                     isMain: this.productImages.length === 0
                 });
                 loadedCount++;
