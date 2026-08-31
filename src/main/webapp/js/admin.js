@@ -813,8 +813,9 @@ const Admin = {
     handleProductMultipleFileUpload(input) {
         const files = input.files;
         if (!files || files.length === 0) return;
-        this.handleDropFiles(files);
-        setTimeout(() => { input.value = ''; }, 1000); // Delay reset so file objects aren't destroyed
+        this.handleDropFiles(files).finally(() => {
+            input.value = ''; // Reset input ONLY after upload finishes
+        });
     },
 
     async handleDropFiles(files) {
@@ -823,9 +824,13 @@ const Admin = {
         const imageFiles = Array.from(files).filter(f => {
             if (f.type && f.type.startsWith('image/')) return true;
             const ext = f.name.toLowerCase();
-            return ext.endsWith('.jpg') || ext.endsWith('.jpeg') || ext.endsWith('.png') || ext.endsWith('.webp') || ext.endsWith('.svg');
+            return ext.endsWith('.jpg') || ext.endsWith('.jpeg') || ext.endsWith('.png') || ext.endsWith('.webp') || ext.endsWith('.svg') || ext.endsWith('.gif') || ext.endsWith('.avif') || ext.endsWith('.heic') || ext.endsWith('.heif');
         });
-        if (imageFiles.length === 0) return;
+        
+        if (imageFiles.length === 0) {
+            showToast('Unsupported file type selected. Please choose a valid image file (JPG, PNG).', 'error');
+            return;
+        }
 
         // Check for HEIC/HEIF
         for (const file of imageFiles) {
