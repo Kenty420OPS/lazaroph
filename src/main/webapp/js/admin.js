@@ -773,13 +773,13 @@ const Admin = {
 
         grid.innerHTML = this.productImages.map((img, i) => {
             const isMain = i === 0 || img.isMain;
-            const url = img.imageUrl || 'images/placeholder-product.png';
+            const url = img.imageUrl || '/images/placeholder-product.png';
 
             return `
                 <div class="admin-image-card ${isMain ? 'is-main' : ''}">
                     ${isMain ? `<span class="admin-image-main-badge"> MAIN COVER</span>` : ''}
                     <div class="admin-image-card-thumb">
-                        <img src="${url}" alt="Product Photo ${i + 1}" onerror="this.src='images/placeholder-product.png'">
+                        <img src="${url}" alt="Product Photo ${i + 1}" onerror="if(this.src!=='/images/placeholder-product.png'){ this.src='/images/placeholder-product.png'; showToast('Warning: Image format may be unsupported by your browser (e.g., HEIC/HEIF).', 'warning'); }">
                     </div>
                     <div class="admin-image-card-actions">
                         ${!isMain ? `
@@ -787,8 +787,8 @@ const Admin = {
                                 Make Main
                             </button>
                         ` : '<span style="font-weight: 800; font-size: 0.68rem; color: #000;">Primary</span>'}
-                        <button type="button" class="btn btn-danger btn-sm" style="font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.removeImageCard(${i})" title="Delete image">
-                            
+                        <button type="button" class="btn btn-danger btn-sm" style="font-weight: 700; font-size: 0.68rem; padding: 2px 6px;" onclick="Admin.removeImageCard(${i})" title="Delete image">
+                            DELETE
                         </button>
                     </div>
                 </div>
@@ -814,6 +814,7 @@ const Admin = {
         const files = input.files;
         if (!files || files.length === 0) return;
         this.handleDropFiles(files);
+        input.value = ''; // Reset input to allow re-uploading the same file
     },
 
     async handleDropFiles(files) {
@@ -821,6 +822,14 @@ const Admin = {
 
         const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
         if (imageFiles.length === 0) return;
+
+        // Check for HEIC/HEIF
+        for (const file of imageFiles) {
+            if (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif') || file.type === 'image/heic' || file.type === 'image/heif') {
+                showToast(`Unsupported format: ${file.name}. Please convert iPhone HEIC photos to JPG/PNG before uploading.`, 'error');
+                return;
+            }
+        }
 
         showToast(`Uploading ${imageFiles.length} photo(s) to Firebase Storage...`, 'info');
 
