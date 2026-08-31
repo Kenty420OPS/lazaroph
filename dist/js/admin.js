@@ -442,10 +442,18 @@ const Admin = {
                                 </tr>
                             </thead>
                             <tbody>
-                                ${this.products.map(p => `
+                                ${this.products.map(p => {
+                                    const mUrl = p.mainImageUrl || (p.images && p.images.length > 0 ? p.images[0].imageUrl : '/images/placeholder-product.png');
+                                    let tStock = p.totalStock;
+                                    if (tStock === undefined) {
+                                        tStock = 0;
+                                        if (p.variants) p.variants.forEach(v => tStock += (v.stock || 0));
+                                    }
+
+                                    return `
                                     <tr id="product-row-${p.id}">
                                         <td>
-                                            <img src="${p.mainImageUrl}" style="width: 48px; height: 48px; object-fit: contain; background: #0e131d; border-radius: 4px; padding: 2px;" onerror="this.src='images/placeholder-product.png'">
+                                            <img src="${mUrl}" style="width: 48px; height: 48px; object-fit: contain; background: #0e131d; border-radius: 4px; padding: 2px;" onerror="if(!this.dataset.errored) { this.dataset.errored='true'; this.src='/images/placeholder-product.png'; }">
                                         </td>
                                         <td>
                                             <strong style="color: #ffffff; display: block;">${p.name}</strong>
@@ -458,8 +466,8 @@ const Admin = {
                                             ${p.discountPrice ? `<span style="font-size: 0.75rem; text-decoration: line-through; color: var(--color-text-muted); display: block;">${formatMoney(p.price)}</span>` : ''}
                                         </td>
                                         <td>
-                                            <span class="badge ${p.totalStock <= 0 ? 'badge-sale' : (p.totalStock <= 5 ? 'badge-outline' : 'badge-legit')}">
-                                                ${p.totalStock} units
+                                            <span class="badge ${tStock <= 0 ? 'badge-sale' : (tStock <= 5 ? 'badge-outline' : 'badge-legit')}">
+                                                ${tStock} units
                                             </span>
                                         </td>
                                         <td><span class="status-pill status-${p.status === 'ACTIVE' ? 'confirmed' : 'cancelled'}">${p.status}</span></td>
@@ -470,7 +478,8 @@ const Admin = {
                                             </div>
                                         </td>
                                     </tr>
-                                `).join('')}
+                                    `;
+                                }).join('')}
                             </tbody>
                         </table>
                     </div>
@@ -1061,6 +1070,13 @@ const Admin = {
             });
         });
 
+        // Calculate mainImageUrl and totalStock for quick catalog rendering
+        const mainImageObj = images.find(img => img.isMain) || images[0];
+        const mainImageUrl = mainImageObj ? mainImageObj.imageUrl : '/images/placeholder-product.png';
+
+        let totalStock = 0;
+        variants.forEach(v => totalStock += v.stock);
+
         const payload = {
             id: this.editingProductId,
             name,
@@ -1079,7 +1095,9 @@ const Admin = {
             status: 'ACTIVE',
             isNewArrival: true,
             images,
-            variants
+            variants,
+            mainImageUrl,
+            totalStock
         };
 
         try {
