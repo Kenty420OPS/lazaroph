@@ -924,9 +924,11 @@ const Admin = {
                 loadedCount++;
             } catch (err) {
                 console.error('[Admin] Image upload error:', err);
-                showToast(`Failed to upload ${file.name}: ${err.message}`, 'error');
+                showToast(`Failed to upload ${rawFile.name}: ${err.message}`, 'error');
             }
-        }
+        });
+
+        await Promise.all(uploadPromises);
 
         if (loadedCount > 0) {
             this.renderImageCardsGrid();
