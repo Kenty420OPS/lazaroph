@@ -811,36 +811,47 @@ const Admin = {
     },
 
     handleProductMultipleFileUpload(input) {
-        const files = input.files;
-        if (!files || files.length === 0) return;
-        this.handleDropFiles(files).finally(() => {
-            input.value = ''; // Reset input ONLY after upload finishes
-        });
+        try {
+            const files = input.files;
+            if (!files || files.length === 0) return;
+            this.handleDropFiles(files).finally(() => {
+                input.value = ''; // Reset input ONLY after upload finishes
+            }).catch(err => {
+                alert('Async Error in DropFiles: ' + err.message);
+            });
+        } catch (err) {
+            alert('Sync Error in FileUpload: ' + err.message);
+        }
     },
 
     async handleDropFiles(files) {
-        if (!files || files.length === 0) return;
+        try {
+            if (!files || files.length === 0) return;
 
-        const imageFiles = Array.from(files).filter(f => {
-            if (f.type && f.type.startsWith('image/')) return true;
-            const ext = f.name.toLowerCase();
-            return ext.endsWith('.jpg') || ext.endsWith('.jpeg') || ext.endsWith('.png') || ext.endsWith('.webp') || ext.endsWith('.svg') || ext.endsWith('.gif') || ext.endsWith('.avif') || ext.endsWith('.heic') || ext.endsWith('.heif');
-        });
-        
-        if (imageFiles.length === 0) {
-            showToast('Unsupported file type selected. Please choose a valid image file (JPG, PNG).', 'error');
-            return;
-        }
-
-        // Check for HEIC/HEIF
-        for (const file of imageFiles) {
-            if (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif') || file.type === 'image/heic' || file.type === 'image/heif') {
-                showToast(`Unsupported format: ${file.name}. Please convert iPhone HEIC photos to JPG/PNG before uploading.`, 'error');
+            const imageFiles = Array.from(files).filter(f => {
+                if (f.type && f.type.startsWith('image/')) return true;
+                const ext = f.name ? f.name.toLowerCase() : '';
+                return ext.endsWith('.jpg') || ext.endsWith('.jpeg') || ext.endsWith('.png') || ext.endsWith('.webp') || ext.endsWith('.svg') || ext.endsWith('.gif') || ext.endsWith('.avif') || ext.endsWith('.heic') || ext.endsWith('.heif');
+            });
+            
+            if (imageFiles.length === 0) {
+                showToast('Unsupported file type selected. Please choose a valid image file (JPG, PNG).', 'error');
                 return;
             }
-        }
 
-        showToast(`Uploading ${imageFiles.length} photo(s) to Firebase Storage...`, 'info');
+            // Check for HEIC/HEIF
+            for (const file of imageFiles) {
+                if (file.name && (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) || file.type === 'image/heic' || file.type === 'image/heif') {
+                    showToast(`Unsupported format: ${file.name}. Please convert iPhone HEIC photos to JPG/PNG before uploading.`, 'error');
+                    return;
+                }
+            }
+
+            showToast(`Uploading ${imageFiles.length} photo(s) to Firebase Storage...`, 'info');
+        } catch (err) {
+            alert('Sync Error in DropFiles Init: ' + err.message);
+            throw err;
+        }
 
         let loadedCount = 0;
         for (const file of imageFiles) {
