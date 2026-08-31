@@ -779,7 +779,7 @@ const Admin = {
                 <div class="admin-image-card ${isMain ? 'is-main' : ''}">
                     ${isMain ? `<span class="admin-image-main-badge"> MAIN COVER</span>` : ''}
                     <div class="admin-image-card-thumb">
-                        <img src="${url}" alt="Product Photo ${i + 1}" onerror="if(this.src!=='/images/placeholder-product.png'){ this.src='/images/placeholder-product.png'; showToast('Warning: Image format may be unsupported by your browser (e.g., HEIC/HEIF).', 'warning'); }">
+                        <img src="${url}" alt="Product Photo ${i + 1}" onerror="if(!this.src.includes('placeholder-product.png')) { this.src='/images/placeholder-product.png'; showToast('Warning: Image format may be unsupported by your browser (e.g., HEIC/HEIF).', 'warning'); }">
                     </div>
                     <div class="admin-image-card-actions">
                         ${!isMain ? `
