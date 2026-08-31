@@ -778,8 +778,8 @@ const Admin = {
             return `
                 <div class="admin-image-card ${isMain ? 'is-main' : ''}">
                     ${isMain ? `<span class="admin-image-main-badge"> MAIN COVER</span>` : ''}
-                    <div class="admin-image-card-thumb">
-                        <img src="${url}" alt="Product Photo ${i + 1}" onerror="if(!this.src.includes('placeholder-product.png')) { this.src='/images/placeholder-product.png'; showToast('Warning: Image format may be unsupported by your browser (e.g., HEIC/HEIF).', 'warning'); }">
+                    <div class="admin-image-card-thumb" style="transition: background-color 0.3s ease;">
+                        <img src="${url}" alt="Product Photo ${i + 1}" onerror="if(!this.dataset.errored) { this.dataset.errored='true'; this.src='/images/placeholder-product.png'; this.parentElement.style.backgroundColor='#fee2e2'; showToast('Warning: Failed to load photo. Format may be unsupported.', 'warning'); }">
                     </div>
                     <div class="admin-image-card-actions">
                         ${!isMain ? `
@@ -840,21 +840,33 @@ const Admin = {
             }
         }
 
-        showToast(`Uploading ${imageFiles.length} photo(s) to Firebase Storage...`, 'info');
+        showToast(`Starting upload for ${imageFiles.length} photo(s)...`, 'info');
 
         let loadedCount = 0;
         for (const file of imageFiles) {
             try {
                 let downloadUrl;
                 if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.uploadProductImage) {
-                    downloadUrl = await LazarophFirebase.uploadProductImage(file);
+                    showToast(`Uploading ${file.name} to Firebase...`, 'info');
+                    
+                    const uploadPromise = LazarophFirebase.uploadProductImage(file);
+                    const timeoutPromise = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error("Upload timed out after 15 seconds. Please check your internet connection or try a smaller file.")), 15000)
+                    );
+                    
+                    downloadUrl = await Promise.race([uploadPromise, timeoutPromise]);
                 } else {
+                    showToast(`Processing ${file.name} locally...`, 'info');
                     downloadUrl = await new Promise((res, rej) => {
                         const reader = new FileReader();
                         reader.onload = e => res(e.target.result);
                         reader.onerror = rej;
                         reader.readAsDataURL(file);
                     });
+                }
+
+                if (!downloadUrl) {
+                    throw new Error("Received empty URL from uploader.");
                 }
 
                 this.productImages.push({
@@ -870,7 +882,7 @@ const Admin = {
 
         if (loadedCount > 0) {
             this.renderImageCardsGrid();
-            showToast(`Successfully uploaded ${loadedCount} photo(s) to product!`, 'success');
+            showToast(`Successfully processed ${loadedCount} photo(s)!`, 'success');
         }
     },
 
