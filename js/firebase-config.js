@@ -1395,6 +1395,57 @@ const LazarophFirebase = {
             console.error('[LazarophFirebase] Error deleting customer:', err);
             throw err;
         }
+    },
+
+    // =========================================================================
+    // 15. CLOUD FIRESTORE — FEATURED CATEGORIES
+    // =========================================================================
+    async getFeaturedCategories() {
+        this.init();
+        if (!this.db) {
+            return typeof FallbackStore !== 'undefined' ? FallbackStore.getFeaturedCategories() : [];
+        }
+        try {
+            const snapshot = await this.db.collection('featuredCategories').get();
+            let cats = [];
+            snapshot.forEach(doc => cats.push(doc.data()));
+            if (cats.length === 0 && typeof FallbackStore !== 'undefined') {
+                cats = FallbackStore.getFeaturedCategories();
+            }
+            return cats;
+        } catch (err) {
+            console.warn('[LazarophFirebase] Error getting featured categories:', err);
+            return typeof FallbackStore !== 'undefined' ? FallbackStore.getFeaturedCategories() : [];
+        }
+    },
+
+    async saveFeaturedCategory(catData) {
+        this.init();
+        if (!this.db) {
+            if (typeof FallbackStore !== 'undefined') {
+                const cats = FallbackStore.getFeaturedCategories();
+                const idx = cats.findIndex(c => c.key === catData.key);
+                if (idx > -1) cats[idx] = catData;
+                else cats.push(catData);
+                localStorage.setItem('lazaroph_featured_cats', JSON.stringify(cats));
+                return { success: true };
+            }
+            throw new Error('Firebase not connected and no local store.');
+        }
+        await this.db.collection('featuredCategories').doc(catData.key).set({
+            ...catData,
+            updatedAt: new Date().toISOString()
+        });
+        return { success: true };
+    },
+
+    async resetFeaturedCategory(key) {
+        this.init();
+        if (!this.db) {
+            return { success: true };
+        }
+        await this.db.collection('featuredCategories').doc(key).delete();
+        return { success: true };
     }
 };
 

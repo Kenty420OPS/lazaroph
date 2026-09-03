@@ -40,6 +40,53 @@ const Admin = {
     },
 
     // =========================================================================
+    // CLOUD MIGRATION UTILITY
+    // =========================================================================
+    async forceCloudSync() {
+        if (typeof LazarophFirebase === 'undefined' || !LazarophFirebase.isReady || !LazarophFirebase.db) {
+            showToast('Firebase Cloud is not connected! Cannot perform sync.', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('btn-force-cloud-sync');
+        const origHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = 'Syncing... Please wait.';
+        }
+
+        try {
+            // 1. Sync Featured Categories
+            const categories = typeof FallbackStore !== 'undefined' ? FallbackStore.getFeaturedCategories() : [];
+            for (const cat of categories) {
+                await LazarophFirebase.saveFeaturedCategory(cat);
+            }
+
+            // 2. Sync Brands
+            const brands = typeof FallbackStore !== 'undefined' ? FallbackStore.getBrands() : [];
+            for (const brand of brands) {
+                await LazarophFirebase.saveBrand(brand);
+            }
+
+            // 3. Sync Products
+            const products = typeof FallbackStore !== 'undefined' ? FallbackStore.getProducts() : [];
+            for (const prod of products) {
+                await LazarophFirebase.saveProduct(prod);
+            }
+
+            showToast('Data Successfully Migrated to Cloud!', 'success');
+        } catch (err) {
+            console.error('[CloudSync] Error migrating data:', err);
+            showToast('Error syncing data to cloud: ' + err.message, 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+        }
+    },
+
+    // =========================================================================
     // SHARED HIGH-PERFORMANCE DELETE ENGINE & NON-BLOCKING CONFIRMATIONS
     // =========================================================================
     safeEscape(val) {
@@ -283,9 +330,15 @@ const Admin = {
                         <div class="section-subtitle">STORE OVERVIEW</div>
                         <h1 class="admin-page-title">EXECUTIVE DASHBOARD</h1>
                     </div>
-                    <button class="btn btn-primary" onclick="Admin.switchTab('add-product')">
-                        + Add New Product
-                    </button>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-warning" id="btn-force-cloud-sync" onclick="Admin.forceCloudSync()" title="Migrate local offline laptop data (Products, Brands, Categories) up to Firebase Firestore" style="background-color: #f59e0b; color: #fff; border-color: #f59e0b; font-weight: 700;">
+                            <svg style="width:16px; height:16px; margin-right:6px; display:inline-block; vertical-align:text-bottom;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                            Force Cloud Sync
+                        </button>
+                        <button class="btn btn-primary" onclick="Admin.switchTab('add-product')">
+                            + Add New Product
+                        </button>
+                    </div>
                 </div>
 
                 <!-- KPI Metrics Cards (All Interactive & Clickable!) -->

@@ -1246,18 +1246,27 @@ const API = {
     },
 
     // ================= HOMEPAGE FEATURED CATEGORIES API =================
-    getFeaturedCategories() {
+    async getFeaturedCategories() {
+        if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
+            return await LazarophFirebase.getFeaturedCategories();
+        }
         return this.request('/api/featured-categories');
     },
 
-    uploadFeaturedCategory(data) {
+    async uploadFeaturedCategory(data) {
+        if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
+            return await LazarophFirebase.saveFeaturedCategory(data);
+        }
         return this.request('/api/admin/featured-categories/upload', {
             method: 'POST',
             body: JSON.stringify(data)
         });
     },
 
-    resetFeaturedCategory(categoryKey) {
+    async resetFeaturedCategory(categoryKey) {
+        if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
+            return await LazarophFirebase.resetFeaturedCategory(categoryKey);
+        }
         return this.request('/api/admin/featured-categories/reset', {
             method: 'POST',
             body: JSON.stringify({ categoryKey })
