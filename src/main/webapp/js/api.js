@@ -232,6 +232,10 @@ const FallbackStore = {
         return [];
     },
 
+    getFeaturedCategories() {
+        return this.handle('/api/featured-categories');
+    },
+
     handle(path, method = 'GET', body = null, queryParams = {}) {
         const cleanPath = path.split('?')[0];
 
