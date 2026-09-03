@@ -2741,6 +2741,19 @@ const Admin = {
                             </button>
                         </form>
                     </div>
+
+                    <!-- 3. Firebase Database Configuration -->
+                    <div class="admin-card">
+                        <h3 style="font-size: 1.15rem; font-weight: 800; text-transform: uppercase; margin-bottom: 20px; color: #000000;">
+                            3. Live Cloud Database Connection
+                        </h3>
+                        <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 20px;">
+                            Connect your store to your own Firebase project to enable cross-device cloud syncing, customer registration, and live order tracking.
+                        </p>
+                        <button type="button" class="btn btn-primary btn-block" onclick="LazarophFirebase.openConfigModal()" style="background: #2563eb; color: #ffffff; font-weight: 800;">
+                            CONFIGURE FIREBASE CLOUD
+                        </button>
+                    </div>
                 </div>
             `;
         } catch (err) {
