@@ -1,3 +1,4 @@
+try {
 const { initializeApp, getApps, cert } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const { getAuth } = require('firebase-admin/auth');
@@ -51,3 +52,5 @@ if (!getApps().length) {
 }
 
 module.exports = { db, auth, storage };
+
+} catch (e) { console.error('Global Firebase Admin Crash:', e); module.exports = { db: null, auth: null, storage: null }; }
