@@ -1,15 +1,4 @@
-/**
- * LAZAROPH — Vercel Serverless API: Orders Handler
- * 
- * Supports:
- * - GET  /api/orders (list all orders)
- * - GET  /api/orders?trackingNumber=LZPH-... (track specific order)
- * - GET  /api/orders?id=123 (single order detail)
- * - POST /api/orders (create new order)
- * - PUT  /api/orders?id=123 (update order status / courier)
- */
-
-let ordersStore = [];
+const { db } = require('./firebase-admin');
 
 function sendJson(res, statusCode, data) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -17,6 +6,12 @@ function sendJson(res, statusCode, data) {
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Session-Key');
     res.status(statusCode).json(data);
+}
+
+function isAuthorized(req) {
+    const key = req.headers['x-session-key'] || req.query.sessionKey;
+    if (!key || !key.startsWith('adm_')) return false;
+    return true;
 }
 
 module.exports = async (req, res) => {
@@ -27,34 +22,48 @@ module.exports = async (req, res) => {
         return res.status(204).end();
     }
 
-    const { query = {}, method, body } = req;
-    const url = req.url || '';
-    const route = query.route || '';
-    const deleteMatch = url.match(/\/delete\/([^/?]+)/) || route.match(/^delete\/([^/?]+)/);
-    let id = query.id ? query.id : (deleteMatch ? deleteMatch[1] : null);
-    if (id && !isNaN(id)) {
-        id = parseInt(id, 10);
-    }
-
     try {
+        if (!db) {
+            console.error('[API Orders Error]: Firestore database not initialized.');
+            return sendJson(res, 500, { success: false, error: 'Database connection error. Missing Firebase credentials.' });
+        }
+
+        const { query = {}, method, body: reqBody } = req;
+        const body = typeof reqBody === 'string' ? JSON.parse(reqBody || '{}') : (reqBody || {});
+        const url = req.url || '';
+        const route = query.route || '';
+
+        const deleteMatch = url.match(/\/delete\/([^/?]+)/) || route.match(/^delete\/([^/?]+)/);
+        let id = query.id ? query.id : (deleteMatch ? deleteMatch[1] : (body.id ? body.id : null));
+        const isDeleteAction = Boolean(deleteMatch || method === 'DELETE' || route.startsWith('delete/') || (method === 'POST' && body.action === 'delete'));
+
+        const ordersRef = db.collection('orders');
+
+        // --- GET ORDERS ---
         if (method === 'GET') {
             if (query.trackingNumber) {
-                const order = ordersStore.find(o => (o.orderNumber || '').toUpperCase() === query.trackingNumber.toUpperCase());
-                if (!order) {
+                const snapshot = await ordersRef.where('orderNumber', '==', query.trackingNumber).limit(1).get();
+                if (snapshot.empty) {
                     return sendJson(res, 404, { success: false, error: `Order with tracking number ${query.trackingNumber} not found.` });
                 }
+                const order = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
                 return sendJson(res, 200, { success: true, data: order });
             }
 
             if (id) {
-                const order = ordersStore.find(o => o.id === id);
-                if (!order) {
+                const doc = await ordersRef.doc(String(id)).get();
+                if (!doc.exists) {
                     return sendJson(res, 404, { success: false, error: `Order #${id} not found.` });
                 }
-                return sendJson(res, 200, { success: true, data: order });
+                return sendJson(res, 200, { success: true, data: { id: doc.id, ...doc.data() } });
             }
 
-            let results = [...ordersStore];
+            const snapshot = await ordersRef.orderBy('createdAt', 'desc').get();
+            let results = [];
+            snapshot.forEach(doc => {
+                results.push({ id: doc.id, ...doc.data() });
+            });
+
             if (query.customerEmail) {
                 const emailLower = query.customerEmail.toLowerCase();
                 results = results.filter(o => (o.customerEmail || '').toLowerCase() === emailLower);
@@ -67,73 +76,69 @@ module.exports = async (req, res) => {
             return sendJson(res, 200, { success: true, count: results.length, data: results });
         }
 
-        if (method === 'POST') {
-            const data = typeof body === 'string' ? JSON.parse(body || '{}') : (body || {});
-            const orderId = Date.now();
+        // --- POST (Create Order) ---
+        if (method === 'POST' && !isDeleteAction && !body.action) {
+            const orderId = Date.now().toString();
             const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-            const orderNum = data.orderNumber || `LZPH-${dateStr}-${String(ordersStore.length + 1).padStart(4, '0')}`;
+            const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+            const orderNum = body.orderNumber || `LZPH-${dateStr}-${randomSuffix}`;
 
             const newOrder = {
                 id: orderId,
                 orderNumber: orderNum,
-                customerName: data.customerName || 'Customer',
-                customerEmail: data.customerEmail || '',
-                customerPhone: data.customerPhone || '',
-                shippingAddress: data.shippingAddress || '',
-                status: data.status || 'PENDING',
-                paymentMethod: data.paymentMethod || 'Cash on Delivery (COD)',
-                paymentStatus: data.paymentStatus || (data.paymentMethod === 'GCash' || data.paymentMethod === 'Salmon Financing' ? 'PAID' : 'PENDING'),
-                courier: data.courier || 'LALAMOVE',
-                riderName: data.riderName || 'Pending Courier Assignment',
-                riderPhone: data.riderPhone || '',
-                estimatedDeliveryTime: data.estimatedDeliveryTime || 'Processing order',
-                subtotal: parseFloat(data.subtotal) || 0,
-                shippingFee: parseFloat(data.shippingFee) || 150.00,
-                totalAmount: parseFloat(data.totalAmount) || ((parseFloat(data.subtotal) || 0) + 150.00),
+                customerName: body.customerName || 'Customer',
+                customerEmail: body.customerEmail || '',
+                customerPhone: body.customerPhone || '',
+                shippingAddress: body.shippingAddress || '',
+                status: body.status || 'PENDING',
+                paymentMethod: body.paymentMethod || 'Cash on Delivery (COD)',
+                paymentStatus: body.paymentStatus || (body.paymentMethod === 'GCash' || body.paymentMethod === 'Salmon Financing' ? 'PAID' : 'PENDING'),
+                courier: body.courier || 'LALAMOVE',
+                riderName: body.riderName || 'Pending Courier Assignment',
+                riderPhone: body.riderPhone || '',
+                estimatedDeliveryTime: body.estimatedDeliveryTime || 'Processing order',
+                subtotal: parseFloat(body.subtotal) || 0,
+                shippingFee: parseFloat(body.shippingFee) || 150.00,
+                totalAmount: parseFloat(body.totalAmount) || ((parseFloat(body.subtotal) || 0) + 150.00),
                 deliveryFeeConfirmed: true,
                 createdAt: new Date().toISOString(),
-                items: data.items || []
+                items: body.items || []
             };
 
-            ordersStore.unshift(newOrder);
+            await ordersRef.doc(orderId).set(newOrder);
             return sendJson(res, 201, { success: true, message: 'Order created successfully.', data: newOrder });
         }
 
-        if (method === 'PUT') {
-            const data = typeof body === 'string' ? JSON.parse(body || '{}') : (body || {});
-            const targetId = id || data.id;
-            const index = ordersStore.findIndex(o => o.id === targetId || o.orderNumber === data.orderNumber);
+        // --- PUT / Update Order ---
+        if (method === 'PUT' || (method === 'POST' && body.action === 'update')) {
+            if (!isAuthorized(req)) return sendJson(res, 403, { success: false, error: 'Unauthorized to update order.' });
+            
+            const targetId = String(id || body.id);
+            if (!targetId || targetId === 'undefined') return sendJson(res, 400, { success: false, error: 'Order ID is required.' });
 
-            if (index === -1) {
-                return sendJson(res, 404, { success: false, error: `Order not found.` });
-            }
+            const updateData = { ...body };
+            delete updateData.id;
+            delete updateData.action;
 
-            ordersStore[index] = {
-                ...ordersStore[index],
-                ...data,
-                updatedAt: new Date().toISOString()
-            };
-
-            return sendJson(res, 200, { success: true, message: 'Order updated successfully.', data: ordersStore[index] });
+            await ordersRef.doc(targetId).set(updateData, { merge: true });
+            return sendJson(res, 200, { success: true, message: 'Order updated successfully.', data: { id: targetId, ...updateData } });
         }
 
-        if (method === 'DELETE' || (method === 'POST' && (req.url || '').includes('/delete'))) {
-            const data = typeof body === 'string' ? JSON.parse(body || '{}') : (body || {});
-            const targetId = id || data.id || data.orderId;
-            const index = ordersStore.findIndex(o => String(o.id) === String(targetId) || o.orderNumber === targetId || String(o.orderNumber) === String(targetId));
+        // --- DELETE Order ---
+        if (isDeleteAction) {
+            if (!isAuthorized(req)) return sendJson(res, 403, { success: false, error: 'Unauthorized to delete order.' });
+            
+            const targetId = String(id || body.id);
+            if (!targetId || targetId === 'undefined') return sendJson(res, 400, { success: false, error: 'Order ID is required.' });
 
-            if (index !== -1) {
-                const deleted = ordersStore.splice(index, 1)[0];
-                return sendJson(res, 200, { success: true, message: 'Order deleted successfully.', data: deleted });
-            }
-            return sendJson(res, 200, { success: true, message: 'Order processed/removed.' });
+            await ordersRef.doc(targetId).delete();
+            return sendJson(res, 200, { success: true, message: `Order #${targetId} deleted successfully.` });
         }
 
-        return sendJson(res, 405, { success: false, error: `Method ${method} not allowed.` });
+        return sendJson(res, 405, { success: false, error: 'Method Not Allowed' });
+
     } catch (err) {
         console.error('[API Orders Error]:', err);
         return sendJson(res, 500, { success: false, error: err.message || 'Internal server error' });
     }
 };
-
-module.exports.ordersStore = ordersStore;

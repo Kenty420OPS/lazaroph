@@ -55,13 +55,6 @@ const FallbackStore = {
     getProducts() {
         const saved = localStorage.getItem('lazaroph_offline_products');
         if (saved) {
-            const cleanPath = path.split('?')[0].toLowerCase();
-            const criticalRoutes = ['/api/products', '/api/brands', '/api/orders', '/api/chat'];
-            if (criticalRoutes.some(route => cleanPath.startsWith(route))) {
-                console.error([API Production Error] Refusing to use LocalStorage fallback for production data route: \);
-                throw new Error('Database connection failed. Please ensure Firebase credentials are provided in Vercel.');
-            }
-
             try { return JSON.parse(saved); } catch (e) {}
         }
         const isInit = localStorage.getItem('lazaroph_store_initialized');
@@ -110,13 +103,6 @@ const FallbackStore = {
         const saved = localStorage.getItem('lazaroph_offline_brands');
         let brands = [];
         if (saved) {
-            const cleanPath = path.split('?')[0].toLowerCase();
-            const criticalRoutes = ['/api/products', '/api/brands', '/api/orders', '/api/chat'];
-            if (criticalRoutes.some(route => cleanPath.startsWith(route))) {
-                console.error([API Production Error] Refusing to use LocalStorage fallback for production data route: \);
-                throw new Error('Database connection failed. Please ensure Firebase credentials are provided in Vercel.');
-            }
-
             try { brands = JSON.parse(saved); } catch (e) {}
         }
         if (!brands || !Array.isArray(brands) || brands.length === 0) {
@@ -171,13 +157,6 @@ const FallbackStore = {
     getAdmins() {
         const saved = localStorage.getItem('lazaroph_fallback_admins');
         if (saved) {
-            const cleanPath = path.split('?')[0].toLowerCase();
-            const criticalRoutes = ['/api/products', '/api/brands', '/api/orders', '/api/chat'];
-            if (criticalRoutes.some(route => cleanPath.startsWith(route))) {
-                console.error([API Production Error] Refusing to use LocalStorage fallback for production data route: \);
-                throw new Error('Database connection failed. Please ensure Firebase credentials are provided in Vercel.');
-            }
-
             try { return JSON.parse(saved); } catch (e) {}
         }
         return [
@@ -202,13 +181,6 @@ const FallbackStore = {
     getCustomers() {
         const saved = localStorage.getItem('lazaroph_fallback_customers');
         if (saved) {
-            const cleanPath = path.split('?')[0].toLowerCase();
-            const criticalRoutes = ['/api/products', '/api/brands', '/api/orders', '/api/chat'];
-            if (criticalRoutes.some(route => cleanPath.startsWith(route))) {
-                console.error([API Production Error] Refusing to use LocalStorage fallback for production data route: \);
-                throw new Error('Database connection failed. Please ensure Firebase credentials are provided in Vercel.');
-            }
-
             try { return JSON.parse(saved); } catch (e) {}
         }
         return [
@@ -232,13 +204,6 @@ const FallbackStore = {
     getCart() {
         const saved = localStorage.getItem('lazaroph_offline_cart');
         if (saved) {
-            const cleanPath = path.split('?')[0].toLowerCase();
-            const criticalRoutes = ['/api/products', '/api/brands', '/api/orders', '/api/chat'];
-            if (criticalRoutes.some(route => cleanPath.startsWith(route))) {
-                console.error([API Production Error] Refusing to use LocalStorage fallback for production data route: \);
-                throw new Error('Database connection failed. Please ensure Firebase credentials are provided in Vercel.');
-            }
-
             try { return JSON.parse(saved); } catch (e) {}
         }
         const emptyCart = { items: [], subtotal: 0, shippingFee: 0, total: 0, totalQuantity: 0 };
@@ -262,13 +227,6 @@ const FallbackStore = {
     getOrders() {
         const saved = localStorage.getItem('lazaroph_offline_orders');
         if (saved) {
-            const cleanPath = path.split('?')[0].toLowerCase();
-            const criticalRoutes = ['/api/products', '/api/brands', '/api/orders', '/api/chat'];
-            if (criticalRoutes.some(route => cleanPath.startsWith(route))) {
-                console.error([API Production Error] Refusing to use LocalStorage fallback for production data route: \);
-                throw new Error('Database connection failed. Please ensure Firebase credentials are provided in Vercel.');
-            }
-
             try { return JSON.parse(saved); } catch (e) {}
         }
         return [];
@@ -362,14 +320,7 @@ const FallbackStore = {
         if (cleanPath === '/api/auth/admin/me') {
             const saved = localStorage.getItem('lazaroph_admin_user');
             if (saved) {
-                const cleanPath = path.split('?')[0].toLowerCase();
-            const criticalRoutes = ['/api/products', '/api/brands', '/api/orders', '/api/chat'];
-            if (criticalRoutes.some(route => cleanPath.startsWith(route))) {
-                console.error([API Production Error] Refusing to use LocalStorage fallback for production data route: \);
-                throw new Error('Database connection failed. Please ensure Firebase credentials are provided in Vercel.');
-            }
-
-            try { return JSON.parse(saved); } catch (e) {}
+                try { return JSON.parse(saved); } catch (e) {}
             }
             const admins = this.getAdmins();
             return admins[0];
@@ -452,14 +403,7 @@ const FallbackStore = {
         if (cleanPath === '/api/auth/customer/me' || cleanPath === '/api/auth/me') {
             const saved = localStorage.getItem('lazaroph_customer_user');
             if (saved) {
-                const cleanPath = path.split('?')[0].toLowerCase();
-            const criticalRoutes = ['/api/products', '/api/brands', '/api/orders', '/api/chat'];
-            if (criticalRoutes.some(route => cleanPath.startsWith(route))) {
-                console.error([API Production Error] Refusing to use LocalStorage fallback for production data route: \);
-                throw new Error('Database connection failed. Please ensure Firebase credentials are provided in Vercel.');
-            }
-
-            try { return JSON.parse(saved); } catch (e) {}
+                try { return JSON.parse(saved); } catch (e) {}
             }
             const custs = this.getCustomers();
             return custs[0];
@@ -958,14 +902,7 @@ const FallbackStore = {
         if (cleanPath === '/api/featured-categories') {
             const rawCats = localStorage.getItem('lazaroph_featured_cats');
             if (rawCats) {
-                const cleanPath = path.split('?')[0].toLowerCase();
-            const criticalRoutes = ['/api/products', '/api/brands', '/api/orders', '/api/chat'];
-            if (criticalRoutes.some(route => cleanPath.startsWith(route))) {
-                console.error([API Production Error] Refusing to use LocalStorage fallback for production data route: \);
-                throw new Error('Database connection failed. Please ensure Firebase credentials are provided in Vercel.');
-            }
-
-            try { return JSON.parse(rawCats); } catch (e) {}
+                try { return JSON.parse(rawCats); } catch (e) {}
             }
             return [
                 { key: 'men', name: 'MEN', badge: "MEN'S COLLECTION", description: 'Authentic shoes, performance apparel, shorts, and gear.', buttonText: 'SHOP MEN', targetRoute: 'shop?gender=MEN', cardSize: 'cat-large', imageUrl: 'images/category-men.jpg' },
@@ -1116,13 +1053,6 @@ const API = {
                 new URLSearchParams(queryStr).forEach((v, k) => {
                     queryParams[k] = v;
                 });
-            }
-
-            const cleanPath = path.split('?')[0].toLowerCase();
-            const criticalRoutes = ['/api/products', '/api/brands', '/api/orders', '/api/chat'];
-            if (criticalRoutes.some(route => cleanPath.startsWith(route))) {
-                console.error([API Production Error] Refusing to use LocalStorage fallback for production data route: \);
-                throw new Error('Database connection failed. Please ensure Firebase credentials are provided in Vercel.');
             }
 
             try {
@@ -1372,13 +1302,6 @@ const API = {
     // Catalog & Products
     async getProducts(query = new URLSearchParams()) {
         if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
-            const cleanPath = path.split('?')[0].toLowerCase();
-            const criticalRoutes = ['/api/products', '/api/brands', '/api/orders', '/api/chat'];
-            if (criticalRoutes.some(route => cleanPath.startsWith(route))) {
-                console.error([API Production Error] Refusing to use LocalStorage fallback for production data route: \);
-                throw new Error('Database connection failed. Please ensure Firebase credentials are provided in Vercel.');
-            }
-
             try {
                 const filters = {};
                 for (const [k, v] of query.entries()) {
@@ -1394,13 +1317,6 @@ const API = {
 
     async getProductById(id) {
         if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
-            const cleanPath = path.split('?')[0].toLowerCase();
-            const criticalRoutes = ['/api/products', '/api/brands', '/api/orders', '/api/chat'];
-            if (criticalRoutes.some(route => cleanPath.startsWith(route))) {
-                console.error([API Production Error] Refusing to use LocalStorage fallback for production data route: \);
-                throw new Error('Database connection failed. Please ensure Firebase credentials are provided in Vercel.');
-            }
-
             try {
                 const products = await LazarophFirebase.getProducts();
                 const p = products.find(p => String(p.id) === String(id));
@@ -1418,13 +1334,6 @@ const API = {
 
     async getBrands() {
         if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
-            const cleanPath = path.split('?')[0].toLowerCase();
-            const criticalRoutes = ['/api/products', '/api/brands', '/api/orders', '/api/chat'];
-            if (criticalRoutes.some(route => cleanPath.startsWith(route))) {
-                console.error([API Production Error] Refusing to use LocalStorage fallback for production data route: \);
-                throw new Error('Database connection failed. Please ensure Firebase credentials are provided in Vercel.');
-            }
-
             try {
                 return await LazarophFirebase.getBrands();
             } catch (err) {
@@ -1506,13 +1415,6 @@ const API = {
 
     async getAdminProducts() {
         if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
-            const cleanPath = path.split('?')[0].toLowerCase();
-            const criticalRoutes = ['/api/products', '/api/brands', '/api/orders', '/api/chat'];
-            if (criticalRoutes.some(route => cleanPath.startsWith(route))) {
-                console.error([API Production Error] Refusing to use LocalStorage fallback for production data route: \);
-                throw new Error('Database connection failed. Please ensure Firebase credentials are provided in Vercel.');
-            }
-
             try {
                 return await LazarophFirebase.getProducts();
             } catch (err) {
@@ -1524,13 +1426,6 @@ const API = {
 
     async saveProduct(productData) {
         if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
-            const cleanPath = path.split('?')[0].toLowerCase();
-            const criticalRoutes = ['/api/products', '/api/brands', '/api/orders', '/api/chat'];
-            if (criticalRoutes.some(route => cleanPath.startsWith(route))) {
-                console.error([API Production Error] Refusing to use LocalStorage fallback for production data route: \);
-                throw new Error('Database connection failed. Please ensure Firebase credentials are provided in Vercel.');
-            }
-
             try {
                 return await LazarophFirebase.saveProduct(productData);
             } catch (err) {
@@ -1548,13 +1443,6 @@ const API = {
             FallbackStore.removeCachedProduct(id);
         }
         if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
-            const cleanPath = path.split('?')[0].toLowerCase();
-            const criticalRoutes = ['/api/products', '/api/brands', '/api/orders', '/api/chat'];
-            if (criticalRoutes.some(route => cleanPath.startsWith(route))) {
-                console.error([API Production Error] Refusing to use LocalStorage fallback for production data route: \);
-                throw new Error('Database connection failed. Please ensure Firebase credentials are provided in Vercel.');
-            }
-
             try {
                 await LazarophFirebase.deleteProduct(id);
             } catch (fsErr) {
@@ -1602,13 +1490,6 @@ const API = {
             if (FallbackStore.saveOrders) FallbackStore.saveOrders(FallbackStore.orders);
         }
         if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
-            const cleanPath = path.split('?')[0].toLowerCase();
-            const criticalRoutes = ['/api/products', '/api/brands', '/api/orders', '/api/chat'];
-            if (criticalRoutes.some(route => cleanPath.startsWith(route))) {
-                console.error([API Production Error] Refusing to use LocalStorage fallback for production data route: \);
-                throw new Error('Database connection failed. Please ensure Firebase credentials are provided in Vercel.');
-            }
-
             try {
                 await LazarophFirebase.deleteOrder(orderId);
             } catch (fsErr) {
@@ -1646,13 +1527,6 @@ const API = {
 
     async deleteCustomer(uid) {
         if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
-            const cleanPath = path.split('?')[0].toLowerCase();
-            const criticalRoutes = ['/api/products', '/api/brands', '/api/orders', '/api/chat'];
-            if (criticalRoutes.some(route => cleanPath.startsWith(route))) {
-                console.error([API Production Error] Refusing to use LocalStorage fallback for production data route: \);
-                throw new Error('Database connection failed. Please ensure Firebase credentials are provided in Vercel.');
-            }
-
             try {
                 await LazarophFirebase.deleteCustomer(uid);
             } catch (e) {
@@ -1691,13 +1565,6 @@ const API = {
 
     async saveAdminBrand(brandData) {
         if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
-            const cleanPath = path.split('?')[0].toLowerCase();
-            const criticalRoutes = ['/api/products', '/api/brands', '/api/orders', '/api/chat'];
-            if (criticalRoutes.some(route => cleanPath.startsWith(route))) {
-                console.error([API Production Error] Refusing to use LocalStorage fallback for production data route: \);
-                throw new Error('Database connection failed. Please ensure Firebase credentials are provided in Vercel.');
-            }
-
             try {
                 return await LazarophFirebase.saveBrand(brandData);
             } catch (e) {
@@ -1715,13 +1582,6 @@ const API = {
 
     async deleteAdminBrand(id) {
         if (typeof LazarophFirebase !== 'undefined' && LazarophFirebase.isReady && LazarophFirebase.db) {
-            const cleanPath = path.split('?')[0].toLowerCase();
-            const criticalRoutes = ['/api/products', '/api/brands', '/api/orders', '/api/chat'];
-            if (criticalRoutes.some(route => cleanPath.startsWith(route))) {
-                console.error([API Production Error] Refusing to use LocalStorage fallback for production data route: \);
-                throw new Error('Database connection failed. Please ensure Firebase credentials are provided in Vercel.');
-            }
-
             try {
                 await LazarophFirebase.deleteBrand(id);
             } catch (e) {
@@ -1877,4 +1737,3 @@ function formatMoney(amount) {
     const num = parseFloat(amount);
     return '₱' + num.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
-

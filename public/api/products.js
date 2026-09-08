@@ -1,66 +1,4 @@
-/**
- * LAZAROPH — Vercel Serverless API: Products Handler
- * 
- * Supports:
- * - GET    /api/products (list, filter by category, brand, gender, status, search)
- * - GET    /api/products?id=123 (single product detail)
- * - POST   /api/products (create product)
- * - PUT    /api/products?id=123 (update product)
- * - DELETE /api/products?id=123 (permanent deletion)
- */
-
-const https = require('https');
-
-// Persistent in-memory & Firestore-synced product store
-            { id: 108, size: 'US 10.5', color: 'Triple Black', colorHex: '#111111', stock: 9, price: 2499.00, sku: 'LZPH-SH-RUN01-10.5-BLK' },
-            { id: 109, size: 'US 11', color: 'Triple Black', colorHex: '#111111', stock: 6, price: 2499.00, sku: 'LZPH-SH-RUN01-11-BLK' },
-            { id: 110, size: 'US 8', color: 'Ghost White', colorHex: '#f0f0f0', stock: 8, price: 2499.00, sku: 'LZPH-SH-RUN01-8-WHT' },
-            { id: 111, size: 'US 8.5', color: 'Ghost White', colorHex: '#f0f0f0', stock: 10, price: 2499.00, sku: 'LZPH-SH-RUN01-8.5-WHT' },
-            { id: 112, size: 'US 9', color: 'Ghost White', colorHex: '#f0f0f0', stock: 12, price: 2499.00, sku: 'LZPH-SH-RUN01-9-WHT' },
-            { id: 113, size: 'US 9.5', color: 'Ghost White', colorHex: '#f0f0f0', stock: 5, price: 2499.00, sku: 'LZPH-SH-RUN01-9.5-WHT' },
-            { id: 114, size: 'US 10', color: 'Ghost White', colorHex: '#f0f0f0', stock: 14, price: 2499.00, sku: 'LZPH-SH-RUN01-10-WHT' }
-        ]
-    },
-    {
-        id: 2,
-        name: 'LAZAROPH Street Classic',
-        sku: 'LZPH-SH-STR01',
-        description: 'Iconic minimalist street sneaker built with supple vegan leather, timeless silhouette, and padded memory foam collar for modern everyday aesthetics.',
-        features: "Minimalist silhouette\nPadded ankle collar\nShock-absorbing cushioned footbed\nNon-marking cupsole",
-        materials: 'Premium synthetic leather, Recycled textile lining, Vulcanized rubber sole',
-        careInstructions: 'Clean with soft brush or leather wipes. Do not machine wash.',
-        price: 2299.00,
-        discountPrice: null,
-        categoryId: 1,
-        categoryName: 'Shoes',
-        subcategory: 'Sneakers',
-        brandId: 3,
-        brandName: 'Adidas',
-        gender: 'WOMEN',
-        sizeType: 'US_WOMEN_SHOES',
-        status: 'ACTIVE',
-        featured: true,
-        newArrival: true,
-        sale: false,
-        mainImageUrl: 'images/street-classic-white-main.png',
-        totalStock: 66,
-        images: [
-            { imageUrl: 'images/street-classic-white-main.png', isMain: true, sortOrder: 1 }
-        ],
-        variants: [
-            { id: 201, size: 'US 5', color: 'Pure White', colorHex: '#ffffff', stock: 6, price: 2299.00, sku: 'LZPH-SH-STR01-5-WHT' },
-            { id: 202, size: 'US 5.5', color: 'Pure White', colorHex: '#ffffff', stock: 8, price: 2299.00, sku: 'LZPH-SH-STR01-5.5-WHT' },
-            { id: 203, size: 'US 6', color: 'Pure White', colorHex: '#ffffff', stock: 12, price: 2299.00, sku: 'LZPH-SH-STR01-6-WHT' },
-            { id: 204, size: 'US 6.5', color: 'Pure White', colorHex: '#ffffff', stock: 15, price: 2299.00, sku: 'LZPH-SH-STR01-6.5-WHT' },
-            { id: 205, size: 'US 7', color: 'Pure White', colorHex: '#ffffff', stock: 10, price: 2299.00, sku: 'LZPH-SH-STR01-7-WHT' },
-            { id: 206, size: 'US 7.5', color: 'Pure White', colorHex: '#ffffff', stock: 7, price: 2299.00, sku: 'LZPH-SH-STR01-7.5-WHT' },
-            { id: 207, size: 'US 8', color: 'Pure White', colorHex: '#ffffff', stock: 8, price: 2299.00, sku: 'LZPH-SH-STR01-8-WHT' }
-        ]
-    }
-];
-
-// Track deleted IDs permanently in serverless execution lifecycle
-const deletedProductIds = new Set();
+const { db } = require('./firebase-admin');
 
 function sendJson(res, statusCode, data) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -68,6 +6,12 @@ function sendJson(res, statusCode, data) {
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Session-Key');
     res.status(statusCode).json(data);
+}
+
+function isAuthorized(req) {
+    const key = req.headers['x-session-key'] || req.query.sessionKey;
+    if (!key || !key.startsWith('adm_')) return false;
+    return true;
 }
 
 module.exports = async (req, res) => {
@@ -78,63 +22,71 @@ module.exports = async (req, res) => {
         return res.status(204).end();
     }
 
-    const { query = {}, method, body } = req;
-    const url = req.url || '';
-    const route = query.route || '';
-
-    // Extract ID from delete URL /delete/123 or route
-    const deleteMatch = url.match(/\/delete\/([^/?]+)/) || route.match(/^delete\/([^/?]+)/);
-    let id = query.id ? query.id : (deleteMatch ? deleteMatch[1] : null);
-    if (id && !isNaN(id)) {
-        id = parseInt(id, 10);
-    }
-    const isDeleteAction = Boolean(deleteMatch || method === 'DELETE' || route.startsWith('delete/'));
-
     try {
-        // --- DELETE /api/products or POST /delete/:id ---
-        if (isDeleteAction) {
-            if (!id) {
-                return sendJson(res, 400, { success: false, error: 'Product ID is required for deletion.' });
+        if (!db) {
+            console.error('[API Products Error]: Firestore database not initialized.');
+            return sendJson(res, 500, { success: false, error: 'Database connection error. Missing Firebase credentials.' });
+        }
+
+        const { query = {}, method, body: reqBody } = req;
+        const body = typeof reqBody === 'string' ? JSON.parse(reqBody || '{}') : (reqBody || {});
+        const url = req.url || '';
+        const route = query.route || '';
+
+        const deleteMatch = url.match(/\/delete\/([^/?]+)/) || route.match(/^delete\/([^/?]+)/);
+        let id = query.id ? query.id : (deleteMatch ? deleteMatch[1] : null);
+        const isDeleteAction = Boolean(deleteMatch || method === 'DELETE' || route.startsWith('delete/'));
+
+        const productsRef = db.collection('products');
+
+        // --- MIGRATION / SEED CHECK ---
+        if (query.action === 'seed') {
+            if (!isAuthorized(req)) return sendJson(res, 403, { success: false, error: 'Unauthorized to seed database' });
+            
+            const snapshot = await productsRef.limit(1).get();
+            if (!snapshot.empty) {
+                return sendJson(res, 400, { success: false, error: 'Firestore already contains products. Seed aborted to prevent duplicates.' });
             }
 
-            const strId = String(id);
-            const index = productsStore.findIndex(p => String(p.id) === strId || p.id === id);
-            if (index === -1 && (deletedProductIds.has(id) || deletedProductIds.has(strId))) {
-                return sendJson(res, 200, { success: true, message: `Product #${id} is already deleted.` });
-            }
-
-            deletedProductIds.add(id);
-            deletedProductIds.add(strId);
-            if (index !== -1) {
-                productsStore.splice(index, 1);
-            }
-
-            return sendJson(res, 200, {
-                success: true,
-                message: `Product #${id} has been permanently deleted from production database.`,
-                deletedId: id
+            return sendJson(res, 200, { 
+                success: true, 
+                message: 'Seed endpoint ready. To seed, the original products array must be restored and imported here.', 
+                expectedCount: 'Unknown (Backup file used)' 
             });
         }
 
-        // --- GET /api/products ---
+        // --- DELETE PRODUCT ---
+        if (isDeleteAction) {
+            if (!isAuthorized(req)) return sendJson(res, 403, { success: false, error: 'Unauthorized' });
+            if (!id) return sendJson(res, 400, { success: false, error: 'Product ID is required for deletion.' });
+
+            await productsRef.doc(String(id)).delete();
+            return sendJson(res, 200, { success: true, message: \Product #\ has been permanently deleted from production database.\, deletedId: id });
+        }
+
+        // --- GET PRODUCTS ---
         if (method === 'GET') {
             if (id) {
-                const product = productsStore.find(p => p.id === id && !deletedProductIds.has(p.id));
-                if (!product) {
-                    return sendJson(res, 404, { success: false, error: `Product #${id} not found.` });
+                const doc = await productsRef.doc(String(id)).get();
+                if (!doc.exists) {
+                    return sendJson(res, 404, { success: false, error: \Product #\ not found.\ });
                 }
-                return sendJson(res, 200, { success: true, data: product });
+                return sendJson(res, 200, { success: true, data: { id: doc.id, ...doc.data() } });
             }
 
-            let results = productsStore.filter(p => !deletedProductIds.has(p.id));
+            const snapshot = await productsRef.get();
+            let results = [];
+            snapshot.forEach(doc => {
+                results.push({ id: doc.id, ...doc.data() });
+            });
 
             if (query.category) {
                 const catLower = query.category.toLowerCase();
-                results = results.filter(p => (p.categoryName || '').toLowerCase() === catLower || (p.categoryId && String(p.categoryId) === query.category));
+                results = results.filter(p => (p.categoryName || '').toLowerCase() === catLower || String(p.categoryId) === query.category);
             }
             if (query.brand) {
                 const brandLower = query.brand.toLowerCase();
-                results = results.filter(p => (p.brandName || '').toLowerCase() === brandLower || (p.brandId && String(p.brandId) === query.brand));
+                results = results.filter(p => (p.brandName || '').toLowerCase() === brandLower || String(p.brandId) === query.brand);
             }
             if (query.gender) {
                 const gUpper = query.gender.toUpperCase();
@@ -149,107 +101,26 @@ module.exports = async (req, res) => {
             if (query.new === 'true' || query.newArrival === 'true') {
                 results = results.filter(p => Boolean(p.newArrival));
             }
-            if (query.q) {
-                const qLower = query.q.toLowerCase();
-                results = results.filter(p => 
-                    (p.name || '').toLowerCase().includes(qLower) ||
-                    (p.description || '').toLowerCase().includes(qLower) ||
-                    (p.brandName || '').toLowerCase().includes(qLower) ||
-                    (p.sku || '').toLowerCase().includes(qLower)
-                );
-            }
 
             return sendJson(res, 200, { success: true, count: results.length, data: results });
         }
 
-        // --- POST /api/products ---
-        if (method === 'POST') {
-            const data = typeof body === 'string' ? JSON.parse(body || '{}') : (body || {});
-            if (!data.name || !data.price) {
-                return sendJson(res, 400, { success: false, error: 'Product name and price are required.' });
-            }
+        // --- POST / PUT (Create/Update) ---
+        if (method === 'POST' || method === 'PUT') {
+            if (!isAuthorized(req)) return sendJson(res, 403, { success: false, error: 'Unauthorized' });
 
-            const newId = Date.now();
-            const newProduct = {
-                id: newId,
-                name: data.name.trim(),
-                sku: data.sku || `LZPH-${Date.now().toString(36).toUpperCase()}`,
-                description: data.description || '',
-                features: data.features || '',
-                materials: data.materials || '',
-                careInstructions: data.careInstructions || '',
-                price: parseFloat(data.price) || 0,
-                discountPrice: data.discountPrice ? parseFloat(data.discountPrice) : null,
-                categoryId: data.categoryId || 1,
-                categoryName: data.categoryName || 'Shoes',
-                subcategory: data.subcategory || '',
-                brandId: data.brandId || 1,
-                brandName: data.brandName || 'Nike',
-                gender: data.gender || 'UNISEX',
-                sizeType: data.sizeType || 'US_MEN_SHOES',
-                status: data.status || 'ACTIVE',
-                featured: Boolean(data.featured),
-                newArrival: Boolean(data.newArrival),
-                sale: Boolean(data.sale),
-                mainImageUrl: data.mainImageUrl || (data.images && data.images[0] ? data.images[0].imageUrl : 'images/runner-x1-black-main.png'),
-                totalStock: parseInt(data.totalStock, 10) || 0,
-                images: data.images || [{ imageUrl: data.mainImageUrl || 'images/runner-x1-black-main.png', isMain: true, sortOrder: 1 }],
-                variants: data.variants || []
-            };
+            const targetId = String(id || body.id || Date.now());
+            const productData = { ...body };
+            delete productData.id; 
+            productData.id = targetId;
 
-            productsStore.unshift(newProduct);
-            return sendJson(res, 201, { success: true, message: 'Product created successfully.', data: newProduct });
+            await productsRef.doc(targetId).set(productData, { merge: true });
+
+            return sendJson(res, 200, { success: true, message: 'Product saved to Firestore successfully.', data: productData });
         }
 
-        // --- PUT /api/products ---
-        if (method === 'PUT') {
-            const data = typeof body === 'string' ? JSON.parse(body || '{}') : (body || {});
-            const targetId = id || data.id;
-            if (!targetId) {
-                return sendJson(res, 400, { success: false, error: 'Product ID is required for update.' });
-            }
+        return sendJson(res, 405, { success: false, error: 'Method Not Allowed' });
 
-            const index = productsStore.findIndex(p => p.id === targetId && !deletedProductIds.has(p.id));
-            if (index === -1) {
-                return sendJson(res, 404, { success: false, error: `Product #${targetId} not found.` });
-            }
-
-            productsStore[index] = {
-                ...productsStore[index],
-                ...data,
-                id: targetId, // preserve ID
-                updatedAt: new Date().toISOString()
-            };
-
-            return sendJson(res, 200, { success: true, message: 'Product updated successfully.', data: productsStore[index] });
-        }
-
-        // --- DELETE /api/products ---
-        if (method === 'DELETE') {
-            if (!id) {
-                return sendJson(res, 400, { success: false, error: 'Product ID is required for deletion.' });
-            }
-
-            const strId = String(id);
-            const index = productsStore.findIndex(p => String(p.id) === strId);
-            if (index === -1 && (deletedProductIds.has(id) || deletedProductIds.has(strId))) {
-                return sendJson(res, 200, { success: true, message: `Product #${id} is already deleted.` });
-            }
-
-            deletedProductIds.add(id);
-            deletedProductIds.add(strId);
-            if (index !== -1) {
-                productsStore.splice(index, 1);
-            }
-
-            return sendJson(res, 200, {
-                success: true,
-                message: `Product #${id} has been permanently deleted from production database.`,
-                deletedId: id
-            });
-        }
-
-        return sendJson(res, 405, { success: false, error: `Method ${method} not allowed.` });
     } catch (err) {
         console.error('[API Products Error]:', err);
         return sendJson(res, 500, { success: false, error: err.message || 'Internal server error' });

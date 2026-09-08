@@ -61,7 +61,7 @@ module.exports = async (req, res) => {
             if (!id) return sendJson(res, 400, { success: false, error: 'Product ID is required for deletion.' });
 
             await productsRef.doc(String(id)).delete();
-            return sendJson(res, 200, { success: true, message: \Product #\ has been permanently deleted from production database.\, deletedId: id });
+            return sendJson(res, 200, { success: true, message: `Product #${id} has been permanently deleted from production database.`, deletedId: id });
         }
 
         // --- GET PRODUCTS ---
@@ -69,7 +69,7 @@ module.exports = async (req, res) => {
             if (id) {
                 const doc = await productsRef.doc(String(id)).get();
                 if (!doc.exists) {
-                    return sendJson(res, 404, { success: false, error: \Product #\ not found.\ });
+                    return sendJson(res, 404, { success: false, error: `Product #${id} not found.` });
                 }
                 return sendJson(res, 200, { success: true, data: { id: doc.id, ...doc.data() } });
             }
