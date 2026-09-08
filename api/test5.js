@@ -1,0 +1,1 @@
+module.exports = async (req, res) => { try { const admin = require('./firebase-admin.js'); res.status(200).json({ success: true, admin: Object.keys(admin) }); } catch (e) { res.status(500).json({ success: false, error: e.message, stack: e.stack }); } };
