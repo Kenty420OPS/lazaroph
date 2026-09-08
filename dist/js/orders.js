@@ -311,11 +311,11 @@ const Orders = {
             `;
         } catch (err) {
             container.innerHTML = `
-                <div style="text-align: center; color: #dc2626; padding: 24px; background: #ffffff; border: 1px solid #fee2e2; border-radius: 6px;">
-                    <p style="margin-bottom: 8px;">Failed to load orders: ${err.message}</p>
-                    <button class="btn btn-secondary btn-sm" onclick="Orders.loadUserOrders()">🔄 Retry</button>
+                <div style="text-align: center; color: #4b5563; padding: 24px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 6px;">
+                    <p style="margin-bottom: 0;">empty cart</p>
                 </div>
             `;
         }
     }
 };
+
