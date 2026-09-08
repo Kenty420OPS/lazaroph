@@ -60,7 +60,7 @@ module.exports = async (req, res) => {
             const status = (body.status || 'ACTIVE').toUpperCase();
 
             await brandsRef.doc(String(id)).set({ status }, { merge: true });
-            return sendJson(res, 200, { success: true, message: \Brand status updated to \\ });
+            return sendJson(res, 200, { success: true, message: `Brand status updated to ${status}` });
         }
 
         // --- CREATE / UPDATE Brand ---

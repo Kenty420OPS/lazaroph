@@ -3,16 +3,27 @@ const { getFirestore } = require('firebase-admin/firestore');
 const { getAuth } = require('firebase-admin/auth');
 const { getStorage } = require('firebase-admin/storage');
 
+let db = null;
+let auth = null;
+let storage = null;
+
 if (!getApps().length) {
     try {
+        let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+        if (privateKey) {
+            // Handle cases where the private key is wrapped in quotes or contains literal \n
+            privateKey = privateKey.replace(/^"|"$/g, '').replace(/\\n/g, '\n');
+        }
+
         const serviceAccount = {
             projectId: process.env.FIREBASE_PROJECT_ID,
             clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-            privateKey: process.env.FIREBASE_PRIVATE_KEY ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n') : undefined
+            privateKey: privateKey
         };
 
         if (!serviceAccount.projectId || !serviceAccount.clientEmail || !serviceAccount.privateKey) {
             console.warn('[Firebase Admin] Missing required environment variables. Firestore operations may fail.');
+            // Initialize without credentials (will fail on actual DB calls but prevents crash)
             initializeApp();
         } else {
             initializeApp({
@@ -21,13 +32,22 @@ if (!getApps().length) {
             });
             console.log('[Firebase Admin] Initialized securely.');
         }
-    } catch (error) {
-        console.error('[Firebase Admin] Initialization error', error.stack);
-    }
-}
 
-const db = getFirestore();
-const auth = getAuth();
-const storage = getStorage();
+        // Only assign these if initialization didn't throw
+        db = getFirestore();
+        auth = getAuth();
+        storage = getStorage();
+
+    } catch (error) {
+        console.error('[Firebase Admin] Critical Initialization Error:', error.message);
+        // db remains null. APIs will check for !db and return 500 JSON gracefully.
+    }
+} else {
+    try {
+        db = getFirestore();
+        auth = getAuth();
+        storage = getStorage();
+    } catch(e) {}
+}
 
 module.exports = { db, auth, storage };
