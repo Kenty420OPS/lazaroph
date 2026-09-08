@@ -1,4 +1,4 @@
-const { db } = require('./firebase-admin');
+const { db } = require('./_firebase-admin');
 
 function sendJson(res, statusCode, data) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
