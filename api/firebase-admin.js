@@ -1,8 +1,6 @@
 try {
 const { initializeApp, getApps, cert } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
-const { getAuth } = require('firebase-admin/auth');
-const { getStorage } = require('firebase-admin/storage');
 
 let db = null;
 let auth = null;
@@ -36,8 +34,8 @@ if (!getApps().length) {
 
         // Only assign these if initialization didn't throw
         db = getFirestore();
-        auth = getAuth();
-        storage = getStorage();
+        
+        
 
     } catch (error) {
         console.error('[Firebase Admin] Critical Initialization Error:', error.message);
@@ -46,11 +44,12 @@ if (!getApps().length) {
 } else {
     try {
         db = getFirestore();
-        auth = getAuth();
-        storage = getStorage();
+        
+        
     } catch(e) {}
 }
 
 module.exports = { db, auth, storage };
 
 } catch (e) { console.error('Global Firebase Admin Crash:', e); module.exports = { db: null, auth: null, storage: null }; }
+
