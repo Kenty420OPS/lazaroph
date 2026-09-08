@@ -14,5 +14,9 @@
     "shoes"
   ],
   "author": "LAZAROPH",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "firebase": "^12.18.0",
+    "firebase-admin": "^14.3.0"
+  }
 }
