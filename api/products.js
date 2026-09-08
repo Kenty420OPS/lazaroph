@@ -15,6 +15,8 @@ function isAuthorized(req) {
 }
 
 module.exports = async (req, res) => {
+    try {
+
     if (req.method === 'OPTIONS') {
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -126,3 +128,4 @@ module.exports = async (req, res) => {
         return sendJson(res, 500, { success: false, error: err.message || 'Internal server error' });
     }
 };
+
